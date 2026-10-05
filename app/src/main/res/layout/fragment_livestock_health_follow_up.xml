@@ -65,21 +65,17 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold"
                         android:id="@+id/tvFollowupLivestockName"
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/aqua_size_12"
                         android:includeFontPadding="false"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body"
-                        android:textStyle="bold"
                         app:layout_constraintEnd_toStartOf="@id/tvFollowupBadge"
                         app:layout_constraintStart_toEndOf="@id/followupPhotoFrame"
-                        app:layout_constraintTop_toTopOf="@id/followupPhotoFrame"
-                        tools:text="Beta" />
+                        app:layout_constraintTop_toTopOf="@id/followupPhotoFrame" />
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.SuccessStatusMicroBold"
                         android:id="@+id/tvFollowupBadge"
                         android:layout_width="wrap_content"
                         android:layout_height="@dimen/aqua_size_26"
@@ -88,38 +84,30 @@
                         android:paddingStart="@dimen/aqua_size_9"
                         android:paddingEnd="@dimen/aqua_size_9"
                         android:text="@string/livestock_health_tracking_badge"
-                        android:textColor="@color/aqua_status_success"
-                        android:textSize="@dimen/aqua_text_size_status_micro"
-                        android:textStyle="bold"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryBodySmall"
                         android:id="@+id/tvFollowupIssue"
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/aqua_size_12"
                         android:layout_marginTop="@dimen/aqua_size_5"
                         android:text="@string/livestock_health_issue_surface"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_body_small"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/followupPhotoFrame"
                         app:layout_constraintTop_toBottomOf="@id/tvFollowupLivestockName" />
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedCaption"
                         android:id="@+id/tvFollowupAffected"
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/aqua_size_12"
                         android:layout_marginTop="@dimen/aqua_size_4"
-                        android:textColor="@color/aqua_content_muted"
-                        android:textSize="@dimen/aqua_text_size_caption"
                         app:layout_constraintBottom_toBottomOf="@id/followupPhotoFrame"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/followupPhotoFrame"
-                        app:layout_constraintTop_toBottomOf="@id/tvFollowupIssue"
-                        tools:text="1 / 4 canlı etkileniyor" />
+                        app:layout_constraintTop_toBottomOf="@id/tvFollowupIssue" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -150,21 +138,16 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
-                        <TextView
+                        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodySmallBold"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/livestock_health_issue_surface"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body_small"
-                            android:textStyle="bold" />
+                            android:text="@string/livestock_health_issue_surface" />
 
-                        <TextView
+                        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_3"
-                            android:text="@string/livestock_health_issue_first_seen"
-                            android:textColor="@color/aqua_content_muted"
-                            android:textSize="@dimen/aqua_text_size_micro" />
+                            android:text="@string/livestock_health_issue_first_seen" />
 
                     </LinearLayout>
 
@@ -172,22 +155,17 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_18"
-                android:text="@string/livestock_health_last_status_title"
-                android:textColor="@color/aqua_card_text_primary"
-                android:textSize="@dimen/aqua_text_size_body"
-                android:textStyle="bold" />
+                android:text="@string/livestock_health_last_status_title" />
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_3"
-                android:text="@string/livestock_health_last_check_time"
-                android:textColor="@color/aqua_content_muted"
-                android:textSize="@dimen/aqua_text_size_micro" />
+                android:text="@string/livestock_health_last_check_time" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -202,13 +180,11 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.DangerStatusMicro"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/livestock_health_status_increased"
-                        android:textColor="@color/aqua_status_danger"
-                        android:textSize="@dimen/aqua_text_size_status_micro" />
+                        android:text="@string/livestock_health_status_increased" />
 
                 </com.google.android.material.card.MaterialCardView>
 
@@ -223,13 +199,11 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.WarningStatusMicro"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/livestock_health_status_same"
-                        android:textColor="@color/dialog_icon_warning"
-                        android:textSize="@dimen/aqua_text_size_status_micro" />
+                        android:text="@string/livestock_health_status_same" />
 
                 </com.google.android.material.card.MaterialCardView>
 
@@ -244,13 +218,11 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.SuccessStatusMicro"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/livestock_health_status_decreased"
-                        android:textColor="@color/aqua_status_success"
-                        android:textSize="@dimen/aqua_text_size_status_micro" />
+                        android:text="@string/livestock_health_status_decreased" />
 
                 </com.google.android.material.card.MaterialCardView>
 
@@ -265,26 +237,21 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <TextView
+                    <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryStatusMicro"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="@string/livestock_health_status_recovered"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_status_micro" />
+                        android:text="@string/livestock_health_status_recovered" />
 
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_20"
-                android:text="@string/livestock_health_history_title"
-                android:textColor="@color/aqua_card_text_primary"
-                android:textSize="@dimen/aqua_text_size_body"
-                android:textStyle="bold" />
+                android:text="@string/livestock_health_history_title" />
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Aqua.Card"
@@ -304,14 +271,11 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_20"
-                android:text="@string/livestock_health_tank_context_title"
-                android:textColor="@color/aqua_card_text_primary"
-                android:textSize="@dimen/aqua_text_size_body"
-                android:textStyle="bold" />
+                android:text="@string/livestock_health_tank_context_title" />
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Aqua.Card"
@@ -358,23 +322,18 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
 
-                            <TextView
+                            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodySmallBold"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_tank_context_measurement_title"
-                                android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="@dimen/aqua_text_size_body_small"
-                                android:textStyle="bold" />
+                                android:text="@string/livestock_health_tank_context_measurement_title" />
 
-                            <TextView
+                            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_tank_context_measurement_age"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_micro" />
+                                android:text="@string/livestock_health_tank_context_measurement_age" />
 
                         </LinearLayout>
 
@@ -415,23 +374,18 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
 
-                            <TextView
+                            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodySmallBold"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_tank_context_change_title"
-                                android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="@dimen/aqua_text_size_body_small"
-                                android:textStyle="bold" />
+                                android:text="@string/livestock_health_tank_context_change_title" />
 
-                            <TextView
+                            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_tank_context_change_age"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_micro" />
+                                android:text="@string/livestock_health_tank_context_change_age" />
 
                         </LinearLayout>
 
@@ -450,14 +404,12 @@
                 android:text="@string/livestock_health_new_check"
                 app:icon="@drawable/ic_add_24" />
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_8"
                 android:gravity="center"
-                android:text="@string/livestock_health_recovered_helper"
-                android:textColor="@color/aqua_content_muted"
-                android:textSize="@dimen/aqua_text_size_micro" />
+                android:text="@string/livestock_health_recovered_helper" />
 
         </LinearLayout>
 

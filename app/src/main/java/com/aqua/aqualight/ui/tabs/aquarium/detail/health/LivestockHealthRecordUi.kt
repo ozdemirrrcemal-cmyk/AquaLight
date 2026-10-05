@@ -31,6 +31,6 @@ internal fun LivestockObservationSnapshot.toClosedUi(): ClosedLivestockFollowupU
         totalCount = totalCount,
         startedAtMillis = createdAtMillis,
         closedAtMillis = requireNotNull(closedAtMillis),
-        closeReason = closeReason.orEmpty(),
+        closeReason = requireNotNull(closeReason),
         checkCount = checks.size
     )

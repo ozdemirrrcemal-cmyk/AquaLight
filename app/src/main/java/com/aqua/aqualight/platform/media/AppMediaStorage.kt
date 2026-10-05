@@ -197,6 +197,18 @@ object AppMediaStorage {
      * Journals a superseded committed file before deletion. A journal failure never risks deleting
      * a still-referenced file; the owner-scoped committed-file sweep is the durable fallback.
      */
+    fun prepareCommittedMediaDeletion(
+        context: Context,
+        ownerUid: String,
+        uriString: String
+    ) {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+        requireNotNull(resolveInternalMediaFile(context, uriString)) {
+            "Committed media URI must be app-owned."
+        }
+        registerDeletion(context, uriString, ownerUid)
+    }
+
     fun deleteAfterCommit(
         context: Context,
         ownerUid: String,

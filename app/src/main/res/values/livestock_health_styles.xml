@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="TextAppearance.Aqua.LivestockHealth.AccentBlueCaptionBold" parent="">
+        <item name="android:textColor">@color/aqua_button_blue</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.AccentBlueDefaultSizeBold" parent="">
+        <item name="android:textColor">@color/aqua_button_blue</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.AccentBlueMicro" parent="">
+        <item name="android:textColor">@color/aqua_button_blue</item>
+        <item name="android:textSize">@dimen/aqua_text_size_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.AccentBlueTitleSmall" parent="">
+        <item name="android:textColor">@color/aqua_button_blue</item>
+        <item name="android:textSize">@dimen/aqua_text_size_title_small</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyLargeBold" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_large</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryBodySmallBold" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_small</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryCaption" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryCaptionBold" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryStatusMicro" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardPrimaryTitleSmallBold" parent="">
+        <item name="android:textColor">@color/aqua_card_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_title_small</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardSecondaryBodySmall" parent="">
+        <item name="android:textColor">@color/aqua_card_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_small</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardSecondaryCaption" parent="">
+        <item name="android:textColor">@color/aqua_card_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardSecondaryCaptionBold" parent="">
+        <item name="android:textColor">@color/aqua_card_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardSecondaryMicro" parent="">
+        <item name="android:textColor">@color/aqua_card_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.CardSecondaryStatusMicro" parent="">
+        <item name="android:textColor">@color/aqua_card_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.ContentMutedCaption" parent="">
+        <item name="android:textColor">@color/aqua_content_muted</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.ContentMutedMicro" parent="">
+        <item name="android:textColor">@color/aqua_content_muted</item>
+        <item name="android:textSize">@dimen/aqua_text_size_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.ContentMutedStatusMicro" parent="">
+        <item name="android:textColor">@color/aqua_content_muted</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.ContentMutedStatusNano" parent="">
+        <item name="android:textColor">@color/aqua_content_muted</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_nano</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.ContentSecondaryBodyLarge" parent="">
+        <item name="android:textColor">@color/aqua_content_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_large</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.DangerStatusMicro" parent="">
+        <item name="android:textColor">@color/aqua_status_danger</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.SuccessStatusMicro" parent="">
+        <item name="android:textColor">@color/aqua_status_success</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.SuccessStatusMicroBold" parent="">
+        <item name="android:textColor">@color/aqua_status_success</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.WarningBodyBold" parent="">
+        <item name="android:textColor">@color/dialog_icon_warning</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.WarningCaptionBold" parent="">
+        <item name="android:textColor">@color/dialog_icon_warning</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.LivestockHealth.WarningStatusMicro" parent="">
+        <item name="android:textColor">@color/dialog_icon_warning</item>
+        <item name="android:textSize">@dimen/aqua_text_size_status_micro</item>
+    </style>
+</resources>

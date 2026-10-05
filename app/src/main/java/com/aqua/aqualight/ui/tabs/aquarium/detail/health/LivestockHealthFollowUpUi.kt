@@ -66,7 +66,8 @@ private fun statusLabelRes(status: String): Int = when (status) {
     LivestockHealthCheckBottomSheet.STATUS_INCREASED -> R.string.livestock_health_status_increased
     LivestockHealthCheckBottomSheet.STATUS_DECREASED -> R.string.livestock_health_status_decreased
     LivestockHealthCheckBottomSheet.STATUS_RECOVERED -> R.string.livestock_health_status_recovered
-    else -> R.string.livestock_health_status_same
+    LivestockHealthCheckBottomSheet.STATUS_SAME -> R.string.livestock_health_status_same
+    else -> throw IllegalArgumentException("Unknown livestock check status: $status")
 }
 
 internal class LivestockHealthFollowUpRenderer(
@@ -212,6 +213,7 @@ internal class LivestockHealthFollowUpRenderer(
         LivestockHealthCheckBottomSheet.STATUS_INCREASED -> R.color.aqua_status_danger
         LivestockHealthCheckBottomSheet.STATUS_DECREASED -> R.color.aqua_status_success
         LivestockHealthCheckBottomSheet.STATUS_RECOVERED -> R.color.aqua_content_secondary
-        else -> R.color.dialog_icon_warning
+        LivestockHealthCheckBottomSheet.STATUS_SAME -> R.color.dialog_icon_warning
+        else -> throw IllegalArgumentException("Unknown livestock check status: $status")
     }
 }

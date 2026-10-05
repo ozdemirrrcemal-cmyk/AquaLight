@@ -35,7 +35,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodySmallBold"
             android:id="@+id/tvName"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -43,15 +43,11 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="@color/aqua_card_text_primary"
-            android:textSize="@dimen/aqua_text_size_body_small"
-            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Beta / Siyam Dövüşçü Balığı" />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryCaption"
             android:id="@+id/tvIssue"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -60,42 +56,32 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_caption"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toBottomOf="@id/tvName"
-            tools:text="Hızlı soluma / yüzeye çıkma" />
+            app:layout_constraintTop_toBottomOf="@id/tvName" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
             android:id="@+id/tvPeriod"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_10"
             android:layout_marginTop="@dimen/aqua_size_3"
             android:includeFontPadding="false"
-            android:textColor="@color/aqua_content_muted"
-            android:textSize="@dimen/aqua_text_size_micro"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toBottomOf="@id/tvIssue"
-            tools:text="25 Eyl – 29 Eyl · 4 gün" />
+            app:layout_constraintTop_toBottomOf="@id/tvIssue" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.SuccessStatusMicroBold"
             android:id="@+id/tvCloseReason"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_10"
             android:layout_marginTop="@dimen/aqua_size_3"
             android:includeFontPadding="false"
-            android:textColor="@color/aqua_status_success"
-            android:textSize="@dimen/aqua_text_size_status_micro"
-            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toBottomOf="@id/tvPeriod"
-            tools:text="Son durum: Düzeldi · 4 kontrol" />
+            app:layout_constraintTop_toBottomOf="@id/tvPeriod" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

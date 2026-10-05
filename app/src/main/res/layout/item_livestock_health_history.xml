@@ -48,14 +48,11 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed">
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.AccentBlueMicro"
             android:id="@+id/tvHistoryTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:textColor="@color/aqua_button_blue"
-            android:textSize="@dimen/aqua_text_size_micro"
-            tools:text="Bugün · 18:20" />
+            android:includeFontPadding="false" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -63,41 +60,30 @@
             android:layout_marginTop="@dimen/aqua_size_3"
             android:orientation="horizontal">
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryCaptionBold"
                 android:id="@+id/tvHistoryObservation"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:textColor="@color/aqua_card_text_primary"
-                android:textSize="@dimen/aqua_text_size_caption"
-                android:textStyle="bold"
-                tools:text="Normalden sık yüzeye çıkma" />
+                android:maxLines="1" />
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.WarningCaptionBold"
                 android:id="@+id/tvHistoryStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/aqua_size_4"
-                android:includeFontPadding="false"
-                android:textColor="@color/dialog_icon_warning"
-                android:textSize="@dimen/aqua_text_size_caption"
-                android:textStyle="bold"
-                tools:text="Aynı" />
+                android:includeFontPadding="false" />
 
         </LinearLayout>
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
             android:id="@+id/tvHistoryAffected"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/aqua_size_3"
-            android:includeFontPadding="false"
-            android:textColor="@color/aqua_content_muted"
-            android:textSize="@dimen/aqua_text_size_micro"
-            tools:text="1 / 4 canlı etkileniyor" />
+            android:includeFontPadding="false" />
 
     </LinearLayout>
 

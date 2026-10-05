@@ -50,19 +50,15 @@
             app:layout_constraintStart_toEndOf="@id/photoFrame"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodySmallBold"
                 android:id="@+id/tvLivestockName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
-                android:maxLines="1"
-                android:textColor="@color/aqua_card_text_primary"
-                android:textSize="@dimen/aqua_text_size_body_small"
-                android:textStyle="bold"
-                tools:text="Beta" />
+                android:maxLines="1" />
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryMicro"
                 android:id="@+id/tvLivestockSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -70,21 +66,15 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="@dimen/aqua_text_size_micro"
                 android:visibility="gone"
-                tools:text="Siyam Dövüşçü Balığı"
                 tools:visibility="visible" />
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
                 android:id="@+id/tvLivestockQuantity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_2"
-                android:includeFontPadding="false"
-                android:textColor="@color/aqua_content_muted"
-                android:textSize="@dimen/aqua_text_size_micro"
-                tools:text="4 canlı" />
+                android:includeFontPadding="false" />
 
         </LinearLayout>
 

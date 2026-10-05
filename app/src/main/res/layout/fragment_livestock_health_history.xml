@@ -36,12 +36,10 @@
             android:paddingEnd="@dimen/aqua_size_16"
             android:paddingBottom="@dimen/aqua_size_24">
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryCaption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/livestock_health_history_screen_subtitle"
-                android:textColor="@color/aqua_card_text_secondary"
-                android:textSize="@dimen/aqua_text_size_caption" />
+                android:text="@string/livestock_health_history_screen_subtitle" />
 
             <LinearLayout
                 android:id="@+id/historyContainer"
@@ -50,15 +48,13 @@
                 android:layout_marginTop="@dimen/aqua_size_12"
                 android:orientation="vertical" />
 
-            <TextView
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedCaption"
                 android:id="@+id/tvEmpty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:padding="@dimen/aqua_size_24"
                 android:text="@string/livestock_health_past_followups_empty"
-                android:textColor="@color/aqua_content_muted"
-                android:textSize="@dimen/aqua_text_size_caption"
                 android:visibility="gone"
                 tools:visibility="visible" />
 

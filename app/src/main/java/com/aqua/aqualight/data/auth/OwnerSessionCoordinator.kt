@@ -130,11 +130,16 @@ private class OwnerSessionOpenFlow(
             DevicesRepositoryProvider.currentOwnerUid() == ownerUid &&
                 TankDeviceAssignmentRepositoryProvider.currentOwnerUid() == ownerUid
         return if (snapshot.activeOwnerUid == ownerUid && providersAlreadyBound) {
-            runCatching { AppMediaRecoveryManager(appContext).reconcileOwner(ownerUid) }
-            OwnerSessionCoordinator.OpenResult.AlreadyActive(
-                ownerUid = ownerUid,
-                generation = snapshot.generation
-            )
+            runCatching<OwnerOpenResult> {
+                AppMediaRecoveryManager(appContext).reconcileOwner(ownerUid)
+                OwnerSessionCoordinator.OpenResult.AlreadyActive(
+                    ownerUid = ownerUid,
+                    generation = snapshot.generation
+                )
+            }.getOrElse { error ->
+                if (error is CancellationException) throw error
+                OwnerSessionCoordinator.OpenResult.Failure(ownerUid, snapshot.generation, error)
+            }
         } else {
             null
         }
@@ -219,7 +224,7 @@ private class OwnerSessionOpenFlow(
             )
         } else {
             val repairs = repairOwnerData(ownerUid)
-            runCatching { AppMediaRecoveryManager(appContext).reconcileOwner(ownerUid) }
+            AppMediaRecoveryManager(appContext).reconcileOwner(ownerUid)
             SessionBoundServiceManager.start(appContext, ownerUid)
             if (stateMachine.commit(transition)) {
                 OwnerSessionCoordinator.OpenResult.Active(

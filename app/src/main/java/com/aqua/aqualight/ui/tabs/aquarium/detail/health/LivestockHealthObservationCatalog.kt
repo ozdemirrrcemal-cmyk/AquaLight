@@ -251,8 +251,9 @@ internal object LivestockHealthObservationCatalog {
 
     @StringRes
     fun symptomLabelRes(key: String): Int =
-        allSymptoms.firstOrNull { option -> option.key == key }?.labelRes
-            ?: R.string.livestock_health_symptom_other
+        requireNotNull(allSymptoms.firstOrNull { option -> option.key == key }) {
+            "Unknown livestock symptom: $key"
+        }.labelRes
 
     fun onsetOptions(): List<LivestockHealthChoiceOption> = listOf(
         LivestockHealthChoiceOption(ONSET_NOW, R.string.livestock_health_when_now),
@@ -279,13 +280,15 @@ internal object LivestockHealthObservationCatalog {
 
     @StringRes
     fun onsetLabelRes(id: String): Int =
-        onsetOptions().firstOrNull { option -> option.id == id }?.labelRes
-            ?: R.string.livestock_health_when_today
+        requireNotNull(onsetOptions().firstOrNull { option -> option.id == id }) {
+            "Unknown livestock onset: $id"
+        }.labelRes
 
     @StringRes
     fun trendLabelRes(id: String): Int =
-        trendOptions().firstOrNull { option -> option.id == id }?.labelRes
-            ?: R.string.livestock_health_trend_new
+        requireNotNull(trendOptions().firstOrNull { option -> option.id == id }) {
+            "Unknown livestock trend: $id"
+        }.labelRes
 
     private fun symptom(
         key: String,

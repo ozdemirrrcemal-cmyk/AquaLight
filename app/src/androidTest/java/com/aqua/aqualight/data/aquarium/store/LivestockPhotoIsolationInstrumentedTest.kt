@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
+import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
@@ -172,6 +173,55 @@ class LivestockPhotoIsolationInstrumentedTest {
             photoUris = listOf(photoUri),
             affectedCount = 1
         )
+
+    @Test
+    fun recoveryRemovesOrphanHealthAfterInterruptedLivestockDeletion() = runBlocking {
+        withTank { owner, tank ->
+            operations().saveLivestockWithPhoto(tank, item(11), owner, true, false)
+            val health = LivestockHealthDataStoreManager(context)
+            val photo = pending(owner)
+            health.create(observation(tank, 11, photo))
+
+            store.removeLivestockFromTank(tank, 11)
+            assertEquals(1, health.observationsForTank(tank).first().size)
+            AppMediaRecoveryManager(context).reconcileOwner(owner)
+
+            assertTrue(health.observationsForTank(tank).first().isEmpty())
+            assertFalse(AppMediaStorage.isAppOwned(context, photo))
+        }
+    }
+
+    @Test
+    fun recoveryRemovesOrphanHealthRecordsAndPhotosAfterInterruptedTankDeletion() = runBlocking {
+        val owner = "health-recovery-${UUID.randomUUID()}"
+        UserDataScope.withOwnerUid(owner) {
+            val removedTank = store.addTankFromDraft(draft())
+            val retainedTank = store.addTankFromDraft(draft())
+            val health = LivestockHealthDataStoreManager(context)
+            try {
+                val operation = operations()
+                operation.saveLivestockWithPhoto(removedTank, item(11), owner, true, false)
+                operation.saveLivestockWithPhoto(retainedTank, item(12), owner, true, false)
+                val removedPhoto = pending(owner)
+                val retainedPhoto = pending(owner)
+                health.create(observation(removedTank, 11, removedPhoto))
+                health.create(observation(retainedTank, 12, retainedPhoto))
+
+                store.deleteTanks(listOf(removedTank))
+                assertEquals(1, health.observationsForTank(removedTank).first().size)
+                AppMediaRecoveryManager(context).reconcileOwner(owner)
+
+                assertTrue(health.observationsForTank(removedTank).first().isEmpty())
+                assertFalse(AppMediaStorage.isAppOwned(context, removedPhoto))
+                assertEquals(1, health.observationsForTank(retainedTank).first().size)
+                assertTrue(AppMediaStorage.isAppOwned(context, retainedPhoto))
+            } finally {
+                health.clearAllForOwner(owner)
+                store.deleteTanks(listOf(removedTank, retainedTank))
+                AppMediaStorage.discardPendingMediaForOwner(context, owner)
+            }
+        }
+    }
 
     @Test
     fun clearingOwnerTanksDeletesLivestockPhotos() = runBlocking {

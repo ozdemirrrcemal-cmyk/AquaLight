@@ -34,7 +34,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold"
             android:id="@+id/tvName"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -42,15 +42,11 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="@color/aqua_card_text_primary"
-            android:textSize="@dimen/aqua_text_size_body"
-            android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/tvBadge"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toTopOf="@id/photoFrame"
-            tools:text="Beta / Siyam Dövüşçü Balığı" />
+            app:layout_constraintTop_toTopOf="@id/photoFrame" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.SuccessStatusMicroBold"
             android:id="@+id/tvBadge"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/aqua_size_26"
@@ -60,13 +56,10 @@
             android:paddingStart="@dimen/aqua_size_9"
             android:paddingEnd="@dimen/aqua_size_9"
             android:text="@string/livestock_health_tracking_badge"
-            android:textColor="@color/aqua_status_success"
-            android:textSize="@dimen/aqua_text_size_status_micro"
-            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryCaption"
             android:id="@+id/tvIssue"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -75,41 +68,32 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_caption"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toBottomOf="@id/tvName"
-            tools:text="Hızlı soluma / yüzeye çıkma" />
+            app:layout_constraintTop_toBottomOf="@id/tvName" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
             android:id="@+id/tvAffected"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_12"
             android:layout_marginTop="@dimen/aqua_size_3"
             android:includeFontPadding="false"
-            android:textColor="@color/aqua_content_muted"
-            android:textSize="@dimen/aqua_text_size_micro"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toBottomOf="@id/tvIssue"
-            tools:text="1 / 4 canlı etkileniyor" />
+            app:layout_constraintTop_toBottomOf="@id/tvIssue" />
 
-        <TextView
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedStatusMicro"
             android:id="@+id/tvLastCheck"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_12"
             android:layout_marginTop="@dimen/aqua_size_3"
             android:includeFontPadding="false"
-            android:textColor="@color/aqua_content_muted"
-            android:textSize="@dimen/aqua_text_size_status_micro"
             app:layout_constraintBottom_toBottomOf="@id/photoFrame"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/photoFrame"
-            app:layout_constraintTop_toBottomOf="@id/tvAffected"
-            tools:text="Son kontrol: Bugün · 18:20" />
+            app:layout_constraintTop_toBottomOf="@id/tvAffected" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

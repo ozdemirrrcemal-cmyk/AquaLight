@@ -30,6 +30,7 @@ class AppMediaRecoveryManager(
         val normalizedOwnerUid = ownerUid.trim().also { normalized ->
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
+        livestockHealth.reconcileOrphansForOwner(normalizedOwnerUid)
         val referencedUris = buildSet {
             preferences.profilePhotoUrlForOwner(normalizedOwnerUid)
                 .takeIf(String::isNotBlank)
