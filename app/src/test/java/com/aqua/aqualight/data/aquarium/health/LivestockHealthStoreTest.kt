@@ -135,11 +135,6 @@ class LivestockHealthStoreTest {
         )
     }
 
-    private fun store(vararg records: StoredLivestockObservation): LivestockHealthStore =
-        LivestockHealthStore.newBuilder()
-            .setSchemaVersion(CommercialStoreSchema.LIVESTOCK_HEALTH_VERSION)
-            .addAllObservations(records.asList()).build()
-
     @Test
     fun evaluationRoundTripPreservesWaterAnalysisSnapshot() {
         val evaluation = initialEvaluation().toBuilder()
