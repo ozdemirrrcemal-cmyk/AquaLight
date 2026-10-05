@@ -18,6 +18,9 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.LIVESTOCK_HEALTH_MAX_PHOTOS
 import com.aqua.aqualight.databinding.DialogLivestockHealthPhotoViewerBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthPhotoViewerBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderTrailingText
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 internal class LivestockHealthPhotoViewerDialogFragment :
     DialogFragment(R.layout.dialog_livestock_health_photo_viewer) {
@@ -42,16 +45,27 @@ internal class LivestockHealthPhotoViewerDialogFragment :
         val initialIndex = requireArguments()
             .getInt(ARG_INITIAL_INDEX, 0)
             .coerceIn(0, photoUris.lastIndex)
+        val initialCounter = photoCounter(initialIndex, photoUris.size)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = getString(R.string.livestock_health_photo_viewer_title),
+                onBackClick = { dismiss() },
+                trailingText = AquaHeaderTrailingText(
+                    text = initialCounter,
+                    contentDescription = initialCounter
+                )
+            )
+        )
         binding.photoViewerPager.adapter = LivestockHealthPhotoPagerAdapter(photoUris)
         binding.photoViewerPager.setCurrentItem(initialIndex, false)
-        binding.btnPhotoViewerClose.setOnClickListener { dismiss() }
 
         pageCallback = object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                renderCounter(position, photoUris.size)
+                renderPageState(position, photoUris.size)
             }
         }.also(binding.photoViewerPager::registerOnPageChangeCallback)
-        renderCounter(initialIndex, photoUris.size)
+        renderPageState(initialIndex, photoUris.size)
     }
 
     override fun onStart() {
@@ -60,7 +74,7 @@ internal class LivestockHealthPhotoViewerDialogFragment :
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             setBackgroundDrawable(
                 ColorDrawable(
-                    ContextCompat.getColor(requireContext(), R.color.aqua_surface_deep)
+                    ContextCompat.getColor(requireContext(), R.color.background_color)
                 )
             )
         }
@@ -76,13 +90,19 @@ internal class LivestockHealthPhotoViewerDialogFragment :
         super.onDestroyView()
     }
 
-    private fun renderCounter(position: Int, total: Int) {
-        binding.tvPhotoViewerCounter.text = getString(
+    private fun renderPageState(position: Int, total: Int) {
+        val counter = photoCounter(position, total)
+        binding.appHeader.tvTrailingText.text = counter
+        binding.appHeader.tvTrailingText.contentDescription = counter
+        binding.photoViewerIndicator.render(total, position)
+    }
+
+    private fun photoCounter(position: Int, total: Int): String =
+        getString(
             R.string.livestock_health_photo_viewer_counter,
             position + 1,
             total
         )
-    }
 
     companion object {
         private const val ARG_PHOTO_URIS = "photo_uris"

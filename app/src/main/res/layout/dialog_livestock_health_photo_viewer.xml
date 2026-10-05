@@ -4,37 +4,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/aqua_surface_deep"
+    android:background="@color/background_color"
     android:fitsSystemWindows="true">
 
-    <TextView
-        android:id="@+id/btnPhotoViewerClose"
-        android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyLargeBold"
-        android:layout_width="@dimen/aqua_size_48"
-        android:layout_height="@dimen/aqua_size_48"
-        android:clickable="true"
-        android:contentDescription="@string/livestock_health_photo_viewer_close"
-        android:focusable="true"
-        android:gravity="center"
-        android:text="@string/common_close"
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/photoViewerPager"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        app:layout_constraintBottom_toTopOf="@id/tvPhotoViewerCounter"
+        app:layout_constraintBottom_toTopOf="@id/photoViewerIndicator"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnPhotoViewerClose" />
+        app:layout_constraintTop_toBottomOf="@id/appHeader" />
 
-    <TextView
-        android:id="@+id/tvPhotoViewerCounter"
-        android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryCaptionBold"
+    <com.aqua.aqualight.ui.common.pager.AquaPageIndicatorView
+        android:id="@+id/photoViewerIndicator"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/aqua_size_48"
-        android:gravity="center"
+        android:layout_height="@dimen/aqua_size_32"
+        android:layout_marginBottom="@dimen/aqua_size_12"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

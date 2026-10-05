@@ -256,8 +256,8 @@
     <string name="livestock_health_check_photo_hint">Up to 3 photos</string>
     <string name="livestock_health_photo_more_count">+%1$d</string>
     <string name="livestock_health_photo_open_viewer">Open health photos</string>
+    <string name="livestock_health_photo_viewer_title">Health photos</string>
     <string name="livestock_health_photo_viewer_counter">%1$d / %2$d</string>
-    <string name="livestock_health_photo_viewer_close">Close photo viewer</string>
     <string name="livestock_health_photo_viewer_image_description">Health photo %1$d of %2$d</string>
     <string name="livestock_health_check_photo_add_title">Add photo</string>
     <string name="livestock_health_check_photo_add_subtitle">Choose camera or gallery</string>

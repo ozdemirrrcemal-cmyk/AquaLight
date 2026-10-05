@@ -32,19 +32,28 @@ internal object AquaHeaderComponentBinder {
         fragment: Fragment,
         config: AquaHeaderConfig
     ) {
-        val navController = fragment.findNavController()
+        val needsNavController =
+            config.titleOverride == null ||
+                (config.showBackButton && config.onBackClick == null)
+        val navController = if (needsNavController) fragment.findNavController() else null
         binding.tvTitle.text = config.titleOverride
-            ?: navController.currentDestination?.label?.toString().orEmpty()
+            ?: navController?.currentDestination?.label?.toString().orEmpty()
         binding.btnBack.visibility = if (config.showBackButton) View.VISIBLE else View.GONE
         binding.btnBack.setOnClickListener(
             if (config.showBackButton) {
                 View.OnClickListener {
-                    config.onBackClick?.invoke() ?: navController.popBackStack()
+                    config.onBackClick?.invoke() ?: navController?.popBackStack()
                 }
             } else {
                 null
             }
         )
+
+        val trailingText = config.trailingText
+        binding.tvTrailingText.visibility =
+            if (trailingText == null) View.GONE else View.VISIBLE
+        binding.tvTrailingText.text = trailingText?.text
+        binding.tvTrailingText.contentDescription = trailingText?.contentDescription
 
         val statusIcon = config.statusIcon
         binding.imgStatusIcon.visibility = if (statusIcon == null) View.GONE else View.VISIBLE

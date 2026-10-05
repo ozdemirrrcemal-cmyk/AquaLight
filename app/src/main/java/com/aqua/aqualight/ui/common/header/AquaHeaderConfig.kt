@@ -13,6 +13,7 @@ data class AquaHeaderConfig(
     val filledIconAction: AquaHeaderFilledIconAction? = null,
     val cardIconAction: AquaHeaderCardIconAction? = null,
     val pillTextAction: AquaHeaderPillTextAction? = null,
+    val trailingText: AquaHeaderTrailingText? = null,
     val scoreBadge: AquaHeaderScoreBadge? = null,
     val searchField: AquaHeaderSearchField? = null,
     val actions: List<AquaHeaderAction> = emptyList()
@@ -63,6 +64,11 @@ data class AquaHeaderPillTextAction(
     @ColorInt val textColor: Int? = null,
     val enabled: Boolean = true,
     val onClick: () -> Unit
+)
+
+data class AquaHeaderTrailingText(
+    val text: String,
+    val contentDescription: String? = null
 )
 
 data class AquaHeaderScoreBadge(

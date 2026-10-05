@@ -21,6 +21,9 @@ PHOTO_VIEWER = (
     APP
     / "ui/tabs/aquarium/detail/health/LivestockHealthPhotoViewerDialogFragment.kt"
 )
+AQUA_HEADER_CONFIG = APP / "ui/common/header/AquaHeaderConfig.kt"
+AQUA_HEADER_LAYOUT = ROOT / "app/src/main/res/layout/layout_aqua_header.xml"
+PAGE_INDICATOR = APP / "ui/common/pager/AquaPageIndicatorView.kt"
 CHECK_SHEET = APP / "ui/tabs/aquarium/detail/health/LivestockHealthCheckBottomSheet.kt"
 CHECK_PHOTO_CONTROLLER = (
     APP
@@ -45,6 +48,9 @@ required = (
     RULES,
     VIEW_MODEL,
     PHOTO_VIEWER,
+    AQUA_HEADER_CONFIG,
+    AQUA_HEADER_LAYOUT,
+    PAGE_INDICATOR,
     CHECK_SHEET,
     CHECK_PHOTO_CONTROLLER,
     FOLLOW_UP_UI,
@@ -160,10 +166,44 @@ for token in (
     "ViewPager2.OnPageChangeCallback",
     "ARG_PHOTO_URIS",
     "LIVESTOCK_HEALTH_MAX_PHOTOS",
+    "binding.appHeader.setupAquaHeader",
+    "AquaHeaderTrailingText",
+    "photoViewerIndicator.render",
 ):
     if token not in photo_viewer:
         errors.append(
             f"{PHOTO_VIEWER.relative_to(ROOT)}: photo viewer contract missing: {token}"
+        )
+for forbidden in (
+    "btnPhotoViewerClose",
+    "tvPhotoViewerCounter",
+    "common_close",
+):
+    if forbidden in photo_viewer:
+        errors.append(
+            f"{PHOTO_VIEWER.relative_to(ROOT)}: legacy viewer chrome remains: {forbidden}"
+        )
+
+header_config = read(AQUA_HEADER_CONFIG)
+if "AquaHeaderTrailingText" not in header_config:
+    errors.append(
+        f"{AQUA_HEADER_CONFIG.relative_to(ROOT)}: shared trailing-text contract is missing"
+    )
+
+header_layout = read(AQUA_HEADER_LAYOUT)
+if "@+id/tvTrailingText" not in header_layout:
+    errors.append(
+        f"{AQUA_HEADER_LAYOUT.relative_to(ROOT)}: shared header trailing text view is missing"
+    )
+
+page_indicator = read(PAGE_INDICATOR)
+for token in (
+    "class AquaPageIndicatorView",
+    "fun render(pageCount: Int, selectedIndex: Int)",
+):
+    if token not in page_indicator:
+        errors.append(
+            f"{PAGE_INDICATOR.relative_to(ROOT)}: shared page indicator contract missing: {token}"
         )
 
 check_sheet = read(CHECK_SHEET)
