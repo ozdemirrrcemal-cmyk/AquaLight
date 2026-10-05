@@ -9,6 +9,7 @@
 
     <string name="livestock_health_entry_title">Canlı Sağlığı</string>
     <plurals name="livestock_health_entry_record_count">
+        <item quantity="one">%d gözlem kaydı</item>
         <item quantity="other">%d gözlem kaydı</item>
     </plurals>
 
