@@ -51,8 +51,6 @@
     <string name="livestock_health_history_screen_subtitle">Closed follow-ups are ordered newest first. Tap one to view its history in read-only mode.</string>
 
     <string name="livestock_health_tracking_badge">Tracking</string>
-    <string name="livestock_health_issue_surface">Breathing near the surface</string>
-    <string name="livestock_health_issue_first_seen">First observed today · 14:30</string>
     <plurals name="livestock_health_affected_format">
         <item quantity="one">%1$d / %2$d livestock affected</item>
         <item quantity="other">%1$d / %2$d livestock affected</item>

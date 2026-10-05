@@ -39,6 +39,7 @@ RECORD_UI = APP / "ui/tabs/aquarium/detail/health/LivestockHealthRecordUi.kt"
 EVALUATION = APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationFragment.kt"
 CHECK_LAYOUT = ROOT / "app/src/main/res/layout/content_sheet_livestock_health_check.xml"
 HISTORY_LAYOUT = ROOT / "app/src/main/res/layout/item_livestock_health_history.xml"
+FOLLOW_UP_LAYOUT = ROOT / "app/src/main/res/layout/fragment_livestock_health_follow_up.xml"
 UI_ROOT = APP / "ui/tabs/aquarium/detail/health"
 OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
 OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
@@ -68,6 +69,7 @@ required = (
     EVALUATION,
     CHECK_LAYOUT,
     HISTORY_LAYOUT,
+    FOLLOW_UP_LAYOUT,
     OWNER_GRAPH,
     OWNER_FACTORY,
     SMOKE,
@@ -288,6 +290,16 @@ for token in (
 ):
     if token not in history_layout:
         errors.append(f"{HISTORY_LAYOUT.relative_to(ROOT)}: history UI contract missing: {token}")
+
+follow_up_layout = read(FOLLOW_UP_LAYOUT)
+for forbidden in (
+    "@string/livestock_health_issue_surface",
+    "@string/livestock_health_issue_first_seen",
+):
+    if forbidden in follow_up_layout:
+        errors.append(
+            f"{FOLLOW_UP_LAYOUT.relative_to(ROOT)}: static demo observation content remains: {forbidden}"
+        )
 
 ui_text = read(UI_TEXT)
 for token in (

@@ -51,8 +51,6 @@
     <string name="livestock_health_history_screen_subtitle">Kapanan takipler en yeniden eskiye sıralanır. Bir takibe dokunarak geçmişini salt okunur görüntüleyebilirsin.</string>
 
     <string name="livestock_health_tracking_badge">Takipte</string>
-    <string name="livestock_health_issue_surface">Normalden sık yüzeye çıkma</string>
-    <string name="livestock_health_issue_first_seen">İlk gözlem bugün · 14:30</string>
     <plurals name="livestock_health_affected_format">
         <item quantity="one">%1$d / %2$d canlı etkileniyor</item>
         <item quantity="other">%1$d / %2$d canlı etkileniyor</item>
