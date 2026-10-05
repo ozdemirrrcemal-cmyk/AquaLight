@@ -159,7 +159,12 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             if (selectedLivestockId != previousLivestockId) {
                 selectedSymptoms.clear()
                 if (previousLivestockId > 0L) {
-                    discardObservationPhotos(observationPhotoUris, _binding)
+                    discardLivestockObservationPhotos(
+                        uris = observationPhotoUris,
+                        binding = _binding,
+                        scope = viewLifecycleOwner.lifecycleScope,
+                        rollbackPendingMedia = mediaFlow::rollbackPendingMedia
+                    )
                 }
             }
 
@@ -171,7 +176,12 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             ) { selected ->
                 if (selectedLivestockId != selected.id) {
                     selectedSymptoms.clear()
-                    discardObservationPhotos(observationPhotoUris, _binding)
+                    discardLivestockObservationPhotos(
+                        uris = observationPhotoUris,
+                        binding = _binding,
+                        scope = viewLifecycleOwner.lifecycleScope,
+                        rollbackPendingMedia = mediaFlow::rollbackPendingMedia
+                    )
                 }
                 selectedLivestockId = selected.id
                 affectedCount = affectedCount.coerceAtMost(
@@ -314,18 +324,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             }
         }
         super.onDestroy()
-    }
-
-    private fun discardObservationPhotos(
-        uris: MutableList<String?>,
-        binding: FragmentLivestockHealthObservationBinding?
-    ) {
-        val pending = uris.filterNotNull()
-        uris.indices.forEach { uris[it] = null }
-        binding?.renderObservationPhotoSlots(uris)
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            pending.forEach { mediaFlow.rollbackPendingMedia(it) }
-        }
     }
 
     companion object {
