@@ -15,7 +15,8 @@ import kotlinx.coroutines.withContext
 internal class DefaultLivestockPhotoOperations(
     context: Context,
     private val tankStore: AquariumTankDataStoreManager,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val deleteLivestockHealthForLivestock: suspend (Long, Long) -> Unit
 ) : AquariumLivestockPhotoOperations {
     private val appContext = context.applicationContext
     private val validator = LivestockSelectionValidator(appContext)
@@ -24,7 +25,10 @@ internal class DefaultLivestockPhotoOperations(
         tankId: Long, livestockId: Long, expectedOwnerUid: String
     ): Unit = withCurrentOwnerScope { owner ->
         require(owner == expectedOwnerUid) { "Livestock form belongs to another owner." }
-        withContext(NonCancellable + dispatcher) { tankStore.removeLivestockFromTank(tankId, livestockId) }
+        withContext(NonCancellable + dispatcher) {
+            tankStore.removeLivestockFromTank(tankId, livestockId)
+            deleteLivestockHealthForLivestock(tankId, livestockId)
+        }
     }
 
     override suspend fun saveLivestockWithPhoto(

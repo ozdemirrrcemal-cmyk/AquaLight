@@ -49,7 +49,9 @@ class DefaultAquariumTankOperations(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AquariumTankOperations,
     AquariumPlantPhotoOperations by DefaultPlantPhotoOperations(context, tankStore, dispatcher),
-    AquariumLivestockPhotoOperations by DefaultLivestockPhotoOperations(context, tankStore, dispatcher) {
+    AquariumLivestockPhotoOperations by DefaultLivestockPhotoOperations(
+        context, tankStore, dispatcher, operationDependencies.deleteLivestockHealthForLivestock
+    ) {
 
     private val appContext = context.applicationContext
     private val notificationPreferences = operationDependencies.notificationPreferences
@@ -276,8 +278,10 @@ class DefaultAquariumTankOperations(
     }
 
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) {
-        tankStore.removeLivestockFromTank(tankId, livestockId)
-        deleteLivestockHealthForLivestock(tankId, livestockId)
+        withContext(NonCancellable + dispatcher) {
+            tankStore.removeLivestockFromTank(tankId, livestockId)
+            deleteLivestockHealthForLivestock(tankId, livestockId)
+        }
     }
 
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =

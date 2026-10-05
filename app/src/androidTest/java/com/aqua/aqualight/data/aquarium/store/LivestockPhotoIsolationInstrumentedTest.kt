@@ -10,6 +10,9 @@ import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCas
 import com.aqua.aqualight.application.notifications.NotificationRenderer
 import com.aqua.aqualight.application.notifications.NotificationScheduler
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
+import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
+import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
@@ -20,6 +23,7 @@ import com.aqua.aqualight.platform.media.AppMediaStorage
 import java.io.File
 import java.lang.reflect.Proxy
 import java.util.UUID
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -129,6 +133,47 @@ class LivestockPhotoIsolationInstrumentedTest {
     }
 
     @Test
+    fun removingLivestockDeletesItsHealthRecordAndPhotoButKeepsOtherLivestock() = runBlocking {
+        withTank { owner, tank ->
+            val operation = operations()
+            operation.saveLivestockWithPhoto(tank, item(11), owner, true, false)
+            operation.saveLivestockWithPhoto(tank, item(12), owner, true, false)
+            val health = LivestockHealthDataStoreManager(context)
+            val removedPhoto = pending(owner)
+            val removedCheckPhoto = pending(owner)
+            val retainedPhoto = pending(owner)
+            val removedId = health.create(observation(tank, 11, removedPhoto))
+            health.addCheck(tank, removedId, LivestockCheckInput(
+                requestId = UUID.randomUUID().toString(),
+                status = "same", affectedCount = 1,
+                checkedAtMillis = System.currentTimeMillis(),
+                note = "", photoUri = removedCheckPhoto
+            ))
+            health.create(observation(tank, 12, retainedPhoto))
+
+            operation.removeLivestockWithPhoto(tank, 11, owner)
+
+            assertEquals(listOf(12L), health.observationsForTank(tank).first().map { it.livestockId })
+            assertFalse(AppMediaStorage.isAppOwned(context, removedPhoto))
+            assertFalse(AppMediaStorage.isAppOwned(context, removedCheckPhoto))
+            assertTrue(AppMediaStorage.isAppOwned(context, retainedPhoto))
+        }
+    }
+
+    private fun observation(tankId: Long, livestockId: Long, photoUri: String) =
+        LivestockObservationInput(
+            requestId = UUID.randomUUID().toString(),
+            tankId = tankId,
+            livestockId = livestockId,
+            symptomKeys = listOf("surface"),
+            onsetKey = "onset_today",
+            otherObservation = "",
+            note = "",
+            photoUris = listOf(photoUri),
+            affectedCount = 1
+        )
+
+    @Test
     fun clearingOwnerTanksDeletesLivestockPhotos() = runBlocking {
         withTank { owner, tank ->
             val photo = pending(owner)
@@ -143,6 +188,7 @@ class LivestockPhotoIsolationInstrumentedTest {
         UserDataScope.withOwnerUid(owner) {
             val tank = store.addTankFromDraft(draft())
             try { block(owner, tank) } finally {
+                LivestockHealthDataStoreManager(context).deleteForTank(tank)
                 store.deleteTanks(listOf(tank))
                 AppMediaStorage.discardPendingMediaForOwner(context, owner)
             }
@@ -186,9 +232,8 @@ class LivestockPhotoIsolationInstrumentedTest {
             deleteLivestockHealthForTank = {
                 error("Photo mutation unexpectedly deleted livestock health records")
             },
-            deleteLivestockHealthForLivestock = { _, _ ->
-                error("Photo mutation unexpectedly deleted livestock health records")
-            }
+            deleteLivestockHealthForLivestock =
+                LivestockHealthDataStoreManager(context)::deleteForLivestock
         )
     )
 
