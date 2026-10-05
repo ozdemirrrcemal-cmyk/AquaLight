@@ -164,13 +164,16 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     private fun bindPhotoAndNote(savedInstanceState: Bundle?) {
         photoController.bind(viewLifecycleOwner)
         contentBinding.renderCheckPhotoSlots(checkPhotoUris)
-        contentBinding.bindCheckPhotoSlots { slotIndex ->
-            activePhotoSlotIndex = slotIndex
-            photoController.showSource(
-                title = getString(R.string.livestock_health_check_photo_source_title),
-                currentUri = checkPhotoUris[slotIndex]
-            )
-        }
+        contentBinding.bindCheckPhotoSlots(
+            currentPhotoUris = { checkPhotoUris },
+            onSlotSelected = { slotIndex ->
+                activePhotoSlotIndex = slotIndex
+                photoController.showSource(
+                    title = getString(R.string.livestock_health_check_photo_source_title),
+                    currentUri = checkPhotoUris[slotIndex]
+                )
+            }
+        )
         contentBinding.etCheckNote.setText(savedInstanceState?.getString(STATE_NOTE))
     }
 

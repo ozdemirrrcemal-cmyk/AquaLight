@@ -116,8 +116,16 @@ internal fun ContentSheetLivestockHealthCheckBinding.renderCheckTime(
 }
 
 internal fun ContentSheetLivestockHealthCheckBinding.bindCheckPhotoSlots(
+    currentPhotoUris: () -> List<String?>,
     onSlotSelected: (Int) -> Unit
 ) {
+    checkPhotoAddArea.setOnClickListener {
+        val slotIndex = currentPhotoUris()
+            .indexOfFirst { uri -> uri.isNullOrBlank() }
+            .takeIf { index -> index >= 0 }
+            ?: 0
+        onSlotSelected(slotIndex)
+    }
     checkPhotoSlotOne.setOnClickListener { onSlotSelected(0) }
     checkPhotoSlotTwo.setOnClickListener { onSlotSelected(1) }
     checkPhotoSlotThree.setOnClickListener { onSlotSelected(2) }

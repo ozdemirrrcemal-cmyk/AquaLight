@@ -232,12 +232,24 @@ for token in (
 
 check_layout = read(CHECK_LAYOUT)
 for token in (
+    "@+id/checkPhotoAddArea",
     "@+id/checkPhotoSlotOne",
     "@+id/checkPhotoSlotTwo",
     "@+id/checkPhotoSlotThree",
+    "@drawable/bg_livestock_health_photo_dropzone",
+    "@drawable/ic_camera_24",
+    "@drawable/ic_livestock_note_24",
+    "@string/livestock_health_photo_optional",
+    "@string/livestock_health_note_label",
 ):
     if token not in check_layout:
-        errors.append(f"{CHECK_LAYOUT.relative_to(ROOT)}: check photo slot missing: {token}")
+        errors.append(
+            f"{CHECK_LAYOUT.relative_to(ROOT)}: shared observation/check media UI missing: {token}"
+        )
+if "@string/livestock_health_check_context_value" in check_layout:
+    errors.append(
+        f"{CHECK_LAYOUT.relative_to(ROOT)}: obsolete water-measurement row must stay removed"
+    )
 
 follow_up_ui = read(FOLLOW_UP_UI)
 for token in (
