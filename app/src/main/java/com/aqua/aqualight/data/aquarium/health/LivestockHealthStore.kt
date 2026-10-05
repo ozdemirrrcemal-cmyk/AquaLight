@@ -374,32 +374,32 @@ internal fun validateLivestockHealthStore(store: LivestockHealthStore): Livestoc
     val requestIds = mutableSetOf<Pair<String, String>>()
     store.observationsList.forEach { record ->
         validateStoredObservation(record)
-        if (!ids.add(record.ownerUid to record.id)) invalidObservation()
-        if (!requestIds.add(record.ownerUid to record.requestId)) invalidObservation()
+        if (!ids.add(record.ownerUid to record.id)) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        if (!requestIds.add(record.ownerUid to record.requestId)) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
         val checkRequestIds = mutableSetOf<String>()
         record.checksList.forEach { check ->
             validateStoredCheck(check, record)
-            if (!checkRequestIds.add(check.requestId)) invalidCheck()
+            if (!checkRequestIds.add(check.requestId)) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
         }
     }
     return store
 }
 
 private fun validateStoredObservation(record: StoredLivestockObservation) {
-    if (record.id <= 0 || record.tankId <= 0 || record.livestockId <= 0) invalidObservation()
+    if (record.id <= 0 || record.tankId <= 0 || record.livestockId <= 0) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     if (record.ownerUid.isBlank() || record.ownerUid.length > MAX_OWNER_UID_LENGTH ||
         record.ownerUid != record.ownerUid.trim()
-    ) invalidObservation()
+    ) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     if (record.createdAtMillis !in MIN_RECORD_TIME_MILLIS..MAX_RECORD_TIME_MILLIS) {
-        invalidObservation()
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
     if (record.totalCount <= 0 || record.affectedCount !in 1..record.totalCount) {
-        invalidObservation()
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
-    if ((record.closedAtMillis == 0L) != record.closeReason.isBlank()) invalidObservation()
+    if ((record.closedAtMillis == 0L) != record.closeReason.isBlank()) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     if (record.closedAtMillis != 0L) {
-        if (record.closedAtMillis < record.createdAtMillis) invalidObservation()
-        if (record.closeReason !in setOf("manual", "recovered")) invalidObservation()
+        if (record.closedAtMillis < record.createdAtMillis) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        if (record.closeReason !in setOf("manual", "recovered")) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
     validateInput(LivestockObservationInput(
         record.requestId, record.tankId, record.livestockId, record.symptomKeysList,
@@ -409,14 +409,15 @@ private fun validateStoredObservation(record: StoredLivestockObservation) {
 }
 
 private fun validateStoredCheck(check: StoredLivestockCheck, record: StoredLivestockObservation) {
-    if (check.status !in setOf("increased", "same", "decreased", "recovered")) invalidCheck()
-    if (check.requestId.length !in 1..MAX_REQUEST_ID_LENGTH) invalidCheck()
-    if (check.affectedCount !in 1..record.totalCount) invalidCheck()
-    if (check.checkedAtMillis < record.createdAtMillis) invalidCheck()
-    if (check.note.length > MAX_NOTE_LENGTH || check.photoUri.length > MAX_URI_LENGTH) invalidCheck()
+    if (check.status !in setOf("increased", "same", "decreased", "recovered")) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    if (check.requestId.length !in 1..MAX_REQUEST_ID_LENGTH) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    if (check.affectedCount !in 1..record.totalCount) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    if (check.checkedAtMillis < record.createdAtMillis) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    if (check.note.length > MAX_NOTE_LENGTH || check.photoUri.length > MAX_URI_LENGTH) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
 }
 
-private fun invalidObservation(): Nothing =
-    throw StoreInvariantViolation("Invalid livestock observation.")
+private const val INVALID_OBSERVATION_MESSAGE = "Invalid livestock observation."
+private const val INVALID_CHECK_MESSAGE = "Invalid livestock check."
 
-private fun invalidCheck(): Nothing = throw StoreInvariantViolation("Invalid livestock check.")
+private fun invalidStoredHealthRecord(message: String): Nothing =
+    throw StoreInvariantViolation(message)
