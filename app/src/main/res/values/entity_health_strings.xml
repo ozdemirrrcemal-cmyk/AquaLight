@@ -144,7 +144,6 @@
         <item quantity="one">%1$s · %2$d / %3$d livestock · %4$s</item>
         <item quantity="other">%1$s · %2$d / %3$d livestock · %4$s</item>
     </plurals>
-    <string name="livestock_health_used_data_title">Used in this evaluation</string>
     <string name="livestock_health_last_water_measurement">Last water measurement</string>
 <string name="livestock_health_old_data_badge">Pending</string>
     <string name="livestock_health_last_water_change">Last water change</string>

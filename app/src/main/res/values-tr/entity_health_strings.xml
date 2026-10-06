@@ -144,7 +144,6 @@
         <item quantity="one">%1$s · %2$d / %3$d canlı · %4$s</item>
         <item quantity="other">%1$s · %2$d / %3$d canlı · %4$s</item>
     </plurals>
-    <string name="livestock_health_used_data_title">Bu değerlendirmede kullanılanlar</string>
     <string name="livestock_health_last_water_measurement">Son su ölçümü</string>
 <string name="livestock_health_old_data_badge">Beklemede</string>
     <string name="livestock_health_last_water_change">Son su değişimi</string>

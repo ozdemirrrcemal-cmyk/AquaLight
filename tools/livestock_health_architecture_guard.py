@@ -582,11 +582,16 @@ if "@string/livestock_health_affected_counter_preview" in observation_layout:
     )
 
 evaluation_layout = read(EVALUATION_LAYOUT)
-if "@+id/tvEvaluationWaterChangeValue" not in evaluation_layout:
-    errors.append(
-        f"{EVALUATION_LAYOUT.relative_to(ROOT)}: real water-change binding is missing"
-    )
+for token in (
+    "@+id/tvEvaluationWaterChangeValue",
+    "@string/livestock_health_tank_context_title",
+):
+    if token not in evaluation_layout:
+        errors.append(
+            f"{EVALUATION_LAYOUT.relative_to(ROOT)}: real tank-context binding missing: {token}"
+        )
 for forbidden in (
+    "@string/livestock_health_used_data_title",
     "@string/livestock_health_last_water_measurement_value",
     "@string/livestock_health_last_water_change_value",
 ):
