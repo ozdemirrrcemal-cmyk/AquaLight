@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/aqua_size_16"
+            android:paddingTop="@dimen/aqua_size_8"
+            android:paddingEnd="@dimen/aqua_size_16"
+            android:paddingBottom="@dimen/aqua_size_24">
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:strokeColor="@color/aqua_status_success">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/aqua_size_14">
+
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_36"
+                        android:layout_height="@dimen/aqua_size_36"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_health_plant_24"
+                        app:tint="@color/aqua_status_success" />
+
+                    <LinearLayout
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_12"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/plant_health_analysis_result_pending_title" />
+
+                        <TextView
+                            android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_4"
+                            android:text="@string/plant_health_analysis_result_pending_body" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:text="@string/plant_health_section_observation_findings" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+                <TextView
+                    android:id="@+id/tvObservationFindings"
+                    android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/aqua_size_14"
+                    tools:text="• Kullanıcı yaprak sararması bildirdi
+• 1 fotoğraf eklendi" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:text="@string/plant_health_section_water_context" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+                <TextView
+                    android:id="@+id/tvWaterContext"
+                    android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/aqua_size_14"
+                    tools:text="pH 6.8 — tür aralığında
+Sıcaklık 24 °C — tür aralığında
+GH 6 dGH — uygun" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:text="@string/plant_health_section_care_context" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+                <TextView
+                    android:id="@+id/tvCareContext"
+                    android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/aqua_size_14"
+                    tools:text="Son gübreleme: 3 gün önce
+Son su değişimi: 2 gün önce" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:text="@string/plant_health_section_recommendations" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+                <TextView
+                    android:id="@+id/tvRecommendations"
+                    android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/aqua_size_14"
+                    tools:text="• Mikro besin düzenini kontrol et
+• Yeni yaprakları 7 gün izle" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:text="@string/plant_health_section_next_check" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+                <TextView
+                    android:id="@+id/tvNextCheck"
+                    android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/aqua_size_14"
+                    tools:text="7 gün sonra tekrar gözlem yap" />
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

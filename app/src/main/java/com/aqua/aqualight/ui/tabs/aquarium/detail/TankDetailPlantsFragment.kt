@@ -35,12 +35,6 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
         binding.plantHealthEntry.tvHealthEntryTitle.setText(
             R.string.plant_health_entry_title
         )
-        binding.plantHealthEntry.tvHealthEntrySummary.setText(
-            R.string.plant_health_entry_summary
-        )
-        binding.plantHealthEntry.tvHealthEntryLastCheck.setText(
-            R.string.plant_health_entry_last_check
-        )
         binding.plantHealthEntry.root.setOnClickListener {
             openPlantHealth()
         }
@@ -51,6 +45,7 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             val tank = tanks.firstOrNull { it.id == tankId } ?: return@observe
             currentPlants = tank.plants
+            renderPlantHealthEntry(currentPlants.size)
             renderPlants(currentPlants)
         }
     }
@@ -90,6 +85,17 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
             TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
                 tankId = tankId
             )
+        )
+    }
+
+    private fun renderPlantHealthEntry(plantCount: Int) {
+        binding.plantHealthEntry.tvHealthEntrySummary.text = resources.getQuantityString(
+            R.plurals.plant_health_entry_assigned_count,
+            plantCount,
+            plantCount
+        )
+        binding.plantHealthEntry.tvHealthEntryLastCheck.setText(
+            R.string.plant_health_status_no_observation
         )
     }
 

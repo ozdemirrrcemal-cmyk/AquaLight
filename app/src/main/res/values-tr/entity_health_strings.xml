@@ -4,9 +4,6 @@
     <string name="screen_title_livestock_health">Canlı Sağlığı</string>
 
     <string name="plant_health_entry_title">Bitki Sağlığı</string>
-    <string name="plant_health_entry_summary">Bitkiler genel olarak sağlıklı</string>
-    <string name="plant_health_entry_last_check">Son kontrol: 1 gün önce</string>
-
     <string name="livestock_health_entry_title">Canlı Sağlığı</string>
     <string name="livestock_health_entry_no_active_followups">Aktif takip yok</string>
     <plurals name="livestock_health_entry_record_count">
