@@ -72,7 +72,8 @@ for path in required:
 
 home = read(HOME)
 for token in (
-    "tank.plants",
+    "tanks.firstOrNull",
+    "?.plants",
     "PlantHealthCatalogUi.record",
     "actionPlantHealthFragmentToPlantHealthDetailFragment",
     "binding.etSearch.doAfterTextChanged",
