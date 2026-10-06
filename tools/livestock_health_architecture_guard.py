@@ -23,6 +23,7 @@ EVALUATION_MUTATION = APP / "data/aquarium/health/LivestockHealthEvaluationMutat
 OBSERVATION_CREATION = APP / "data/aquarium/health/LivestockObservationCreationContext.kt"
 LEGACY_STORE = APP / "data/aquarium/health/LivestockHealthStore.kt"
 VIEW_MODEL = APP / "ui/tabs/aquarium/detail/health/LivestockHealthViewModel.kt"
+TANK_DETAIL_LIFE = APP / "ui/tabs/aquarium/detail/TankDetailLifeFragment.kt"
 PHOTO_VIEWER = (
     APP
     / "ui/tabs/aquarium/detail/health/LivestockHealthPhotoViewerDialogFragment.kt"
@@ -70,6 +71,7 @@ OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
 SMOKE = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 BOUNDARY_TEST = TESTS / "ui/tabs/aquarium/detail/health/LivestockHealthViewModelBoundaryTest.kt"
 CONTEXT_TEST = TESTS / "application/aquarium/health/LivestockHealthContextCoordinatorTest.kt"
+LIFE_ENTRY_TEST = TESTS / "ui/tabs/aquarium/detail/TankDetailLifeHealthEntrySummaryTest.kt"
 
 required = (
     APPLICATION,
@@ -86,6 +88,7 @@ required = (
     EVALUATION_MUTATION,
     OBSERVATION_CREATION,
     VIEW_MODEL,
+    TANK_DETAIL_LIFE,
     PHOTO_VIEWER,
     AQUA_HEADER_CONFIG,
     AQUA_HEADER_LAYOUT,
@@ -116,6 +119,7 @@ required = (
     SMOKE,
     BOUNDARY_TEST,
     CONTEXT_TEST,
+    LIFE_ENTRY_TEST,
 )
 errors: list[str] = []
 
@@ -415,6 +419,27 @@ if "@string/livestock_health_check_context_value" in check_layout:
     errors.append(
         f"{CHECK_LAYOUT.relative_to(ROOT)}: obsolete water-measurement row must stay removed"
     )
+
+tank_detail_life = read(TANK_DETAIL_LIFE)
+for token in (
+    "buildLivestockHealthEntrySummary(records)",
+    "records.filter { record -> record.closedAtMillis == null }",
+    "activeFollowupCount = activeFollowups.size",
+    ".flatMap { record -> record.checks }",
+    "livestock_health_entry_no_active_followups",
+):
+    if token not in tank_detail_life:
+        errors.append(
+            f"{TANK_DETAIL_LIFE.relative_to(ROOT)}: active-only health-entry summary missing: {token}"
+        )
+for forbidden in (
+    "records.size,",
+    "records.flatMap { it.checks }",
+):
+    if forbidden in tank_detail_life:
+        errors.append(
+            f"{TANK_DETAIL_LIFE.relative_to(ROOT)}: closed follow-ups leak into health-entry summary: {forbidden}"
+        )
 
 follow_up_fragment = read(FOLLOW_UP_FRAGMENT)
 if "healthViewModel.contextForTank(args.tankId)" not in follow_up_fragment:
@@ -727,6 +752,16 @@ for token in (
 ):
     if token not in context_test:
         errors.append(f"{CONTEXT_TEST.relative_to(ROOT)}: context regression coverage missing: {token}")
+
+life_entry_test = read(LIFE_ENTRY_TEST)
+for token in (
+    "summaryCountsOnlyActiveFollowupsAndUsesOnlyTheirChecks",
+    "summaryHasNoLastCheckWhenOnlyClosedFollowupsExist",
+):
+    if token not in life_entry_test:
+        errors.append(
+            f"{LIFE_ENTRY_TEST.relative_to(ROOT)}: active-followup summary regression coverage missing: {token}"
+        )
 
 if errors:
     print("Livestock Health architecture guard failed:", file=sys.stderr)

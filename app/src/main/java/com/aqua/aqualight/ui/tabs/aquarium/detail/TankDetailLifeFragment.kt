@@ -212,17 +212,18 @@ private fun FragmentTankDetailLifeBinding.renderHealthEntry(
     fragment: Fragment,
     records: List<LivestockObservationSnapshot>
 ) {
+    val summary = buildLivestockHealthEntrySummary(records)
     livestockHealthEntry.tvHealthEntrySummary.text =
-        if (records.isEmpty()) {
-            fragment.getString(R.string.livestock_health_empty_followups_title)
+        if (summary.activeFollowupCount == 0) {
+            fragment.getString(R.string.livestock_health_entry_no_active_followups)
         } else {
             fragment.resources.getQuantityString(
                 R.plurals.livestock_health_entry_record_count,
-                records.size,
-                records.size
+                summary.activeFollowupCount,
+                summary.activeFollowupCount
             )
         }
-    val lastCheck = records.flatMap { it.checks }.maxOfOrNull { it.checkedAtMillis }
+    val lastCheck = summary.lastCheckAtMillis
     livestockHealthEntry.tvHealthEntryLastCheck.text =
         if (lastCheck == null) {
             fragment.getString(R.string.livestock_health_no_check_yet)
@@ -233,4 +234,21 @@ private fun FragmentTankDetailLifeBinding.renderHealthEntry(
                     LocaleFormatter.formatTime(fragment.requireContext(), lastCheck)
             )
         }
+}
+
+internal data class LivestockHealthEntrySummary(
+    val activeFollowupCount: Int,
+    val lastCheckAtMillis: Long?
+)
+
+internal fun buildLivestockHealthEntrySummary(
+    records: List<LivestockObservationSnapshot>
+): LivestockHealthEntrySummary {
+    val activeFollowups = records.filter { record -> record.closedAtMillis == null }
+    return LivestockHealthEntrySummary(
+        activeFollowupCount = activeFollowups.size,
+        lastCheckAtMillis = activeFollowups
+            .flatMap { record -> record.checks }
+            .maxOfOrNull { check -> check.checkedAtMillis }
+    )
 }

@@ -8,6 +8,7 @@
     <string name="plant_health_entry_last_check">Son kontrol: 1 gün önce</string>
 
     <string name="livestock_health_entry_title">Canlı Sağlığı</string>
+    <string name="livestock_health_entry_no_active_followups">Aktif takip yok</string>
     <plurals name="livestock_health_entry_record_count">
         <item quantity="one">%d gözlem kaydı</item>
         <item quantity="other">%d gözlem kaydı</item>
