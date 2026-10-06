@@ -10,8 +10,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.health.LivestockHealthContextSnapshot
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
-import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
@@ -27,14 +27,15 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
     private val args: LivestockHealthFollowUpFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val healthViewModel: LivestockHealthViewModel by activityViewModels()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthFollowUpBinding? = null
     private val binding get() = _binding!!
     private var currentLivestock: AquariumLivestock? = null
     private var currentRecord: LivestockObservationSnapshot? = null
-    private var latestWaterAnalysis: WaterAnalysisSnapshot? = null
-    private var lastWaterChangeAtMillis: Long? = null
+    private var currentContext = LivestockHealthContextSnapshot(
+        latestWaterAnalysis = null,
+        lastWaterChangeAtMillis = null
+    )
     private var renderer: LivestockHealthFollowUpRenderer? = null
     private var isEnding = false
 
@@ -132,15 +133,10 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
                 it.livestockId == args.livestockId }
             render()
         }
-        waterAnalysisViewModel.analysesForTank(args.tankId).observe(viewLifecycleOwner) { analyses ->
-            latestWaterAnalysis = analyses.firstOrNull()
+        healthViewModel.contextForTank(args.tankId).observe(viewLifecycleOwner) { context ->
+            currentContext = context
             render()
         }
-        healthViewModel.lastCompletedWaterChangeForTank(args.tankId)
-            .observe(viewLifecycleOwner) { completedAtMillis ->
-                lastWaterChangeAtMillis = completedAtMillis
-                render()
-            }
     }
 
     private fun render() {
@@ -157,14 +153,14 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
         )
         renderer?.renderLatestStatus(record)
         renderer?.renderTankContext(
-            latestWaterAnalysis = latestWaterAnalysis,
-            lastWaterChangeAtMillis = lastWaterChangeAtMillis
+            latestWaterAnalysis = currentContext.latestWaterAnalysis,
+            lastWaterChangeAtMillis = currentContext.lastWaterChangeAtMillis
         )
         renderer?.renderHistory(record.toHistoryEntries(this))
         binding.renderEvaluationSummary(
             fragment = this,
             record = record,
-            latestWaterAnalysis = latestWaterAnalysis
+            latestWaterAnalysis = currentContext.latestWaterAnalysis
         ) {
             findNavController().navigateSafelyFrom(
                 sourceDestinationId = R.id.livestockHealthFollowUpFragment,

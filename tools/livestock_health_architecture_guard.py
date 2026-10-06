@@ -9,6 +9,8 @@ APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 APPLICATION = APP / "application/aquarium/health/LivestockHealthOperations.kt"
+CONTEXT_APPLICATION = APP / "application/aquarium/health/LivestockHealthContextOperations.kt"
+CONTEXT_COORDINATOR = APP / "application/aquarium/health/LivestockHealthContextCoordinator.kt"
 SCHEMA = APP / "data/store/CommercialStoreSchema.kt"
 PROTO = ROOT / "app/src/main/proto/livestock_health.proto"
 ADAPTER = APP / "data/aquarium/health/DefaultLivestockHealthOperations.kt"
@@ -67,9 +69,12 @@ OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
 OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
 SMOKE = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 BOUNDARY_TEST = TESTS / "ui/tabs/aquarium/detail/health/LivestockHealthViewModelBoundaryTest.kt"
+CONTEXT_TEST = TESTS / "application/aquarium/health/LivestockHealthContextCoordinatorTest.kt"
 
 required = (
     APPLICATION,
+    CONTEXT_APPLICATION,
+    CONTEXT_COORDINATOR,
     SCHEMA,
     PROTO,
     ADAPTER,
@@ -110,6 +115,7 @@ required = (
     OWNER_FACTORY,
     SMOKE,
     BOUNDARY_TEST,
+    CONTEXT_TEST,
 )
 errors: list[str] = []
 
@@ -153,6 +159,51 @@ for token in (
     if token not in application:
         errors.append(
             f"{APPLICATION.relative_to(ROOT)}: evaluation application contract missing: {token}"
+        )
+
+context_application = read(CONTEXT_APPLICATION)
+for token in (
+    "data class LivestockHealthContextSnapshot",
+    "interface LivestockHealthContextOperations",
+    "fun contextForTank(tankId: Long)",
+):
+    if token not in context_application:
+        errors.append(
+            f"{CONTEXT_APPLICATION.relative_to(ROOT)}: context application contract missing: {token}"
+        )
+for forbidden in (
+    "import android.",
+    "import androidx.",
+    "com.aqua.aqualight.data.",
+    "com.aqua.aqualight.ui.",
+):
+    if forbidden in context_application:
+        errors.append(
+            f"{CONTEXT_APPLICATION.relative_to(ROOT)}: context application boundary leak: {forbidden}"
+        )
+
+context_coordinator = read(CONTEXT_COORDINATOR)
+for token in (
+    "LivestockHealthContextOperations",
+    "WaterAnalysisOperations",
+    "MaintenanceOperations",
+    "combine(",
+    "CareTaskType.WATER_CHANGE",
+    "CareTaskStatus.COMPLETED",
+):
+    if token not in context_coordinator:
+        errors.append(
+            f"{CONTEXT_COORDINATOR.relative_to(ROOT)}: context aggregation missing: {token}"
+        )
+for forbidden in (
+    "import android.",
+    "import androidx.",
+    "com.aqua.aqualight.data.",
+    "com.aqua.aqualight.ui.",
+):
+    if forbidden in context_coordinator:
+        errors.append(
+            f"{CONTEXT_COORDINATOR.relative_to(ROOT)}: context coordinator boundary leak: {forbidden}"
         )
 
 schema = read(SCHEMA)
@@ -366,17 +417,19 @@ if "@string/livestock_health_check_context_value" in check_layout:
     )
 
 follow_up_fragment = read(FOLLOW_UP_FRAGMENT)
-for token in (
-    "lastCompletedWaterChangeForTank(args.tankId)",
-):
-    if token not in follow_up_fragment:
-        errors.append(
-            f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: real tank-context binding missing: {token}"
-        )
-if "MaintenanceViewModel" in follow_up_fragment:
+if "healthViewModel.contextForTank(args.tankId)" not in follow_up_fragment:
     errors.append(
-        f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: cross-feature MaintenanceViewModel dependency is forbidden"
+        f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: unified tank-context binding is missing"
     )
+for forbidden in (
+    "WaterAnalysisViewModel",
+    "MaintenanceViewModel",
+    "lastCompletedWaterChangeForTank",
+):
+    if forbidden in follow_up_fragment:
+        errors.append(
+            f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: split context dependency is forbidden: {forbidden}"
+        )
 
 follow_up_ui = read(FOLLOW_UP_UI)
 for token in (
@@ -462,17 +515,21 @@ for token in (
 
 evaluation = read(EVALUATION)
 for token in (
-    "WaterAnalysisViewModel",
-    "lastCompletedWaterChangeForTank(args.tankId)",
+    "healthViewModel.contextForTank(args.tankId)",
     "renderEvaluationScreen(",
     "saveLivestockEvaluation(",
 ):
     if token not in evaluation:
         errors.append(f"{EVALUATION.relative_to(ROOT)}: evaluation flow missing: {token}")
-if "MaintenanceViewModel" in evaluation:
-    errors.append(
-        f"{EVALUATION.relative_to(ROOT)}: cross-feature MaintenanceViewModel dependency is forbidden"
-    )
+for forbidden in (
+    "WaterAnalysisViewModel",
+    "MaintenanceViewModel",
+    "lastCompletedWaterChangeForTank",
+):
+    if forbidden in evaluation:
+        errors.append(
+            f"{EVALUATION.relative_to(ROOT)}: split context dependency is forbidden: {forbidden}"
+        )
 
 evaluation_persistence = read(EVALUATION_PERSISTENCE)
 for token in (
@@ -568,13 +625,24 @@ for token in (
         errors.append(f"{NAVIGATION.relative_to(ROOT)}: evaluation navigation missing: {token}")
 
 view_model = read(VIEW_MODEL)
-if "LivestockHealthOperations" not in view_model:
-    errors.append(f"{VIEW_MODEL.relative_to(ROOT)}: ViewModel must depend on application operations")
+for token in (
+    "LivestockHealthOperations",
+    "LivestockHealthContextOperations",
+    "contextOperations.contextForTank(tankId)",
+):
+    if token not in view_model:
+        errors.append(
+            f"{VIEW_MODEL.relative_to(ROOT)}: ViewModel application boundary missing: {token}"
+        )
 for forbidden in (
     "com.aqua.aqualight.data.",
     "com.aqua.aqualight.platform.",
     "LivestockHealthDataStoreManager",
     "DefaultLivestockHealthOperations",
+    "CareTaskSnapshot",
+    "CareTaskStatus",
+    "CareTaskType",
+    "lastCompletedWaterChangeForTank",
 ):
     if forbidden in view_model:
         errors.append(f"{VIEW_MODEL.relative_to(ROOT)}: ViewModel boundary leak: {forbidden}")
@@ -605,7 +673,9 @@ owner_factory = read(OWNER_FACTORY)
 for token in (
     "LivestockHealthViewModel::class.java",
     "DefaultLivestockHealthOperations(graph.livestockHealthStore)",
-    "careTasks = DefaultMaintenanceOperations(",
+    "LivestockHealthContextCoordinator(",
+    "contextOperations =",
+    "createMaintenanceOperations(graph)",
 ):
     if token not in owner_factory:
         errors.append(f"{OWNER_FACTORY.relative_to(ROOT)}: livestock ViewModel binding missing: {token}")
@@ -613,8 +683,14 @@ for token in (
 smoke = read(SMOKE)
 if "LivestockHealthDataStoreManager(appContext, tankStore)" not in smoke:
     errors.append(f"{SMOKE.relative_to(ROOT)}: release-smoke store wiring must match production")
-if "careTasks = maintenanceOperations.tasks" not in smoke:
-    errors.append(f"{SMOKE.relative_to(ROOT)}: release-smoke care-task projection must match production")
+for token in (
+    "LivestockHealthContextCoordinator(",
+    "contextOperations = livestockHealthContextOperations",
+):
+    if token not in smoke:
+        errors.append(
+            f"{SMOKE.relative_to(ROOT)}: release-smoke context wiring missing: {token}"
+        )
 
 single_arg_construction = re.compile(
     r"LivestockHealthDataStoreManager\(\s*(?:appContext|context)\s*\)"
@@ -631,12 +707,21 @@ for source_root in (ROOT / "app/src/main", ROOT / "app/src/releaseSmoke"):
 boundary_test = read(BOUNDARY_TEST)
 for token in (
     "observationReadDelegatesToApplicationBoundary",
+    "contextReadDelegatesToApplicationBoundary",
     "createCheckAndCloseDelegateTypedApplicationInputs",
-    "lastWaterChangeUsesLatestCompletedTaskForSelectedTank",
+    "FakeLivestockHealthContextOperations",
     "FakeLivestockHealthOperations",
 ):
     if token not in boundary_test:
         errors.append(f"{BOUNDARY_TEST.relative_to(ROOT)}: boundary regression coverage missing: {token}")
+
+context_test = read(CONTEXT_TEST)
+for token in (
+    "contextSelectsLatestWaterAnalysisAndCompletedWaterChangeForTank",
+    "contextUsesNullsWhenTankHasNoWaterOrMaintenanceHistory",
+):
+    if token not in context_test:
+        errors.append(f"{CONTEXT_TEST.relative_to(ROOT)}: context regression coverage missing: {token}")
 
 if errors:
     print("Livestock Health architecture guard failed:", file=sys.stderr)

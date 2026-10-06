@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.aquarium.health.LivestockHealthContextCoordinator
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
@@ -221,18 +222,14 @@ internal class OwnerViewModelFactory(
             )
             LivestockHealthViewModel::class.java -> LivestockHealthViewModel(
                 operations = DefaultLivestockHealthOperations(graph.livestockHealthStore),
-                careTasks = DefaultMaintenanceOperations(
-                    context = appContext,
-                    manager = graph.careTaskStore,
-                    notificationPreferences = notificationPreferenceUseCase
-                ).tasks
+                contextOperations = LivestockHealthContextCoordinator(
+                    waterAnalysisOperations =
+                        DefaultWaterAnalysisOperations(graph.waterAnalysisStore),
+                    maintenanceOperations = createMaintenanceOperations(graph)
+                )
             )
             MaintenanceViewModel::class.java -> MaintenanceViewModel(
-                operations = DefaultMaintenanceOperations(
-                    context = appContext,
-                    manager = graph.careTaskStore,
-                    notificationPreferences = notificationPreferenceUseCase
-                ),
+                operations = createMaintenanceOperations(graph),
                 textResolver = maintenanceTextResolver
             )
             DeviceLightRootViewModel::class.java -> DeviceLightRootViewModel(
@@ -363,6 +360,14 @@ internal class OwnerViewModelFactory(
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
     }
+
+    private fun createMaintenanceOperations(
+        graph: OwnerDependencyGraph
+    ): DefaultMaintenanceOperations = DefaultMaintenanceOperations(
+        context = appContext,
+        manager = graph.careTaskStore,
+        notificationPreferences = notificationPreferenceUseCase
+    )
 
     private fun createDeviceMenuOpenUseCase(
         graph: OwnerDependencyGraph,

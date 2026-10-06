@@ -8,6 +8,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.application.aquarium.LivestockCatalogOperations
 import com.aqua.aqualight.application.aquarium.LivestockWaterAdvisorOperations
+import com.aqua.aqualight.application.aquarium.health.LivestockHealthContextCoordinator
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AppSessionOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
@@ -226,6 +227,10 @@ private class ReleaseSmokeViewModelFactory(
         manager = careTaskStore,
         notificationPreferences = notificationPreferences
     )
+    private val livestockHealthContextOperations = LivestockHealthContextCoordinator(
+        waterAnalysisOperations = DefaultWaterAnalysisOperations(waterAnalysisStore),
+        maintenanceOperations = maintenanceOperations
+    )
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
     private val appTextResolver = AndroidAppTextResolver(appContext)
     private val deviceMenuOpenUseCase = DeviceMenuOpenUseCase(
@@ -307,7 +312,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(LivestockHealthViewModel::class.java) ->
             LivestockHealthViewModel(
                 operations = DefaultLivestockHealthOperations(livestockHealthStore),
-                careTasks = maintenanceOperations.tasks
+                contextOperations = livestockHealthContextOperations
             )
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(
