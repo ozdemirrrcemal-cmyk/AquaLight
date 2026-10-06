@@ -28,6 +28,7 @@ internal data class LivestockEvaluationScreenState(
 private data class LivestockEvaluationContextState(
     val usedWaterAnalysis: WaterAnalysisSnapshot?,
     val latestWaterAnalysis: WaterAnalysisSnapshot?,
+    val lastWaterChangeText: String?,
     val existingEvaluation: Boolean,
     val stale: Boolean,
     val recorded: Boolean
@@ -188,6 +189,7 @@ internal fun FragmentLivestockHealthEvaluationBinding.renderEvaluationScreen(
         state = LivestockEvaluationContextState(
             usedWaterAnalysis = state.record?.latestEvaluation?.waterAnalysis,
             latestWaterAnalysis = state.latestWaterAnalysis,
+            lastWaterChangeText = state.lastWaterChangeText,
             existingEvaluation = state.existingEvaluation,
             stale = stale,
             recorded = state.record?.closedAtMillis != null
