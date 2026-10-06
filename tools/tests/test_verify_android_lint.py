@@ -50,6 +50,41 @@ class AndroidLintEvidenceTest(unittest.TestCase):
         self.assertEqual(1, summary["totals"]["Warning"])
         self.assertEqual(0, summary["totals"]["Error"])
 
+    def test_livestock_health_unused_resource_warning_is_a_blocker(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            reports = self.complete_reports(directory)
+            reports[0] = self.write_report(
+                directory,
+                "debug",
+                '<issue id="UnusedResources" severity="Warning" '
+                'message="The resource R.string.livestock_health_orphan appears to be unused">'
+                '<location file="entity_health_strings.xml" line="12" /></issue>',
+            )
+
+            summary = validate_reports(reports)
+
+        self.assertFalse(summary["passed"])
+        self.assertEqual("UnusedResources", summary["blockers"][0]["id"])
+        self.assertEqual("Warning", summary["blockers"][0]["severity"])
+
+    def test_unrelated_unused_resource_warning_remains_non_blocking(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            reports = self.complete_reports(directory)
+            reports[0] = self.write_report(
+                directory,
+                "debug",
+                '<issue id="UnusedResources" severity="Warning" '
+                'message="The resource R.string.legacy_other_feature appears to be unused">'
+                '<location file="legacy_strings.xml" line="12" /></issue>',
+            )
+
+            summary = validate_reports(reports)
+
+        self.assertTrue(summary["passed"])
+        self.assertEqual(1, summary["totals"]["Warning"])
+
     def test_error_is_a_blocker(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

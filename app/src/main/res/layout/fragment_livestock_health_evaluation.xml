@@ -160,7 +160,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_last_water_measurement_value" />
+                                android:text="@string/common_not_available_double_symbol" />
 
                         </LinearLayout>
 
@@ -225,7 +225,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_last_water_change_value" />
+                                android:id="@+id/tvEvaluationWaterChangeValue"
+                                android:text="@string/common_not_available_double_symbol" />
 
                         </LinearLayout>
 

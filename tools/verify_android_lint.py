@@ -17,6 +17,9 @@ ALL_VARIANTS = ("debug", "staging", "releaseSmoke", "release")
 ALLOWED_SEVERITIES = {"Fatal", "Error", "Warning", "Information", "Ignore"}
 BLOCKER_SEVERITIES = {"Fatal", "Error"}
 REPORT_NAME = re.compile(r"^lint-results-(debug|staging|releaseSmoke|release)\.xml$")
+LIVESTOCK_HEALTH_UNUSED_RESOURCE = re.compile(
+    r"R\.[^.]+\.(?:livestock_health_[A-Za-z0-9_]+|ic_livestock_[A-Za-z0-9_]+)"
+)
 
 
 class LintFailure(ValueError):
@@ -34,6 +37,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--summary", required=True, type=Path)
     return parser.parse_args()
+
+
+def is_blocker(issue_id: str, severity: str, message: str) -> bool:
+    if severity in BLOCKER_SEVERITIES:
+        return True
+    return (
+        issue_id == "UnusedResources"
+        and LIVESTOCK_HEALTH_UNUSED_RESOURCE.search(message) is not None
+    )
 
 
 def parse_report(path: Path) -> tuple[str, dict[str, object]]:
@@ -64,7 +76,7 @@ def parse_report(path: Path) -> tuple[str, dict[str, object]]:
         if not issue_id or not message:
             raise LintFailure(f"{path} issue {index} has no id or message")
         counts[severity] += 1
-        if severity in BLOCKER_SEVERITIES:
+        if is_blocker(issue_id, severity, message):
             location = issue.find("location")
             blockers.append(
                 {
@@ -133,7 +145,11 @@ def validate_reports(
         "passed": not blockers,
         "baselineApplied": False,
         "requiredVariants": list(required),
-        "thresholds": {"fatal": 0, "error": 0},
+        "thresholds": {
+            "fatal": 0,
+            "error": 0,
+            "livestockHealthUnusedResources": 0,
+        },
         "totals": totals,
         "reports": ordered,
         "blockers": blockers,
@@ -171,6 +187,7 @@ def main() -> int:
     if not summary["passed"]:
         print(
             "Android Lint blocker gate failed: "
+            f"{len(summary['blockers'])} blocker issue(s), "
             f"{summary['totals']['Fatal']} Fatal, "
             f"{summary['totals']['Error']} Error.",
             file=sys.stderr,

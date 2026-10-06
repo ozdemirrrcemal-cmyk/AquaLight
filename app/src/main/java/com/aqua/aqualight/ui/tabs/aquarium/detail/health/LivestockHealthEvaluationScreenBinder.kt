@@ -8,7 +8,6 @@ import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.databinding.FragmentLivestockHealthEvaluationBinding
-import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 
 internal data class LivestockEvaluationFallbackState(
@@ -22,6 +21,7 @@ internal data class LivestockEvaluationScreenState(
     val record: LivestockObservationSnapshot?,
     val fallback: LivestockEvaluationFallbackState,
     val latestWaterAnalysis: WaterAnalysisSnapshot?,
+    val lastWaterChangeText: String?,
     val existingEvaluation: Boolean
 )
 
@@ -54,6 +54,8 @@ private fun FragmentLivestockHealthEvaluationBinding.renderEvaluationContext(
         displayedWater = displayedWater,
         state = state
     )
+    tvEvaluationWaterChangeValue.text = state.lastWaterChangeText
+        ?: fragment.getString(R.string.common_not_available_double_symbol)
     renderEvaluationNotice(state)
 }
 
@@ -69,7 +71,7 @@ private fun FragmentLivestockHealthEvaluationBinding.renderWaterContext(
             } else {
                 R.string.livestock_health_evaluation_water_current_format
             },
-            water.healthEvaluationDateTime(fragment)
+            formatLivestockHealthDateTime(fragment, water.measuredAtMillis)
         )
     } ?: fragment.getString(R.string.livestock_health_evaluation_no_water_analysis)
 
@@ -133,11 +135,6 @@ internal fun FragmentLivestockHealthEvaluationBinding.renderEvaluationAction(
         }
     )
 }
-
-private fun WaterAnalysisSnapshot.healthEvaluationDateTime(fragment: Fragment): String =
-    LocaleFormatter.formatDate(fragment.requireContext(), measuredAtMillis) +
-        " · " +
-        LocaleFormatter.formatTime(fragment.requireContext(), measuredAtMillis)
 
 internal fun FragmentLivestockHealthEvaluationBinding.bindEvaluationChecks(
     checks: List<LivestockHealthEvaluationCheck>

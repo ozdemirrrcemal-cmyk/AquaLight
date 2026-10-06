@@ -214,7 +214,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_3"
-                android:text="@string/livestock_health_last_check_time" />
+                android:id="@+id/tvFollowupLastCheckTime"
+                android:text="@string/common_not_available_double_symbol" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -382,7 +383,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_tank_context_measurement_age" />
+                                android:id="@+id/tvFollowupWaterMeasurementValue"
+                                android:text="@string/common_not_available_double_symbol" />
 
                         </LinearLayout>
 
@@ -434,7 +436,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
-                                android:text="@string/livestock_health_tank_context_change_age" />
+                                android:id="@+id/tvFollowupWaterChangeValue"
+                                android:text="@string/common_not_available_double_symbol" />
 
                         </LinearLayout>
 

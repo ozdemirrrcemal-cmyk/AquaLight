@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthHistoryBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
@@ -137,6 +138,28 @@ internal class LivestockHealthFollowUpRenderer(
         }
     }
 
+    fun renderLatestStatus(record: LivestockObservationSnapshot) {
+        val latestCheck = record.checks.maxByOrNull { check -> check.checkedAtMillis }
+        renderStatus(latestCheck?.status)
+        binding.tvFollowupLastCheckTime.text = latestCheck?.let { check ->
+            fragment.getString(
+                R.string.livestock_health_last_check_time_format,
+                formatLivestockHealthDateTime(fragment, check.checkedAtMillis)
+            )
+        } ?: fragment.getString(R.string.livestock_health_no_checks_yet)
+    }
+
+    fun renderTankContext(
+        latestWaterAnalysis: WaterAnalysisSnapshot?,
+        lastWaterChangeText: String?
+    ) {
+        binding.tvFollowupWaterMeasurementValue.text = latestWaterAnalysis?.let { analysis ->
+            formatLivestockHealthDateTime(fragment, analysis.measuredAtMillis)
+        } ?: fragment.getString(R.string.livestock_health_tank_data_last_measurement_empty)
+        binding.tvFollowupWaterChangeValue.text = lastWaterChangeText
+            ?: fragment.getString(R.string.common_not_available_double_symbol)
+    }
+
     fun renderHistory(entries: List<FollowUpHistoryEntry>) {
         val inflater = LayoutInflater.from(fragment.requireContext())
         binding.historyContainer.removeAllViews()
@@ -222,7 +245,7 @@ internal class LivestockHealthFollowUpRenderer(
         }
     }
 
-    fun renderStatus(currentStatus: String) {
+    private fun renderStatus(currentStatus: String?) {
         val cards = linkedMapOf(
             LivestockHealthCheckBottomSheet.STATUS_INCREASED to binding.cardStatusIncreased,
             LivestockHealthCheckBottomSheet.STATUS_SAME to binding.cardStatusSame,

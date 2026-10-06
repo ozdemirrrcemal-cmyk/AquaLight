@@ -33,6 +33,7 @@ CHECK_PHOTO_CONTROLLER = (
     APP
     / "ui/tabs/aquarium/detail/health/LivestockHealthCheckPhotoController.kt"
 )
+FOLLOW_UP_FRAGMENT = APP / "ui/tabs/aquarium/detail/health/LivestockHealthFollowUpFragment.kt"
 FOLLOW_UP_UI = APP / "ui/tabs/aquarium/detail/health/LivestockHealthFollowUpUi.kt"
 FOLLOW_UP_CARD_BINDER = (
     APP / "ui/tabs/aquarium/detail/health/LivestockHealthFollowupCardBinder.kt"
@@ -57,6 +58,10 @@ NAVIGATION = ROOT / "app/src/main/res/navigation/nav_aquarium.xml"
 CHECK_LAYOUT = ROOT / "app/src/main/res/layout/content_sheet_livestock_health_check.xml"
 HISTORY_LAYOUT = ROOT / "app/src/main/res/layout/item_livestock_health_history.xml"
 FOLLOW_UP_LAYOUT = ROOT / "app/src/main/res/layout/fragment_livestock_health_follow_up.xml"
+OBSERVATION_LAYOUT = ROOT / "app/src/main/res/layout/fragment_livestock_health_observation.xml"
+EVALUATION_LAYOUT = ROOT / "app/src/main/res/layout/fragment_livestock_health_evaluation.xml"
+STRINGS = ROOT / "app/src/main/res/values/entity_health_strings.xml"
+STRINGS_TR = ROOT / "app/src/main/res/values-tr/entity_health_strings.xml"
 UI_ROOT = APP / "ui/tabs/aquarium/detail/health"
 OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
 OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
@@ -82,6 +87,7 @@ required = (
     PAGE_INDICATOR,
     CHECK_SHEET,
     CHECK_PHOTO_CONTROLLER,
+    FOLLOW_UP_FRAGMENT,
     FOLLOW_UP_UI,
     FOLLOW_UP_CARD_BINDER,
     UI_TEXT,
@@ -96,6 +102,10 @@ required = (
     CHECK_LAYOUT,
     HISTORY_LAYOUT,
     FOLLOW_UP_LAYOUT,
+    OBSERVATION_LAYOUT,
+    EVALUATION_LAYOUT,
+    STRINGS,
+    STRINGS_TR,
     OWNER_GRAPH,
     OWNER_FACTORY,
     SMOKE,
@@ -355,6 +365,17 @@ if "@string/livestock_health_check_context_value" in check_layout:
         f"{CHECK_LAYOUT.relative_to(ROOT)}: obsolete water-measurement row must stay removed"
     )
 
+follow_up_fragment = read(FOLLOW_UP_FRAGMENT)
+for token in (
+    "MaintenanceViewModel",
+    "tankActivityStateFlow(args.tankId)",
+    "resolveLivestockHealthLastWaterChange(this)",
+):
+    if token not in follow_up_fragment:
+        errors.append(
+            f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: real tank-context binding missing: {token}"
+        )
+
 follow_up_ui = read(FOLLOW_UP_UI)
 for token in (
     "val photoUris: List<String>",
@@ -363,6 +384,11 @@ for token in (
     "LivestockHealthUiText.observationLabel",
     "tvHistoryNote",
     "livestock_health_history_note_format",
+    "renderLatestStatus(",
+    "renderTankContext(",
+    "tvFollowupLastCheckTime",
+    "tvFollowupWaterMeasurementValue",
+    "tvFollowupWaterChangeValue",
 ):
     if token not in follow_up_ui:
         errors.append(f"{FOLLOW_UP_UI.relative_to(ROOT)}: history contract missing: {token}")
@@ -382,13 +408,22 @@ for token in (
         errors.append(f"{HISTORY_LAYOUT.relative_to(ROOT)}: history UI contract missing: {token}")
 
 follow_up_layout = read(FOLLOW_UP_LAYOUT)
-if "@+id/cardEvaluation" not in follow_up_layout:
-    errors.append(
-        f"{FOLLOW_UP_LAYOUT.relative_to(ROOT)}: evaluation summary card is missing"
-    )
+for token in (
+    "@+id/cardEvaluation",
+    "@+id/tvFollowupLastCheckTime",
+    "@+id/tvFollowupWaterMeasurementValue",
+    "@+id/tvFollowupWaterChangeValue",
+):
+    if token not in follow_up_layout:
+        errors.append(
+            f"{FOLLOW_UP_LAYOUT.relative_to(ROOT)}: live follow-up binding missing: {token}"
+        )
 for forbidden in (
     "@string/livestock_health_issue_surface",
     "@string/livestock_health_issue_first_seen",
+    "@string/livestock_health_last_check_time",
+    "@string/livestock_health_tank_context_measurement_age",
+    "@string/livestock_health_tank_context_change_age",
 ):
     if forbidden in follow_up_layout:
         errors.append(
@@ -426,6 +461,8 @@ for token in (
 evaluation = read(EVALUATION)
 for token in (
     "WaterAnalysisViewModel",
+    "MaintenanceViewModel",
+    "tankActivityStateFlow(args.tankId)",
     "renderEvaluationScreen(",
     "saveLivestockEvaluation(",
 ):
@@ -457,6 +494,8 @@ evaluation_screen_binder = read(EVALUATION_SCREEN_BINDER)
 for token in (
     "usedWaterAnalysis",
     "latestWaterAnalysis",
+    "lastWaterChangeText",
+    "tvEvaluationWaterChangeValue",
     "renderEvaluationAction",
 ):
     if token not in evaluation_screen_binder:
@@ -473,6 +512,46 @@ for token in (
         errors.append(
             f"{EVALUATION_REQUEST_FACTORY.relative_to(ROOT)}: idempotent evaluation request missing: {token}"
         )
+
+observation_layout = read(OBSERVATION_LAYOUT)
+if "@string/livestock_health_affected_counter_preview" in observation_layout:
+    errors.append(
+        f"{OBSERVATION_LAYOUT.relative_to(ROOT)}: fake affected-count preview is forbidden"
+    )
+
+evaluation_layout = read(EVALUATION_LAYOUT)
+if "@+id/tvEvaluationWaterChangeValue" not in evaluation_layout:
+    errors.append(
+        f"{EVALUATION_LAYOUT.relative_to(ROOT)}: real water-change binding is missing"
+    )
+for forbidden in (
+    "@string/livestock_health_last_water_measurement_value",
+    "@string/livestock_health_last_water_change_value",
+):
+    if forbidden in evaluation_layout:
+        errors.append(
+            f"{EVALUATION_LAYOUT.relative_to(ROOT)}: static tank-context fallback remains: {forbidden}"
+        )
+
+legacy_demo_resources = (
+    "livestock_health_history_today_surface_same",
+    "livestock_health_history_issue_surface",
+    "livestock_health_tank_context_measurement",
+    "livestock_health_tank_context_measurement_age",
+    "livestock_health_tank_context_change_age",
+    "livestock_health_tank_context_change",
+    "livestock_health_affected_counter_preview",
+    "livestock_health_last_check_time",
+    "livestock_health_check_time_value",
+    "livestock_health_check_context_value",
+)
+for resource_file in (STRINGS, STRINGS_TR):
+    resource_text = read(resource_file)
+    for resource_name in legacy_demo_resources:
+        if f'name="{resource_name}"' in resource_text:
+            errors.append(
+                f"{resource_file.relative_to(ROOT)}: legacy demo resource remains: {resource_name}"
+            )
 
 navigation = read(NAVIGATION)
 for token in (

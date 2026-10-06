@@ -463,7 +463,7 @@
                         android:layout_height="match_parent"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:text="@string/livestock_health_affected_counter_preview"
+                        android:text="@string/common_not_available_double_symbol"
                         app:layout_constraintEnd_toStartOf="@id/affectedEndDivider"
                         app:layout_constraintStart_toEndOf="@id/affectedStartDivider" />
 
