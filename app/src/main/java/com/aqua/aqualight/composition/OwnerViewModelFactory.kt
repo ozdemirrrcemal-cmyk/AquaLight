@@ -220,7 +220,12 @@ internal class OwnerViewModelFactory(
                 operations = DefaultWaterAnalysisOperations(graph.waterAnalysisStore)
             )
             LivestockHealthViewModel::class.java -> LivestockHealthViewModel(
-                operations = DefaultLivestockHealthOperations(graph.livestockHealthStore)
+                operations = DefaultLivestockHealthOperations(graph.livestockHealthStore),
+                careTasks = DefaultMaintenanceOperations(
+                    context = appContext,
+                    manager = graph.careTaskStore,
+                    notificationPreferences = notificationPreferenceUseCase
+                ).tasks
             )
             MaintenanceViewModel::class.java -> MaintenanceViewModel(
                 operations = DefaultMaintenanceOperations(

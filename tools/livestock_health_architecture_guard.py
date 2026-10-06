@@ -367,14 +367,16 @@ if "@string/livestock_health_check_context_value" in check_layout:
 
 follow_up_fragment = read(FOLLOW_UP_FRAGMENT)
 for token in (
-    "MaintenanceViewModel",
-    "tankActivityStateFlow(args.tankId)",
-    "resolveLivestockHealthLastWaterChange(this)",
+    "lastCompletedWaterChangeForTank(args.tankId)",
 ):
     if token not in follow_up_fragment:
         errors.append(
             f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: real tank-context binding missing: {token}"
         )
+if "MaintenanceViewModel" in follow_up_fragment:
+    errors.append(
+        f"{FOLLOW_UP_FRAGMENT.relative_to(ROOT)}: cross-feature MaintenanceViewModel dependency is forbidden"
+    )
 
 follow_up_ui = read(FOLLOW_UP_UI)
 for token in (
@@ -461,13 +463,16 @@ for token in (
 evaluation = read(EVALUATION)
 for token in (
     "WaterAnalysisViewModel",
-    "MaintenanceViewModel",
-    "tankActivityStateFlow(args.tankId)",
+    "lastCompletedWaterChangeForTank(args.tankId)",
     "renderEvaluationScreen(",
     "saveLivestockEvaluation(",
 ):
     if token not in evaluation:
         errors.append(f"{EVALUATION.relative_to(ROOT)}: evaluation flow missing: {token}")
+if "MaintenanceViewModel" in evaluation:
+    errors.append(
+        f"{EVALUATION.relative_to(ROOT)}: cross-feature MaintenanceViewModel dependency is forbidden"
+    )
 
 evaluation_persistence = read(EVALUATION_PERSISTENCE)
 for token in (
@@ -494,7 +499,7 @@ evaluation_screen_binder = read(EVALUATION_SCREEN_BINDER)
 for token in (
     "usedWaterAnalysis",
     "latestWaterAnalysis",
-    "lastWaterChangeText",
+    "lastWaterChangeAtMillis",
     "tvEvaluationWaterChangeValue",
     "renderEvaluationAction",
 ):
@@ -600,6 +605,7 @@ owner_factory = read(OWNER_FACTORY)
 for token in (
     "LivestockHealthViewModel::class.java",
     "DefaultLivestockHealthOperations(graph.livestockHealthStore)",
+    "careTasks = DefaultMaintenanceOperations(",
 ):
     if token not in owner_factory:
         errors.append(f"{OWNER_FACTORY.relative_to(ROOT)}: livestock ViewModel binding missing: {token}")
@@ -607,6 +613,8 @@ for token in (
 smoke = read(SMOKE)
 if "LivestockHealthDataStoreManager(appContext, tankStore)" not in smoke:
     errors.append(f"{SMOKE.relative_to(ROOT)}: release-smoke store wiring must match production")
+if "careTasks = maintenanceOperations.tasks" not in smoke:
+    errors.append(f"{SMOKE.relative_to(ROOT)}: release-smoke care-task projection must match production")
 
 single_arg_construction = re.compile(
     r"LivestockHealthDataStoreManager\(\s*(?:appContext|context)\s*\)"
@@ -624,6 +632,7 @@ boundary_test = read(BOUNDARY_TEST)
 for token in (
     "observationReadDelegatesToApplicationBoundary",
     "createCheckAndCloseDelegateTypedApplicationInputs",
+    "lastWaterChangeUsesLatestCompletedTaskForSelectedTank",
     "FakeLivestockHealthOperations",
 ):
     if token not in boundary_test:

@@ -151,13 +151,14 @@ internal class LivestockHealthFollowUpRenderer(
 
     fun renderTankContext(
         latestWaterAnalysis: WaterAnalysisSnapshot?,
-        lastWaterChangeText: String?
+        lastWaterChangeAtMillis: Long?
     ) {
         binding.tvFollowupWaterMeasurementValue.text = latestWaterAnalysis?.let { analysis ->
             formatLivestockHealthDateTime(fragment, analysis.measuredAtMillis)
         } ?: fragment.getString(R.string.livestock_health_tank_data_last_measurement_empty)
-        binding.tvFollowupWaterChangeValue.text = lastWaterChangeText
-            ?: fragment.getString(R.string.common_not_available_double_symbol)
+        binding.tvFollowupWaterChangeValue.text = lastWaterChangeAtMillis?.let { millis ->
+            formatLivestockHealthDateTime(fragment, millis)
+        } ?: fragment.getString(R.string.livestock_health_last_water_change_value)
     }
 
     fun renderHistory(entries: List<FollowUpHistoryEntry>) {

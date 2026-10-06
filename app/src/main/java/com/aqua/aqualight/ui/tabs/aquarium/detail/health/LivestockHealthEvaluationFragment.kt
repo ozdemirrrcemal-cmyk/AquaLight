@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -18,7 +17,6 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -30,7 +28,6 @@ class LivestockHealthEvaluationFragment :
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val healthViewModel: LivestockHealthViewModel by activityViewModels()
     private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
-    private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthEvaluationBinding? = null
     private val binding get() = _binding!!
@@ -38,7 +35,7 @@ class LivestockHealthEvaluationFragment :
     private var currentLivestock: AquariumLivestock? = null
     private var currentRecord: LivestockObservationSnapshot? = null
     private var latestWaterAnalysis: WaterAnalysisSnapshot? = null
-    private var lastWaterChangeText: String? = null
+    private var lastWaterChangeAtMillis: Long? = null
     private var isNavigating = false
     private var isSaving = false
 
@@ -72,7 +69,6 @@ class LivestockHealthEvaluationFragment :
 
     private fun observeEvaluationData() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            maintenanceViewModel.setTanks(tanks)
             currentLivestock = tanks
                 .firstOrNull { tank -> tank.id == args.tankId }
                 ?.livestock
@@ -89,10 +85,9 @@ class LivestockHealthEvaluationFragment :
             latestWaterAnalysis = analyses.firstOrNull()
             renderEvaluation()
         }
-        maintenanceViewModel.tankActivityStateFlow(args.tankId)
-            .asLiveData()
-            .observe(viewLifecycleOwner) { state ->
-                lastWaterChangeText = state.resolveLivestockHealthLastWaterChange(this)
+        healthViewModel.lastCompletedWaterChangeForTank(args.tankId)
+            .observe(viewLifecycleOwner) { completedAtMillis ->
+                lastWaterChangeAtMillis = completedAtMillis
                 renderEvaluation()
             }
     }
@@ -121,7 +116,7 @@ class LivestockHealthEvaluationFragment :
                     otherObservation = draftOtherObservation
                 ),
                 latestWaterAnalysis = latestWaterAnalysis,
-                lastWaterChangeText = lastWaterChangeText,
+                lastWaterChangeAtMillis = lastWaterChangeAtMillis,
                 existingEvaluation = existingEvaluation
             )
         )

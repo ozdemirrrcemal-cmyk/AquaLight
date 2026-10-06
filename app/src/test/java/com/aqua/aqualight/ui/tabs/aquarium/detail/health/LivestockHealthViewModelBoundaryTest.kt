@@ -8,6 +8,10 @@ import com.aqua.aqualight.application.aquarium.health.LivestockEvaluationTrigger
 import com.aqua.aqualight.application.aquarium.health.LivestockHealthOperations
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
+import com.aqua.aqualight.application.care.CareTaskSnapshot
+import com.aqua.aqualight.application.care.CareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus
+import com.aqua.aqualight.application.care.CareTaskType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +40,7 @@ class LivestockHealthViewModelBoundaryTest {
     @Test
     fun observationReadDelegatesToApplicationBoundary() = runTest {
         val operations = FakeLivestockHealthOperations()
-        val viewModel = LivestockHealthViewModel(operations)
+        val viewModel = LivestockHealthViewModel(operations, flowOf(emptyList()))
         val observer = Observer<List<LivestockObservationSnapshot>> { }
 
         val liveData = viewModel.observationsForTank(42L)
@@ -51,9 +55,35 @@ class LivestockHealthViewModelBoundaryTest {
     }
 
     @Test
+    fun lastWaterChangeUsesLatestCompletedTaskForSelectedTank() = runTest {
+        val operations = FakeLivestockHealthOperations()
+        val viewModel = LivestockHealthViewModel(
+            operations = operations,
+            careTasks = flowOf(
+                listOf(
+                    waterChangeTask(id = 1L, tankId = 42L, completedAtMillis = 1_700L),
+                    waterChangeTask(id = 2L, tankId = 42L, completedAtMillis = 1_900L),
+                    waterChangeTask(id = 3L, tankId = 7L, completedAtMillis = 2_100L)
+                )
+            )
+        )
+        val observer = Observer<Long?> { }
+
+        val liveData = viewModel.lastCompletedWaterChangeForTank(42L)
+        try {
+            liveData.observeForever(observer)
+            advanceUntilIdle()
+
+            assertEquals(1_900L, liveData.value)
+        } finally {
+            liveData.removeObserver(observer)
+        }
+    }
+
+    @Test
     fun createCheckAndCloseDelegateTypedApplicationInputs() = runTest {
         val operations = FakeLivestockHealthOperations()
-        val viewModel = LivestockHealthViewModel(operations)
+        val viewModel = LivestockHealthViewModel(operations, flowOf(emptyList()))
         val observation = LivestockObservationInput(
             requestId = "observation-request",
             tankId = 42L,
@@ -93,6 +123,30 @@ class LivestockHealthViewModelBoundaryTest {
         assertEquals(Triple(42L, 91L, check), operations.checked)
         assertEquals(Triple(42L, 91L, "manual"), operations.closed)
     }
+
+    private fun waterChangeTask(
+        id: Long,
+        tankId: Long,
+        completedAtMillis: Long
+    ) = CareTaskSnapshot(
+        id = id,
+        tankId = tankId,
+        title = "water change",
+        description = "",
+        type = CareTaskType.WATER_CHANGE,
+        source = CareTaskSource.MANUAL,
+        status = CareTaskStatus.COMPLETED,
+        dueAtMillis = completedAtMillis,
+        completedAtMillis = completedAtMillis,
+        repeatEnabled = false,
+        repeatIntervalDays = 1,
+        reminderEnabled = false,
+        missedReminderEnabled = false,
+        missedReminderDays = 1,
+        waterChangePercent = null,
+        note = "",
+        createdAtMillis = completedAtMillis
+    )
 
     private class FakeLivestockHealthOperations : LivestockHealthOperations {
         var observedTankId: Long? = null

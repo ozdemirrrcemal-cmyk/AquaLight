@@ -306,7 +306,8 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(LivestockHealthViewModel::class.java) ->
             LivestockHealthViewModel(
-                operations = DefaultLivestockHealthOperations(livestockHealthStore)
+                operations = DefaultLivestockHealthOperations(livestockHealthStore),
+                careTasks = maintenanceOperations.tasks
             )
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(

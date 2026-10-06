@@ -21,14 +21,14 @@ internal data class LivestockEvaluationScreenState(
     val record: LivestockObservationSnapshot?,
     val fallback: LivestockEvaluationFallbackState,
     val latestWaterAnalysis: WaterAnalysisSnapshot?,
-    val lastWaterChangeText: String?,
+    val lastWaterChangeAtMillis: Long?,
     val existingEvaluation: Boolean
 )
 
 private data class LivestockEvaluationContextState(
     val usedWaterAnalysis: WaterAnalysisSnapshot?,
     val latestWaterAnalysis: WaterAnalysisSnapshot?,
-    val lastWaterChangeText: String?,
+    val lastWaterChangeAtMillis: Long?,
     val existingEvaluation: Boolean,
     val stale: Boolean,
     val recorded: Boolean
@@ -55,8 +55,9 @@ private fun FragmentLivestockHealthEvaluationBinding.renderEvaluationContext(
         displayedWater = displayedWater,
         state = state
     )
-    tvEvaluationWaterChangeValue.text = state.lastWaterChangeText
-        ?: fragment.getString(R.string.common_not_available_double_symbol)
+    tvEvaluationWaterChangeValue.text = state.lastWaterChangeAtMillis?.let { millis ->
+        formatLivestockHealthDateTime(fragment, millis)
+    } ?: fragment.getString(R.string.livestock_health_last_water_change_value)
     renderEvaluationNotice(state)
 }
 
@@ -189,7 +190,7 @@ internal fun FragmentLivestockHealthEvaluationBinding.renderEvaluationScreen(
         state = LivestockEvaluationContextState(
             usedWaterAnalysis = state.record?.latestEvaluation?.waterAnalysis,
             latestWaterAnalysis = state.latestWaterAnalysis,
-            lastWaterChangeText = state.lastWaterChangeText,
+            lastWaterChangeAtMillis = state.lastWaterChangeAtMillis,
             existingEvaluation = state.existingEvaluation,
             stale = stale,
             recorded = state.record?.closedAtMillis != null
