@@ -74,63 +74,70 @@ class PlantHealthObservationFragment : Fragment(R.layout.fragment_plant_health_o
     private fun renderSymptoms() {
         binding.symptomGridContainer.removeAllViews()
         SYMPTOMS.chunked(COLUMN_COUNT).forEach { rowOptions ->
-            val row = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.HORIZONTAL
-                weightSum = COLUMN_COUNT.toFloat()
-            }
+            binding.symptomGridContainer.addView(createSymptomRow(rowOptions))
+        }
+    }
+
+    private fun createSymptomRow(rowOptions: List<SymptomOption>): LinearLayout =
+        LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            weightSum = COLUMN_COUNT.toFloat()
             rowOptions.forEachIndexed { index, option ->
-                val item = ItemPlantHealthSymptomBinding.inflate(
-                    LayoutInflater.from(requireContext()),
-                    row,
-                    false
-                )
-                item.tvSymptom.setText(option.labelRes)
-                item.ivSymptom.setImageResource(option.iconRes)
-                item.root.isChecked = option.key in selectedSymptoms
-                item.root.strokeColor = ContextCompat.getColor(
-                    requireContext(),
-                    if (item.root.isChecked) {
-                        R.color.aqua_status_success
-                    } else {
-                        R.color.aqua_card_outline
-                    }
-                )
-                item.root.setOnClickListener {
-                    if (option.key in selectedSymptoms) {
-                        selectedSymptoms.remove(option.key)
-                    } else {
-                        selectedSymptoms.add(option.key)
-                    }
-                    item.root.isChecked = option.key in selectedSymptoms
-                    item.root.strokeColor = ContextCompat.getColor(
-                        requireContext(),
-                        if (item.root.isChecked) {
-                            R.color.aqua_status_success
-                        } else {
-                            R.color.aqua_card_outline
-                        }
-                    )
-                }
-                item.root.layoutParams = LinearLayout.LayoutParams(
-                    0,
-                    resources.getDimensionPixelSize(R.dimen.aqua_size_96),
-                    1f
-                ).apply {
-                    if (index > 0) {
-                        marginStart = resources.getDimensionPixelSize(R.dimen.aqua_size_6)
-                    }
-                    bottomMargin = resources.getDimensionPixelSize(R.dimen.aqua_size_6)
-                }
-                row.addView(item.root)
+                addView(createSymptomItem(this, index, option))
             }
             repeat(COLUMN_COUNT - rowOptions.size) {
-                row.addView(
+                addView(
                     View(requireContext()),
-                    LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+                    LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        1f
+                    )
                 )
             }
-            binding.symptomGridContainer.addView(row)
         }
+
+    private fun createSymptomItem(
+        parent: LinearLayout,
+        index: Int,
+        option: SymptomOption
+    ): View {
+        val item = ItemPlantHealthSymptomBinding.inflate(
+            LayoutInflater.from(requireContext()),
+            parent,
+            false
+        )
+        item.tvSymptom.setText(option.labelRes)
+        item.ivSymptom.setImageResource(option.iconRes)
+        renderSymptomSelection(item, option.key in selectedSymptoms)
+        item.root.setOnClickListener {
+            if (!selectedSymptoms.add(option.key)) {
+                selectedSymptoms.remove(option.key)
+            }
+            renderSymptomSelection(item, option.key in selectedSymptoms)
+        }
+        item.root.layoutParams = LinearLayout.LayoutParams(
+            0,
+            resources.getDimensionPixelSize(R.dimen.aqua_size_96),
+            1f
+        ).apply {
+            if (index > 0) {
+                marginStart = resources.getDimensionPixelSize(R.dimen.aqua_size_6)
+            }
+            bottomMargin = resources.getDimensionPixelSize(R.dimen.aqua_size_6)
+        }
+        return item.root
+    }
+
+    private fun renderSymptomSelection(
+        item: ItemPlantHealthSymptomBinding,
+        selected: Boolean
+    ) {
+        item.root.isChecked = selected
+        item.root.strokeColor = ContextCompat.getColor(
+            requireContext(),
+            if (selected) R.color.aqua_status_success else R.color.aqua_card_outline
+        )
     }
 
     private fun bindPlantPhoto(imageView: ImageView, photoUri: String?) {

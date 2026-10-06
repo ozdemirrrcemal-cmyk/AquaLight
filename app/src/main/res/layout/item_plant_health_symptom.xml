@@ -8,7 +8,7 @@
     android:layout_height="@dimen/aqua_size_96"
     android:clickable="true"
     android:focusable="true"
-    app:checkable="true"
+    android:checkable="true"
     app:checkedIcon="@drawable/ic_check_24"
     app:checkedIconTint="@color/aqua_status_success"
     app:checkedIconSize="@dimen/aqua_size_18"
