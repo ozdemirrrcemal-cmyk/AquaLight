@@ -510,7 +510,7 @@ class DeviceLightV1ContractTest {
     )
 
     private fun assertKeys(json: JSONObject, vararg expected: String) {
-        assertEquals(expected.toSet(), json.keySet())
+        assertEquals(expected.toSet(), json.keys().asSequence().toSet())
     }
 
     private companion object {

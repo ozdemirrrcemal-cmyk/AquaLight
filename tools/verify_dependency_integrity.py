@@ -34,7 +34,7 @@ REQUIRED_COMPONENTS = {
     ("com.android.tools.build", "gradle", "8.10.0"),
     ("com.android.tools.build", "aapt2", "8.10.0-12782657"),
     ("com.android.tools.lint", "lint-gradle", "31.10.0"),
-    ("org.jetbrains.kotlin", "kotlin-gradle-plugin", "2.1.0"),
+    ("org.jetbrains.kotlin", "kotlin-gradle-plugin", "2.2.21"),
     ("com.google.gms", "google-services", "4.4.4"),
     ("com.google.protobuf", "protobuf-gradle-plugin", "0.9.5"),
     ("androidx.navigation", "navigation-safe-args-gradle-plugin", "2.9.5"),
