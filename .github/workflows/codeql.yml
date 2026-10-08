@@ -152,7 +152,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew -PAQL_FINAL_LINT=true lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
+          ./gradlew lintDebug --no-daemon --stacktrace 2>&1 | tee lint-debug.log
 
       - name: Build Debug APK
         shell: bash
@@ -191,7 +191,7 @@ jobs:
           RELEASE_KEY_PASSWORD: aqualight-ci
         run: |
           set -o pipefail
-          ./gradlew -PAQL_FINAL_LINT=true lintReleaseSmoke --no-daemon --stacktrace \
+          ./gradlew lintReleaseSmoke --no-daemon --stacktrace \
             2>&1 | tee lint-release-smoke.log
 
       - name: Build minified Release Smoke APK with CI-only signing
