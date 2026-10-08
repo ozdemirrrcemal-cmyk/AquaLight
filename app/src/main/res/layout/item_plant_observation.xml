@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Aqua.Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/aqua_size_8"
+    android:clickable="true"
+    android:focusable="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/aqua_size_12">
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+            android:text="@string/plant_health_record_title" />
+        <TextView
+            android:id="@+id/tvSymptoms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodySmallBold"
+            android:text="@string/plant_health_record_title"
+            android:layout_marginTop="@dimen/aqua_size_4" />
+        <TextView
+            android:id="@+id/tvNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+            android:text="@string/plant_health_note_optional"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:layout_marginTop="@dimen/aqua_size_4" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

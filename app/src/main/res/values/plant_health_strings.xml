@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="plant_health_status_no_observation">No observation yet</string>
     <string name="plant_health_detail_action_description">Open plant details for %1$s</string>
@@ -7,7 +7,7 @@
     <string name="plant_health_tab_observations">Observations</string>
     <string name="plant_health_tab_care">Care</string>
     <string name="plant_health_tab_notes">Notes</string>
-    <string name="plant_health_last_status_title">Latest status</string>
+    <string name="plant_health_last_status_title">Latest observation</string>
     <string name="plant_health_no_observation_title">No health observation yet</string>
     <string name="plant_health_no_observation_body">Add the first observation to begin tracking this plant over time.</string>
     <string name="plant_health_basic_info_title">Catalog profile</string>
@@ -34,7 +34,7 @@
     <string name="plant_health_notes_empty_body">Plant-specific notes will be stored here when the note persistence layer is connected.</string>
     <string name="plant_health_observation_title">New Observation</string>
     <string name="plant_health_observation_question">What are you observing?</string>
-    <string name="plant_health_observation_helper">Select one or more visible signs.</string>
+    <string name="plant_health_observation_helper">Select visible signs. Healthy looking is used on its own.</string>
     <string name="plant_health_symptom_healthy">Looks healthy</string>
     <string name="plant_health_symptom_yellowing">Leaf yellowing</string>
     <string name="plant_health_symptom_melting">Leaf melt</string>
@@ -48,7 +48,7 @@
     <string name="plant_health_note_hint">Add details about what you observed…</string>
     <string name="plant_health_photo_add">Add photo</string>
     <string name="plant_health_analysis_start">Start Analysis</string>
-    <string name="plant_health_analysis_deferred">Analysis navigation will be connected in the next stage.</string>
+    <string name="plant_health_analysis_deferred">Analysis is not available yet. This record contains your observations.</string>
     <string name="plant_health_history_title">Observation History</string>
     <string name="plant_health_history_empty_title">No observation history yet</string>
     <string name="plant_health_history_empty_body">Saved observations for this plant will appear here in chronological order.</string>
@@ -120,4 +120,29 @@
     <string name="plant_health_placement_epiphyte">Epiphyte</string>
     <string name="plant_health_placement_surface">Surface</string>
     <string name="plant_health_placement_surface_leaves">Surface leaves</string>
+    <string name="plant_health_save">Save observation</string>
+    <string name="plant_health_saving">Saving…</string>
+    <string name="plant_health_retry_save">Retry save</string>
+    <string name="plant_health_retry">Try again</string>
+    <string name="plant_health_save_failed">Could not confirm the save. Your observation is kept; retry with the same details.</string>
+    <string name="plant_health_load_failed">Observations could not be loaded. Please try again.</string>
+    <string name="plant_health_other_requires_note">Describe what you observed when selecting Other.</string>
+    <string name="plant_health_note_required">Note (required for Other)</string>
+    <string name="plant_health_photo_optional">Photos (optional)</string>
+    <string name="plant_health_photo_helper">Add up to 3 photos. Tap a photo to change or remove it.</string>
+    <string name="plant_health_photo_add_slot">Add photo %1$d</string>
+    <string name="plant_health_photo_slot">Observation photo %1$d</string>
+    <string name="plant_health_record_title">Observation</string>
+    <string name="plant_health_record_signs">Reported signs</string>
+    <string name="plant_health_record_note">Note</string>
+    <string name="plant_health_record_date">%1$s · %2$s</string>
+    <string name="plant_health_sign_separator"> · </string>
+    <string name="plant_health_record_count">%1$d observations</string>
+    <string name="plant_health_record_no_note">No note added.</string>
+    <string name="plant_health_algae_reported">You reported algae. Continue to your aquarium’s algae control.</string>
+    <string name="plant_health_delete_title">Delete observation?</string>
+    <string name="plant_health_delete_body">This observation, its note and its photos will be permanently deleted.</string>
+    <string name="plant_health_delete_failed">Observation could not be deleted. Please try again.</string>
+    <string name="plant_health_symptom_image_note">Photos illustrate plants, not a diagnosis. Select the signs you can see on your own plant.</string>
+    <string name="plant_health_save_failed_editable">Could not save. Your draft is kept; check your photos and try again.</string>
 </resources>

@@ -38,7 +38,9 @@ data class AquariumTankOperationDependencies(
     val notificationPreferences: NotificationPreferenceUseCase,
     val deleteWaterAnalysesForTank: suspend (Long) -> Unit,
     val deleteLivestockHealthForTank: suspend (Long) -> Unit,
-    val deleteLivestockHealthForLivestock: suspend (Long, Long) -> Unit
+    val deleteLivestockHealthForLivestock: suspend (Long, Long) -> Unit,
+    val deletePlantHealthForTank: suspend (Long) -> Unit,
+    val reconcilePlantHealthForTank: suspend (Long) -> Unit
 )
 
 class DefaultAquariumTankOperations(
@@ -61,6 +63,8 @@ class DefaultAquariumTankOperations(
         operationDependencies.deleteLivestockHealthForTank
     private val deleteLivestockHealthForLivestock =
         operationDependencies.deleteLivestockHealthForLivestock
+    private val deletePlantHealthForTank = operationDependencies.deletePlantHealthForTank
+    private val reconcilePlantHealthForTank = operationDependencies.reconcilePlantHealthForTank
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
@@ -167,8 +171,15 @@ class DefaultAquariumTankOperations(
                             )
                         }
                 }
+                val plantIssues = baseResult.tankIds.mapNotNull { tankId ->
+                    runCatching { deletePlantHealthForTank(tankId) }
+                        .exceptionOrNull()?.let { error ->
+                            if (error is CancellationException) throw error
+                            AquariumTankCleanupIssue(tankId, AquariumTankCleanupStage.PLANT_HEALTH)
+                        }
+                }
                 baseResult.copy(
-                    cleanupIssues = baseResult.cleanupIssues + analysisIssues + healthIssues
+                    cleanupIssues = baseResult.cleanupIssues + analysisIssues + healthIssues + plantIssues
                 )
             }
         }
@@ -258,6 +269,7 @@ class DefaultAquariumTankOperations(
                     )
                 }
             }
+            reconcilePlantHealthForTank(tankId)
         }
     }
 

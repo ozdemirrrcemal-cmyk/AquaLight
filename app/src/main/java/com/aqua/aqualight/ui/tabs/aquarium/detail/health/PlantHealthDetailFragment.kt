@@ -2,10 +2,13 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
 import android.view.View
-import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -19,6 +22,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail) {
 
+    private val health: PlantHealthViewModel by viewModels()
     private val args: PlantHealthDetailFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
@@ -34,6 +38,13 @@ class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail
         require(args.tankId > 0L && args.plantId > 0L) {
             "PlantHealthDetailFragment requires positive tankId and plantId."
         }
+        selectedTab = savedInstanceState?.getString(KEY_TAB)?.let(PlantHealthDetailTab::valueOf)
+            ?: PlantHealthDetailTab.OVERVIEW
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(KEY_TAB, selectedTab.name)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -46,7 +57,19 @@ class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail
                 onBackClick = { findNavController().navigateUp() }
             )
         )
-        bindTabs()
+        binding.cardNoObservations.isVisible = false
+        binding.cardNoNotes.isVisible = false
+        binding.cardLatestObservation.isVisible = false
+        binding.tvObservationStatus.isVisible = false
+        binding.btnRetry.setOnClickListener { health.retry() }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                health.observations(args.tankId, args.plantId).collect { state ->
+                    binding.renderPlantRecords(state, ::openRecord)
+                }
+            }
+        }
+        binding.bindPlantHealthTabs(::selectTab)
         binding.btnNewObservation.setOnClickListener { openNewObservation() }
         binding.btnOpenHistory.setOnClickListener { openHistory() }
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
@@ -65,15 +88,6 @@ class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail
         isNavigating = false
     }
 
-    private fun bindTabs() {
-        binding.tabOverview.setOnClickListener { selectTab(PlantHealthDetailTab.OVERVIEW) }
-        binding.tabObservations.setOnClickListener {
-            selectTab(PlantHealthDetailTab.OBSERVATIONS)
-        }
-        binding.tabCare.setOnClickListener { selectTab(PlantHealthDetailTab.CARE) }
-        binding.tabNotes.setOnClickListener { selectTab(PlantHealthDetailTab.NOTES) }
-    }
-
     private fun selectTab(tab: PlantHealthDetailTab) {
         selectedTab = tab
         renderSelectedTab()
@@ -85,23 +99,10 @@ class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail
         binding.observationsContainer.isVisible = selectedTab == PlantHealthDetailTab.OBSERVATIONS
         binding.careContainer.isVisible = selectedTab == PlantHealthDetailTab.CARE
         binding.notesContainer.isVisible = selectedTab == PlantHealthDetailTab.NOTES
-        setTabSelected(binding.tabOverview, selectedTab == PlantHealthDetailTab.OVERVIEW)
-        setTabSelected(binding.tabObservations, selectedTab == PlantHealthDetailTab.OBSERVATIONS)
-        setTabSelected(binding.tabCare, selectedTab == PlantHealthDetailTab.CARE)
-        setTabSelected(binding.tabNotes, selectedTab == PlantHealthDetailTab.NOTES)
-    }
-
-    private fun setTabSelected(view: TextView, selected: Boolean) {
-        view.setTextColor(
-            ContextCompat.getColor(
-                requireContext(),
-                if (selected) R.color.aqua_accent_primary else R.color.aqua_content_secondary
-            )
-        )
-        view.setTypeface(
-            view.typeface,
-            if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
-        )
+        binding.tabOverview.setPlantHealthTabSelected(selectedTab == PlantHealthDetailTab.OVERVIEW)
+        binding.tabObservations.setPlantHealthTabSelected(selectedTab == PlantHealthDetailTab.OBSERVATIONS)
+        binding.tabCare.setPlantHealthTabSelected(selectedTab == PlantHealthDetailTab.CARE)
+        binding.tabNotes.setPlantHealthTabSelected(selectedTab == PlantHealthDetailTab.NOTES)
     }
 
     private fun openNewObservation() {
@@ -128,15 +129,20 @@ class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail
         )
     }
 
+    private fun openRecord(id: Long) {
+        if (isNavigating || currentPlant == null) return
+        isNavigating = findNavController().navigateSafelyFrom(
+            R.id.plantHealthDetailFragment,
+            PlantHealthDetailFragmentDirections.actionPlantHealthDetailFragmentToPlantObservationRecordFragment(
+                args.tankId, args.plantId, id
+            )
+        )
+    }
+
+    private companion object { const val KEY_TAB = "plant_detail_tab" }
+
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
     }
-}
-
-private enum class PlantHealthDetailTab {
-    OVERVIEW,
-    OBSERVATIONS,
-    CARE,
-    NOTES
 }

@@ -1,182 +1,156 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
-import androidx.fragment.app.Fragment
+import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import coil3.load
-import coil3.request.crossfade
-import coil3.request.error
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.aquarium.AquariumPlantTag
+import com.aqua.aqualight.application.media.MediaScope
+import com.aqua.aqualight.application.aquarium.health.PlantObservationRules
 import com.aqua.aqualight.databinding.FragmentPlantHealthObservationBinding
-import com.aqua.aqualight.databinding.ItemPlantHealthSymptomBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.media.TankRecordPhotoFragment
+import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import kotlinx.coroutines.launch
 
-class PlantHealthObservationFragment : Fragment(R.layout.fragment_plant_health_observation) {
-
+class PlantHealthObservationFragment : TankRecordPhotoFragment(
+    R.layout.fragment_plant_health_observation,
+    MediaScope.PLANT,
+    R.string.aquarium_plant_photo_title,
+    R.string.aquarium_plant_photo_crop_title
+) {
     private val args: PlantHealthObservationFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-
+    private val draft: PlantObservationDraftViewModel by viewModels()
     private var _binding: FragmentPlantHealthObservationBinding? = null
     private val binding get() = _binding!!
-
-    private val selectedSymptoms = linkedSetOf<String>()
+    private var symptomGrid: PlantSymptomGrid? = null
+    private var photoGrid: PlantObservationPhotos? = null
+    private var plantPresent = false
+    override val photoTankId: Long get() = args.tankId
+    override val hasPhotoView: Boolean get() = _binding != null
+    override val photoActionsBlocked: Boolean get() = draft.locked
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        require(args.tankId > 0L && args.plantId > 0L) {
-            "PlantHealthObservationFragment requires positive tankId and plantId."
-        }
+        require(args.tankId > 0L && args.plantId > 0L)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentPlantHealthObservationBinding.bind(view)
+        binding.appHeader.setupAquaHeader(this, AquaHeaderConfig(
+            titleOverride = getString(R.string.plant_health_observation_title),
+            onBackClick = { findNavController().navigateUp() }
+        ))
+        setupPhotoSourceResultListener()
+        bindForm()
+        observePlant()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { draft.revision.collect { renderForm() } }
+                launch { draft.save.collect { renderSave(it) } }
+                launch { photoTarget.inProgress.collect { renderForm() } }
+            }
+        }
+    }
 
-        binding.appHeader.setupAquaHeader(
-            fragment = this,
-            config = AquaHeaderConfig(
-                titleOverride = getString(R.string.plant_health_observation_title),
-                onBackClick = { findNavController().navigateUp() }
+    private fun bindForm() {
+        symptomGrid = PlantSymptomGrid(binding.symptomGridContainer, draft::toggle)
+        photoGrid = PlantObservationPhotos(binding.photoContainer, onEdit = { index ->
+            if (draft.locked || !plantPresent) return@PlantObservationPhotos
+            showRecordPhotoSource(
+                recordId = (index + 1).toLong(),
+                persistedUri = draft.photos.getOrNull(index)?.takeIf(String::isNotBlank),
+                resetSelection = true
             )
-        )
-        renderSymptoms()
+        })
+        binding.etNote.setText(draft.note)
+        binding.etNote.doAfterTextChanged { draft.updateNote(it?.toString().orEmpty()) }
+        binding.btnSaveObservation.setOnClickListener {
+            if (plantPresent && !photoTarget.isInProgress) draft.submit(args.tankId, args.plantId)
+        }
+    }
 
+    private fun observePlant() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val plant = tanks.firstOrNull { tank -> tank.id == args.tankId }
-                ?.plants
-                ?.firstOrNull { item -> item.id == args.plantId }
+            val plant = tanks.firstOrNull { it.id == args.tankId }
+                ?.plants?.firstOrNull { it.id == args.plantId }
+            plantPresent = plant != null
             if (plant == null) {
                 findNavController().navigateUp()
             } else {
-                renderPlant(plant)
+                binding.plantIdentity.tvPlantName.text = plant.plantName
+                binding.plantIdentity.tvPlantCategory.text = plant.category
+                binding.plantIdentity.imgPlant.bindRecordPhoto(plant.photoUri, R.drawable.ic_health_plant_24)
+                renderForm()
             }
         }
     }
 
-    private fun renderPlant(plant: AquariumPlantTag) {
-        binding.tvPlantName.text = plant.plantName
-        binding.tvPlantCategory.text = plant.category
-        bindPlantPhoto(binding.imgPlant, plant.photoUri)
+    private fun renderForm() {
+        symptomGrid?.render(draft.symptoms, !draft.locked)
+        photoGrid?.render(draft.photos, !draft.locked)
+        binding.etNote.isEnabled = !draft.locked
+        val other = PlantObservationRules.OTHER in draft.symptoms
+        binding.tvNoteLabel.setText(
+            if (other) R.string.plant_health_note_required else R.string.plant_health_note_optional
+        )
+        binding.tvValidation.isVisible = other && draft.note.isBlank()
+        binding.btnSaveObservation.isEnabled = plantPresent && draft.canSave &&
+            draft.save.value != PlantSaveState.Working && !photoTarget.isInProgress
     }
 
-    private fun renderSymptoms() {
-        binding.symptomGridContainer.removeAllViews()
-        SYMPTOMS.chunked(COLUMN_COUNT).forEach { rowOptions ->
-            binding.symptomGridContainer.addView(createSymptomRow(rowOptions))
-        }
-    }
-
-    private fun createSymptomRow(rowOptions: List<SymptomOption>): LinearLayout =
-        LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            weightSum = COLUMN_COUNT.toFloat()
-            rowOptions.forEachIndexed { index, option ->
-                addView(createSymptomItem(this, index, option))
-            }
-            repeat(COLUMN_COUNT - rowOptions.size) {
-                addView(
-                    View(requireContext()),
-                    LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        1f
+    private suspend fun renderSave(state: PlantSaveState) {
+        renderForm()
+        binding.tvSaveError.isVisible = state == PlantSaveState.Failed
+        binding.tvSaveError.setText(
+            if (draft.locked) R.string.plant_health_save_failed else R.string.plant_health_save_failed_editable
+        )
+        binding.btnSaveObservation.setText(when (state) {
+            PlantSaveState.Working -> R.string.plant_health_saving
+            PlantSaveState.Failed -> R.string.plant_health_retry_save
+            else -> R.string.plant_health_save
+        })
+        if (state is PlantSaveState.Saved) {
+            mediaFlow.commitSelection(deletePersistedMedia = false)
+            findNavController().navigateSafelyFrom(
+                R.id.plantHealthObservationFragment,
+                PlantHealthObservationFragmentDirections
+                    .actionPlantHealthObservationFragmentToPlantObservationRecordFragment(
+                        args.tankId, args.plantId, state.id
                     )
-                )
-            }
+            )
         }
-
-    private fun createSymptomItem(
-        parent: LinearLayout,
-        index: Int,
-        option: SymptomOption
-    ): View {
-        val item = ItemPlantHealthSymptomBinding.inflate(
-            LayoutInflater.from(requireContext()),
-            parent,
-            false
-        )
-        item.tvSymptom.setText(option.labelRes)
-        item.ivSymptom.setImageResource(option.iconRes)
-        renderSymptomSelection(item, option.key in selectedSymptoms)
-        item.root.setOnClickListener {
-            if (!selectedSymptoms.add(option.key)) {
-                selectedSymptoms.remove(option.key)
-            }
-            renderSymptomSelection(item, option.key in selectedSymptoms)
-        }
-        item.root.layoutParams = LinearLayout.LayoutParams(
-            0,
-            resources.getDimensionPixelSize(R.dimen.aqua_size_96),
-            1f
-        ).apply {
-            if (index > 0) {
-                marginStart = resources.getDimensionPixelSize(R.dimen.aqua_size_6)
-            }
-            bottomMargin = resources.getDimensionPixelSize(R.dimen.aqua_size_6)
-        }
-        return item.root
     }
 
-    private fun renderSymptomSelection(
-        item: ItemPlantHealthSymptomBinding,
-        selected: Boolean
-    ) {
-        item.root.isChecked = selected
-        item.root.strokeColor = ContextCompat.getColor(
-            requireContext(),
-            if (selected) R.color.aqua_status_success else R.color.aqua_card_outline
-        )
-    }
-
-    private fun bindPlantPhoto(imageView: ImageView, photoUri: String?) {
-        if (photoUri.isNullOrBlank()) {
-            imageView.scaleType = ImageView.ScaleType.CENTER
-            imageView.setImageResource(R.drawable.ic_health_plant_24)
-            return
-        }
-        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-        imageView.load(photoUri.toUri()) {
-            crossfade(true)
-            error(R.drawable.ic_health_plant_24)
+    override suspend fun onPhotoSelected(photoUri: String?) {
+        val index = requireNotNull(photoTarget.recordId).toInt() - 1
+        try {
+            draft.replacePhoto(index, photoUri)
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            showPhotoSnackBar(getString(R.string.aquarium_photo_crop_failed))
+        } finally {
+            photoTarget.finish()
+            if (hasPhotoView) renderForm()
         }
     }
 
     override fun onDestroyView() {
+        symptomGrid = null
+        photoGrid = null
         _binding = null
         super.onDestroyView()
-    }
-
-    private data class SymptomOption(
-        val key: String,
-        val labelRes: Int,
-        val iconRes: Int
-    )
-
-    private companion object {
-        const val COLUMN_COUNT = 3
-
-        val SYMPTOMS = listOf(
-            SymptomOption("healthy", R.string.plant_health_symptom_healthy, R.drawable.ic_check_24),
-            SymptomOption("yellowing", R.string.plant_health_symptom_yellowing, R.drawable.ic_warning),
-            SymptomOption("melting", R.string.plant_health_symptom_melting, R.drawable.ic_health_plant_24),
-            SymptomOption("damage", R.string.plant_health_symptom_damage, R.drawable.ic_warning),
-            SymptomOption("slow_growth", R.string.plant_health_symptom_slow_growth, R.drawable.ic_health_plant_24),
-            SymptomOption("brown_spots", R.string.plant_health_symptom_brown_spots, R.drawable.ic_warning),
-            SymptomOption("algae", R.string.plant_health_symptom_algae, R.drawable.ic_care_algae_24),
-            SymptomOption("deformation", R.string.plant_health_symptom_deformation, R.drawable.ic_health_plant_24),
-            SymptomOption("other", R.string.plant_health_symptom_other, R.drawable.ic_info)
-        )
     }
 }

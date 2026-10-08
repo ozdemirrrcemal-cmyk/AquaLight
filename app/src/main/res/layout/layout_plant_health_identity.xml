@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Aqua.Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="@dimen/aqua_size_12">
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgPlant"
+            android:layout_width="@dimen/aqua_size_56"
+            android:layout_height="@dimen/aqua_size_56"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no" />
+        <LinearLayout
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:layout_weight="1">
+            <TextView
+                android:id="@+id/tvPlantName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodySmallBold"
+                android:text="@string/plant_health_detail_title" />
+            <TextView
+                android:id="@+id/tvPlantCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                android:text="@string/plant_health_detail_title" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

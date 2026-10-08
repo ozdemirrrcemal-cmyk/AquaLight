@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.aquarium.health";
+option java_multiple_files = true;
+
+message PlantHealthStore {
+  repeated StoredPlantObservation observations = 1;
+  uint32 schema_version = 100;
+}
+
+message StoredPlantObservation {
+  int64 id = 1;
+  string request_id = 2;
+  int64 tank_id = 3;
+  int64 plant_id = 4;
+  repeated string symptom_keys = 5;
+  string note = 6;
+  repeated string photo_uris = 7;
+  int64 created_at_millis = 8;
+  string owner_uid = 100;
+}

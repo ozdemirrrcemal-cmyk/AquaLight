@@ -84,6 +84,7 @@
                 </LinearLayout>
 
                 <TextView
+                                android:id="@+id/tvObservationStatus"
                     android:textAppearance="@style/TextAppearance.Aqua.Content.MutedStatusMicro"
                     android:layout_width="wrap_content"
                     android:layout_height="@dimen/aqua_size_28"
@@ -274,6 +275,23 @@
                 android:layout_height="@dimen/aqua_size_1"
                 android:background="@color/aqua_card_divider" />
 
+            <TextView
+                android:id="@+id/tvLoadError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+                android:text="@string/plant_health_load_failed"
+                android:visibility="gone"
+                android:accessibilityLiveRegion="polite" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRetry"
+                style="@style/Widget.Aqua.Button.OutlineAccent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/plant_health_retry"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:id="@+id/overviewContainer"
                 android:layout_width="match_parent"
@@ -288,6 +306,7 @@
                     android:text="@string/plant_health_last_status_title" />
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardLatestObservation"
                     style="@style/Widget.Aqua.Card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -311,11 +330,13 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
+                                android:id="@+id/tvLatestObservationTitle"
                                 android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodySmallBold"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="@string/plant_health_no_observation_title" />
                             <TextView
+                                android:id="@+id/tvLatestObservationBody"
                                 android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -365,7 +386,14 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
+                <LinearLayout
+                    android:id="@+id/observationListContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardNoObservations"
                     style="@style/Widget.Aqua.Card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -470,7 +498,14 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
+                <LinearLayout
+                    android:id="@+id/noteListContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardNoNotes"
                     style="@style/Widget.Aqua.Card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

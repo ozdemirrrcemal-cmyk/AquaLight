@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="plant_health_status_no_observation">Henüz gözlem yok</string>
     <string name="plant_health_detail_action_description">%1$s için bitki detayını aç</string>
@@ -7,7 +7,7 @@
     <string name="plant_health_tab_observations">Gözlemler</string>
     <string name="plant_health_tab_care">Bakım</string>
     <string name="plant_health_tab_notes">Notlar</string>
-    <string name="plant_health_last_status_title">Son Durum</string>
+    <string name="plant_health_last_status_title">Son gözlem</string>
     <string name="plant_health_no_observation_title">Henüz sağlık gözlemi yok</string>
     <string name="plant_health_no_observation_body">Bu bitkinin zaman içindeki durumunu takip etmek için ilk gözlemi ekleyin.</string>
     <string name="plant_health_basic_info_title">Katalog profili</string>
@@ -34,7 +34,7 @@
     <string name="plant_health_notes_empty_body">Bitkiye özel not kayıt altyapısı bağlandığında notlar burada tutulacak.</string>
     <string name="plant_health_observation_title">Yeni Gözlem</string>
     <string name="plant_health_observation_question">Ne gözlemliyorsun?</string>
-    <string name="plant_health_observation_helper">Bir veya birden fazla görünür belirti seçin.</string>
+    <string name="plant_health_observation_helper">Görünür belirtileri seçin. Sağlıklı görünüyor seçeneği tek başına kullanılır.</string>
     <string name="plant_health_symptom_healthy">Sağlıklı görünüyor</string>
     <string name="plant_health_symptom_yellowing">Yaprak sararması</string>
     <string name="plant_health_symptom_melting">Yaprak erimesi</string>
@@ -48,7 +48,7 @@
     <string name="plant_health_note_hint">Gözleminizle ilgili ayrıntı ekleyin…</string>
     <string name="plant_health_photo_add">Fotoğraf ekle</string>
     <string name="plant_health_analysis_start">Analizi Başlat</string>
-    <string name="plant_health_analysis_deferred">Analiz yönlendirmesi sonraki aşamada bağlanacak.</string>
+    <string name="plant_health_analysis_deferred">Analiz henüz kullanılamıyor. Bu kayıt sizin gözlemlerinizi içerir.</string>
     <string name="plant_health_history_title">Gözlem Geçmişi</string>
     <string name="plant_health_history_empty_title">Henüz gözlem geçmişi yok</string>
     <string name="plant_health_history_empty_body">Bu bitkiye kaydedilen gözlemler burada tarih sırasıyla gösterilecek.</string>
@@ -120,4 +120,29 @@
     <string name="plant_health_placement_epiphyte">Epifit</string>
     <string name="plant_health_placement_surface">Yüzey</string>
     <string name="plant_health_placement_surface_leaves">Yüzey yapraklı</string>
+    <string name="plant_health_save">Gözlemi kaydet</string>
+    <string name="plant_health_saving">Kaydediliyor…</string>
+    <string name="plant_health_retry_save">Kaydetmeyi tekrar dene</string>
+    <string name="plant_health_retry">Tekrar dene</string>
+    <string name="plant_health_save_failed">Kayıt doğrulanamadı. Gözleminiz korunuyor; aynı bilgilerle tekrar deneyin.</string>
+    <string name="plant_health_load_failed">Gözlemler yüklenemedi. Tekrar deneyin.</string>
+    <string name="plant_health_other_requires_note">Diğer seçeneği için ne gözlemlediğinizi yazın.</string>
+    <string name="plant_health_note_required">Not (Diğer için gerekli)</string>
+    <string name="plant_health_photo_optional">Fotoğraflar (isteğe bağlı)</string>
+    <string name="plant_health_photo_helper">En fazla 3 fotoğraf ekleyin. Değiştirmek veya kaldırmak için fotoğrafa dokunun.</string>
+    <string name="plant_health_photo_add_slot">%1$d. fotoğrafı ekle</string>
+    <string name="plant_health_photo_slot">%1$d. gözlem fotoğrafı</string>
+    <string name="plant_health_record_title">Gözlem</string>
+    <string name="plant_health_record_signs">Bildirilen belirtiler</string>
+    <string name="plant_health_record_note">Not</string>
+    <string name="plant_health_record_date">%1$s · %2$s</string>
+    <string name="plant_health_sign_separator"> · </string>
+    <string name="plant_health_record_count">%1$d gözlem</string>
+    <string name="plant_health_record_no_note">Not eklenmedi.</string>
+    <string name="plant_health_algae_reported">Yosun bildirdiniz. Akvaryumunuzun yosun kontrolüne geçebilirsiniz.</string>
+    <string name="plant_health_delete_title">Gözlem silinsin mi?</string>
+    <string name="plant_health_delete_body">Bu gözlem, notu ve fotoğrafları kalıcı olarak silinecek.</string>
+    <string name="plant_health_delete_failed">Gözlem silinemedi. Tekrar deneyin.</string>
+    <string name="plant_health_symptom_image_note">Fotoğraflar bitki örnekleridir, teşhis değildir. Kendi bitkinizde gördüğünüz belirtileri seçin.</string>
+    <string name="plant_health_save_failed_editable">Kaydedilemedi. Taslağınız korunuyor; fotoğrafları kontrol edip tekrar deneyin.</string>
 </resources>

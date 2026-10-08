@@ -109,17 +109,17 @@ for token in (
 observation = read(OBSERVATION)
 if "PlantPickerFragment" in observation:
     errors.append(f"{OBSERVATION.relative_to(ROOT)}: observation must use the selected tank plant")
-if "navigateSafelyFrom" in observation:
+if "actionPlantHealthObservationFragmentToPlantObservationRecordFragment" not in observation:
     errors.append(
-        f"{OBSERVATION.relative_to(ROOT)}: analysis navigation must remain deferred in this stage"
+        f"{OBSERVATION.relative_to(ROOT)}: saved observation must open its real record"
     )
 
 observation_layout = read(OBSERVATION_LAYOUT)
 for token in (
     "@+id/symptomGridContainer",
     "@+id/etNote",
-    "@+id/btnStartAnalysis",
-    'android:enabled="false"',
+    "@+id/btnSaveObservation",
+    "@+id/photoContainer",
 ):
     if token not in observation_layout:
         errors.append(f"{OBSERVATION_LAYOUT.relative_to(ROOT)}: observation UI contract missing: {token}")
@@ -140,13 +140,24 @@ for forbidden in (
     "action_tankDetailFragment_to_plantHealthFragment",
     "plantHealthAnalysisResultFragment",
     "plantHealthAlgaeDetectionFragment",
-    "plantHealthAlgaeControlFragment",
-    "action_plantHealthObservationFragment_to_",
 ):
     if forbidden in navigation:
         errors.append(
             f"{NAVIGATION.relative_to(ROOT)}: removed or deferred navigation remains: {forbidden}"
         )
+
+for token in (
+    "plantObservationRecordFragment",
+    "plantHealthAlgaeControlFragment",
+    "action_plantHealthObservationFragment_to_plantObservationRecordFragment",
+    'app:popUpToInclusive="true"',
+):
+    if token not in navigation:
+        errors.append(f"Plant observation persistence navigation missing: {token}")
+if "btnStartAnalysis" in observation_layout or "plant_health_analysis_start" in observation_layout:
+    errors.append("Observation form must save observations without pretending to run an analysis")
+if "algaeGridContainer" in read(ALGAE_CONTROL_LAYOUT):
+    errors.append("Algae control must remain an empty shared-header destination in this stage")
 
 android = "{http://schemas.android.com/apk/res/android}"
 app = "{http://schemas.android.com/apk/res-auto}"
@@ -254,5 +265,5 @@ if errors:
 
 print(
     "Plant Health UI architecture guard passed: tank plant cards open detail directly, "
-    "photo actions stay separate, detail tabs are present, and analysis/algae navigation is deferred."
+    "photo actions use plant thumbnails, saved records and algae routing are present, and analysis is deferred."
 )

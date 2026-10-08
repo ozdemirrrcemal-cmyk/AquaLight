@@ -2,132 +2,61 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color">
-
     <include
-        android:id="@+id/appHeader"
-        layout="@layout/layout_aqua_header"
+        android:id="@+id/appHeader" layout="@layout/layout_aqua_header"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
     <LinearLayout
+        android:id="@+id/historyHeader"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/aqua_size_16"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader">
+        <include
+            android:id="@+id/plantIdentity" layout="@layout/layout_plant_health_identity" />
+        <TextView
+            android:id="@+id/tvLoadError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+            android:text="@string/plant_health_load_failed"
+            android:visibility="gone"
+            android:accessibilityLiveRegion="polite" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetry"
+            style="@style/Widget.Aqua.Button.OutlineAccent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/aqua_size_48"
+            android:layout_marginTop="@dimen/aqua_size_8"
+            android:text="@string/plant_health_retry" />
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
+            android:text="@string/plant_health_history_empty_body"
+            android:visibility="gone" />
+    </LinearLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/historyList"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:orientation="vertical"
         android:paddingStart="@dimen/aqua_size_16"
-        android:paddingTop="@dimen/aqua_size_8"
         android:paddingEnd="@dimen/aqua_size_16"
-        android:paddingBottom="@dimen/aqua_size_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:paddingBottom="@dimen/aqua_size_16"
+        android:clipToPadding="false"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appHeader">
-
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Aqua.Card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="@dimen/aqua_size_12">
-
-                <ImageView
-                    android:id="@+id/imgPlant"
-                    android:layout_width="@dimen/aqua_size_52"
-                    android:layout_height="@dimen/aqua_size_52"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_health_plant_24"
-                    app:tint="@null" />
-
-                <LinearLayout
-                    android:layout_width="@dimen/aqua_size_0"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/aqua_size_12"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvPlantName"
-                        android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodySmallBold"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        tools:text="Anubias barteri var. caladiifolia" />
-
-                    <TextView
-                        android:id="@+id/tvPlantCategory"
-                        android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_3"
-                        tools:text="Epiphyte" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <LinearLayout
-            android:id="@+id/historyContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_12"
-            android:orientation="vertical" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardEmpty"
-            style="@style/Widget.Aqua.Card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_16">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="@dimen/aqua_size_24">
-
-                <ImageView
-                    android:layout_width="@dimen/aqua_size_36"
-                    android:layout_height="@dimen/aqua_size_36"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/ic_health_plant_24"
-                    app:tint="@color/aqua_content_secondary" />
-
-                <TextView
-                    android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/aqua_size_10"
-                    android:gravity="center"
-                    android:text="@string/plant_health_history_empty_title" />
-
-                <TextView
-                    android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/aqua_size_6"
-                    android:gravity="center"
-                    android:text="@string/plant_health_history_empty_body" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
-
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/historyHeader"
+        app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

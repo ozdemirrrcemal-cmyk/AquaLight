@@ -250,6 +250,14 @@
                 android:name="plantId"
                 app:argType="long" />
         </action>
+        <action
+            android:id="@+id/action_plantHealthDetailFragment_to_plantObservationRecordFragment"
+            app:destination="@id/plantObservationRecordFragment"
+            app:launchSingleTop="true"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
@@ -263,6 +271,16 @@
         <argument
             android:name="plantId"
             app:argType="long" />
+        <action
+            android:id="@+id/action_plantHealthObservationFragment_to_plantObservationRecordFragment"
+            app:destination="@id/plantObservationRecordFragment"
+            app:popUpTo="@id/plantHealthObservationFragment"
+            app:popUpToInclusive="true"
+            app:launchSingleTop="true"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
@@ -276,6 +294,38 @@
         <argument
             android:name="plantId"
             app:argType="long" />
+        <action
+            android:id="@+id/action_plantHealthHistoryFragment_to_plantObservationRecordFragment"
+            app:destination="@id/plantObservationRecordFragment"
+            app:launchSingleTop="true"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/plantObservationRecordFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantObservationRecordFragment"
+        android:label="@string/plant_health_record_title">
+        <argument android:name="tankId" app:argType="long" />
+        <argument android:name="plantId" app:argType="long" />
+        <argument android:name="observationId" app:argType="long" />
+        <action
+            android:id="@+id/action_plantObservationRecordFragment_to_plantHealthAlgaeControlFragment"
+            app:destination="@id/plantHealthAlgaeControlFragment"
+            app:launchSingleTop="true"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/plantHealthAlgaeControlFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthAlgaeControlFragment"
+        android:label="@string/plant_health_algae_control_title">
+        <argument android:name="tankId" app:argType="long" />
     </fragment>
 
     <fragment

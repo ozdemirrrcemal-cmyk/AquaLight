@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 
 /** Keeps the selected record fixed throughout camera/gallery/crop and saved-state recreation. */
 class RecordPhotoTargetViewModel(private val state: SavedStateHandle) : ViewModel() {
+    val inProgress = state.getStateFlow("photoInProgress", false)
     val ownerUid: String? get() = state["photoOwnerUid"]
     val recordId: Long? get() = state["photoRecordId"]
     val isInProgress: Boolean get() = state["photoInProgress"] ?: false
