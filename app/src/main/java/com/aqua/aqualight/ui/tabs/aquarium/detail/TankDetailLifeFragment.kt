@@ -25,7 +25,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
     private var tankId: Long = 0L
     private var isOpeningLivestockForm: Boolean = false
-    private var isOpeningLivestockHealth: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,19 +36,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentTankDetailLifeBinding.bind(view)
-
-        binding.livestockHealthEntry.ivHealthEntryIcon.setImageResource(
-            R.drawable.ic_health_livestock_24
-        )
-        binding.livestockHealthEntry.tvHealthEntryTitle.setText(
-            R.string.livestock_health_entry_title
-        )
-        binding.livestockHealthEntry.tvHealthEntrySummary.setText(
-            R.string.livestock_health_entry_summary
-        )
-        binding.livestockHealthEntry.tvHealthEntryLastCheck.setText(
-            R.string.livestock_health_entry_last_check
-        )
 
         cardFactory = TankLivestockCardFactory(
             context = requireContext(),
@@ -65,14 +51,9 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     override fun onResume() {
         super.onResume()
         isOpeningLivestockForm = false
-        isOpeningLivestockHealth = false
     }
 
     private fun setupClickListeners() {
-        binding.livestockHealthEntry.root.setOnClickListener {
-            openLivestockHealth()
-        }
-
         binding.btnAddLife.setOnClickListener {
             openLivestockPicker()
         }
@@ -80,28 +61,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         binding.btnEmptyAddLife.setOnClickListener {
             openLivestockPicker()
         }
-    }
-
-    private fun openLivestockHealth() {
-        if (isOpeningLivestockHealth) {
-            return
-        }
-
-        val navController = findNavController()
-        navController.currentBackStackEntry
-            ?.savedStateHandle
-            ?.set(
-                TankDetailFragment.KEY_SELECTED_TAB,
-                TankDetailTabArgs.TANK_LIFE
-            )
-
-        val didNavigate = navController.navigateSafelyFrom(
-            sourceDestinationId = R.id.tankDetailFragment,
-            directions = TankDetailFragmentDirections
-                .actionTankDetailFragmentToLivestockHealthFragment(tankId)
-        )
-
-        isOpeningLivestockHealth = didNavigate
     }
 
     private fun openLivestockPicker() {

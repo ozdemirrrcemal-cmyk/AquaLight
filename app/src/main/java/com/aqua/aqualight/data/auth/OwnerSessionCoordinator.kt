@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.auth
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
-import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecovery
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
@@ -280,8 +279,6 @@ private class OwnerSessionOpenFlow(
             CareTaskDataStoreManager
                 .create(appContext)
                 .repairOrphanedTankTasks(normalizedOwnerUid)
-        WaterAnalysisDataStoreManager(appContext)
-            .repairOrphanedTankAnalyses(normalizedOwnerUid)
         return OwnerRepairCounts(assignmentCount, careTaskCount)
     }
 

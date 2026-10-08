@@ -13,8 +13,6 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
 import com.aqua.aqualight.databinding.ItemTankPlantPhotoBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
-import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class TankDetailPlantsFragment : TankPlantPhotoFragment() {
     private var _binding: FragmentTankDetailPlantsBinding? = null
@@ -23,27 +21,10 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
     private var currentPlants: List<AquariumPlantTag> = emptyList()
     protected override val hasPhotoView: Boolean get() = _binding != null
     private var isOpeningPlantTagScreen = false
-    private var isOpeningPlantHealth = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankDetailPlantsBinding.bind(view)
-
-        binding.plantHealthEntry.ivHealthEntryIcon.setImageResource(
-            R.drawable.ic_health_plant_24
-        )
-        binding.plantHealthEntry.tvHealthEntryTitle.setText(
-            R.string.plant_health_entry_title
-        )
-        binding.plantHealthEntry.tvHealthEntrySummary.setText(
-            R.string.plant_health_entry_summary
-        )
-        binding.plantHealthEntry.tvHealthEntryLastCheck.setText(
-            R.string.plant_health_entry_last_check
-        )
-        binding.plantHealthEntry.root.setOnClickListener {
-            openPlantHealth()
-        }
 
         binding.btnAddPlant.setOnClickListener { openPlantTagScreen() }
         setupPhotoSourceResultListener()
@@ -58,27 +39,6 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
     override fun onResume() {
         super.onResume()
         isOpeningPlantTagScreen = false
-        isOpeningPlantHealth = false
-    }
-
-    private fun openPlantHealth() {
-        if (isOpeningPlantHealth || photoTarget.isInProgress) return
-
-        val navController = findNavController()
-        navController.currentBackStackEntry
-            ?.savedStateHandle
-            ?.set(
-                TankDetailFragment.KEY_SELECTED_TAB,
-                TankDetailTabArgs.PLANTS
-            )
-
-        val didNavigate = navController.navigateSafelyFrom(
-            sourceDestinationId = R.id.tankDetailFragment,
-            directions = TankDetailFragmentDirections
-                .actionTankDetailFragmentToPlantHealthFragment(tankId)
-        )
-
-        isOpeningPlantHealth = didNavigate
     }
 
     private fun openPlantTagScreen() {

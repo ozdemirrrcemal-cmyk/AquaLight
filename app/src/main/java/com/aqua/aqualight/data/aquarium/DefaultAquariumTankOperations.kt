@@ -16,7 +16,6 @@ import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
-import java.util.concurrent.CancellationException
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -35,8 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 data class AquariumTankOperationDependencies(
-    val notificationPreferences: NotificationPreferenceUseCase,
-    val deleteWaterAnalysesForTank: suspend (Long) -> Unit
+    val notificationPreferences: NotificationPreferenceUseCase
 )
 
 class DefaultAquariumTankOperations(
@@ -51,8 +49,6 @@ class DefaultAquariumTankOperations(
 
     private val appContext = context.applicationContext
     private val notificationPreferences = operationDependencies.notificationPreferences
-    private val deleteWaterAnalysesForTank =
-        operationDependencies.deleteWaterAnalysesForTank
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
@@ -134,25 +130,7 @@ class DefaultAquariumTankOperations(
         tankIds: Collection<Long>
     ): DeleteAquariumTanksResult = withContext(dispatcher) {
         withCurrentOwnerScope {
-            val baseResult = tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
-            if (baseResult !is DeleteAquariumTanksResult.Deleted) {
-                baseResult
-            } else {
-                val analysisIssues = baseResult.tankIds.mapNotNull { tankId ->
-                    runCatching {
-                        deleteWaterAnalysesForTank(tankId)
-                    }.exceptionOrNull()?.let { error ->
-                        if (error is CancellationException) throw error
-                        AquariumTankCleanupIssue(
-                            tankId = tankId,
-                            stage = AquariumTankCleanupStage.WATER_ANALYSES
-                        )
-                    }
-                }
-                baseResult.copy(
-                    cleanupIssues = baseResult.cleanupIssues + analysisIssues
-                )
-            }
+            tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
         }
     }
 
