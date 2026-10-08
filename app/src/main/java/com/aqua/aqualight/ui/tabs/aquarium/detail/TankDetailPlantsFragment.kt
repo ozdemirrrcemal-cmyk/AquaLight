@@ -20,46 +20,32 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
     private var _binding: FragmentTankDetailPlantsBinding? = null
     private val binding get() = _binding!!
 
-    private var currentPlants: List<AquariumPlantTag> = emptyList()
     protected override val hasPhotoView: Boolean get() = _binding != null
-    private var isOpeningPlantTagScreen = false
-    private var isOpeningPlantHealth = false
+    private var isNavigating = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankDetailPlantsBinding.bind(view)
-
-        binding.plantHealthEntry.ivHealthEntryIcon.setImageResource(
-            R.drawable.ic_health_plant_24
-        )
-        binding.plantHealthEntry.tvHealthEntryTitle.setText(
-            R.string.plant_health_entry_title
-        )
-        binding.plantHealthEntry.root.setOnClickListener {
-            openPlantHealth()
-        }
 
         binding.btnAddPlant.setOnClickListener { openPlantTagScreen() }
         setupPhotoSourceResultListener()
 
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             val tank = tanks.firstOrNull { it.id == tankId } ?: return@observe
-            currentPlants = tank.plants
-            renderPlantHealthEntry(currentPlants.size)
-            renderPlants(currentPlants)
+            renderPlants(tank.plants)
         }
     }
 
     override fun onResume() {
         super.onResume()
-        isOpeningPlantTagScreen = false
-        isOpeningPlantHealth = false
+        isNavigating = false
     }
 
-    private fun openPlantHealth() {
-        if (isOpeningPlantHealth || photoTarget.isInProgress) return
+    private fun openPlantDetail(plant: AquariumPlantTag) {
+        if (isNavigating || photoTarget.isInProgress || photoActionsBlocked) return
 
         val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.tankDetailFragment) return
         navController.currentBackStackEntry
             ?.savedStateHandle
             ?.set(
@@ -67,35 +53,24 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
                 TankDetailTabArgs.PLANTS
             )
 
-        val didNavigate = navController.navigateSafelyFrom(
+        isNavigating = navController.navigateSafelyFrom(
             sourceDestinationId = R.id.tankDetailFragment,
             directions = TankDetailFragmentDirections
-                .actionTankDetailFragmentToPlantHealthFragment(tankId)
+                .actionTankDetailFragmentToPlantHealthDetailFragment(
+                    tankId = tankId,
+                    plantId = plant.id
+                )
         )
-
-        isOpeningPlantHealth = didNavigate
     }
 
     private fun openPlantTagScreen() {
-        if (isOpeningPlantTagScreen || photoTarget.isInProgress) return
+        if (isNavigating || photoTarget.isInProgress || photoActionsBlocked) return
         val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.tankDetailFragment) return
-        isOpeningPlantTagScreen = true
-        navController.navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
+        isNavigating = navController.navigateSafelyFrom(
+            sourceDestinationId = R.id.tankDetailFragment,
+            directions = TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
                 tankId = tankId
             )
-        )
-    }
-
-    private fun renderPlantHealthEntry(plantCount: Int) {
-        binding.plantHealthEntry.tvHealthEntrySummary.text = resources.getQuantityString(
-            R.plurals.plant_health_entry_assigned_count,
-            plantCount,
-            plantCount
-        )
-        binding.plantHealthEntry.tvHealthEntryLastCheck.setText(
-            R.string.plant_health_status_no_observation
         )
     }
 
@@ -117,12 +92,21 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
         item.tvPlantCategory.text = plant.category
         item.tvPlantName.text = plant.plantName
         item.plantCard.contentDescription = getString(
-            R.string.aquarium_plant_photo_action_description,
+            R.string.plant_health_detail_action_description,
             plant.plantName
         )
         bindPlantPhoto(item.imgPlantPhoto, plant.photoUri)
         item.plantCard.setOnClickListener {
-            showPlantPhotoSource(plant)
+            openPlantDetail(plant)
+        }
+        item.btnPlantPhoto.contentDescription = getString(
+            R.string.aquarium_plant_photo_action_description,
+            plant.plantName
+        )
+        item.btnPlantPhoto.setOnClickListener {
+            if (!isNavigating && findNavController().currentDestination?.id == R.id.tankDetailFragment) {
+                showPlantPhotoSource(plant)
+            }
         }
         return item.root
     }

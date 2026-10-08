@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="plant_health_search_hint">Search assigned plants</string>
-    <string name="plant_health_home_info_title">Plant health in this tank</string>
-    <string name="plant_health_home_info_body">Track only the plants already assigned to this tank. Catalog data provides the care profile; observations will provide the health history.</string>
-    <string name="plant_health_no_plants_title">No plants assigned to this tank</string>
-    <string name="plant_health_no_plants_body">Add plants from the Plants tab before starting plant-health tracking.</string>
     <string name="plant_health_status_no_observation">No observation yet</string>
+    <string name="plant_health_detail_action_description">Open plant details for %1$s</string>
     <string name="plant_health_detail_title">Plant Detail</string>
     <string name="plant_health_tab_overview">Overview</string>
     <string name="plant_health_tab_observations">Observations</string>
@@ -124,8 +120,4 @@
     <string name="plant_health_placement_epiphyte">Epiphyte</string>
     <string name="plant_health_placement_surface">Surface</string>
     <string name="plant_health_placement_surface_leaves">Surface leaves</string>
-    <plurals name="plant_health_entry_assigned_count">
-        <item quantity="one">%d assigned plant</item>
-        <item quantity="other">%d assigned plants</item>
-    </plurals>
 </resources>

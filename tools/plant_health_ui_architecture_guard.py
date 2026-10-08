@@ -3,12 +3,12 @@
 
 from pathlib import Path
 import sys
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 RES = ROOT / "app/src/main/res"
 
-HOME = APP / "ui/tabs/aquarium/detail/health/PlantHealthFragment.kt"
 DETAIL = APP / "ui/tabs/aquarium/detail/health/PlantHealthDetailFragment.kt"
 DETAIL_BINDER = APP / "ui/tabs/aquarium/detail/health/PlantHealthDetailUiBinder.kt"
 OBSERVATION = APP / "ui/tabs/aquarium/detail/health/PlantHealthObservationFragment.kt"
@@ -19,7 +19,8 @@ ALGAE_CONTROL = APP / "ui/tabs/aquarium/detail/health/PlantHealthAlgaeControlFra
 CATALOG_UI = APP / "ui/tabs/aquarium/detail/health/PlantHealthCatalogUi.kt"
 TANK_PLANTS = APP / "ui/tabs/aquarium/detail/TankDetailPlantsFragment.kt"
 
-HOME_LAYOUT = RES / "layout/fragment_plant_health.xml"
+TANK_PLANTS_LAYOUT = RES / "layout/fragment_tank_detail_plants.xml"
+PLANT_CARD_LAYOUT = RES / "layout/item_tank_plant_photo.xml"
 DETAIL_LAYOUT = RES / "layout/fragment_plant_health_detail.xml"
 OBSERVATION_LAYOUT = RES / "layout/fragment_plant_health_observation.xml"
 HISTORY_LAYOUT = RES / "layout/fragment_plant_health_history.xml"
@@ -33,7 +34,6 @@ ENTITY_STRINGS_TR = RES / "values-tr/entity_health_strings.xml"
 NAVIGATION = RES / "navigation/nav_aquarium.xml"
 
 required = (
-    HOME,
     DETAIL,
     DETAIL_BINDER,
     OBSERVATION,
@@ -43,7 +43,8 @@ required = (
     ALGAE_CONTROL,
     CATALOG_UI,
     TANK_PLANTS,
-    HOME_LAYOUT,
+    TANK_PLANTS_LAYOUT,
+    PLANT_CARD_LAYOUT,
     DETAIL_LAYOUT,
     OBSERVATION_LAYOUT,
     HISTORY_LAYOUT,
@@ -70,23 +71,13 @@ def read(path: Path) -> str:
 for path in required:
     read(path)
 
-home = read(HOME)
-for token in (
-    "tanks.firstOrNull",
-    "?.plants",
-    "PlantHealthCatalogUi.record",
-    "actionPlantHealthFragmentToPlantHealthDetailFragment",
-    "binding.etSearch.doAfterTextChanged",
+for legacy_file in (
+    APP / "ui/tabs/aquarium/detail/health/PlantHealthFragment.kt",
+    RES / "layout/fragment_plant_health.xml",
+    RES / "layout/item_plant_health_plant.xml",
 ):
-    if token not in home:
-        errors.append(f"{HOME.relative_to(ROOT)}: assigned-plant home flow missing: {token}")
-for forbidden in (
-    "PlantPickerFragment",
-    "PlantCatalog.resolve",
-    "actionPlantHealthFragmentToPlantPicker",
-):
-    if forbidden in home:
-        errors.append(f"{HOME.relative_to(ROOT)}: catalog selection leaked into health flow: {forbidden}")
+    if legacy_file.exists():
+        errors.append(f"{legacy_file.relative_to(ROOT)}: duplicate assigned-plant list must stay removed")
 
 detail = read(DETAIL)
 for token in (
@@ -138,13 +129,15 @@ for token in (
     'android:id="@+id/plantHealthDetailFragment"',
     'android:id="@+id/plantHealthObservationFragment"',
     'android:id="@+id/plantHealthHistoryFragment"',
-    "action_plantHealthFragment_to_plantHealthDetailFragment",
+    "action_tankDetailFragment_to_plantHealthDetailFragment",
     "action_plantHealthDetailFragment_to_plantHealthObservationFragment",
     "action_plantHealthDetailFragment_to_plantHealthHistoryFragment",
 ):
     if token not in navigation:
         errors.append(f"{NAVIGATION.relative_to(ROOT)}: Plant Health navigation missing: {token}")
 for forbidden in (
+    '@+id/plantHealthFragment',
+    "action_tankDetailFragment_to_plantHealthFragment",
     "plantHealthAnalysisResultFragment",
     "plantHealthAlgaeDetectionFragment",
     "plantHealthAlgaeControlFragment",
@@ -152,29 +145,77 @@ for forbidden in (
 ):
     if forbidden in navigation:
         errors.append(
-            f"{NAVIGATION.relative_to(ROOT)}: analysis/algae navigation must remain deferred: {forbidden}"
+            f"{NAVIGATION.relative_to(ROOT)}: removed or deferred navigation remains: {forbidden}"
         )
 
-for source in (HOME, DETAIL, OBSERVATION, HISTORY, ANALYSIS_RESULT, ALGAE_DETECTION, ALGAE_CONTROL):
+android = "{http://schemas.android.com/apk/res/android}"
+app = "{http://schemas.android.com/apk/res-auto}"
+try:
+    graph = ET.fromstring(navigation)
+    tank = next(node for node in graph.iter("fragment")
+                if node.get(android + "id") == "@+id/tankDetailFragment")
+    action = next(node for node in tank.findall("action")
+                  if node.get(android + "id") ==
+                  "@+id/action_tankDetailFragment_to_plantHealthDetailFragment")
+    if action.get(app + "destination") != "@id/plantHealthDetailFragment":
+        errors.append("Plant card must navigate directly from tank detail to plant detail")
+    arguments = {node.get(android + "name"): node.get(app + "argType")
+                 for node in action.findall("argument")}
+    if arguments != {"tankId": "long", "plantId": "long"}:
+        errors.append("Direct plant detail action must carry both tankId and plantId as longs")
+except (ET.ParseError, StopIteration):
+    errors.append("Direct tank-to-plant-detail navigation contract is missing or malformed")
+
+for source in (DETAIL, OBSERVATION, HISTORY, ANALYSIS_RESULT, ALGAE_DETECTION, ALGAE_CONTROL):
     text = read(source)
     if "setupAquaHeader" not in text:
         errors.append(f"{source.relative_to(ROOT)}: shared AquaHeader is required")
 
 tank_plants = read(TANK_PLANTS)
 for forbidden in (
+    "plantHealthEntry",
+    "PlantPickerFragment",
+    "PlantCatalog.resolve",
     "R.string.plant_health_entry_summary",
     "R.string.plant_health_entry_last_check",
 ):
     if forbidden in tank_plants:
         errors.append(
-            f"{TANK_PLANTS.relative_to(ROOT)}: fake Plant Health entry copy remains: {forbidden}"
+            f"{TANK_PLANTS.relative_to(ROOT)}: duplicate/fake health entry or catalog selection remains: {forbidden}"
         )
 for token in (
-    "R.plurals.plant_health_entry_assigned_count",
-    "R.string.plant_health_status_no_observation",
+    "tanks.firstOrNull { it.id == tankId }",
+    "renderPlants(tank.plants)",
+    "actionTankDetailFragmentToPlantHealthDetailFragment",
+    "tankId = tankId",
+    "plantId = plant.id",
+    "TankDetailFragment.KEY_SELECTED_TAB",
+    "TankDetailTabArgs.PLANTS",
+    "isNavigating || photoTarget.isInProgress || photoActionsBlocked",
+    "item.plantCard.setOnClickListener",
+    "openPlantDetail(plant)",
+    "item.btnPlantPhoto.setOnClickListener",
+    "showPlantPhotoSource(plant)",
+    "R.string.plant_health_detail_action_description",
+    "item.btnPlantPhoto.contentDescription",
+    "R.string.aquarium_plant_photo_action_description",
 ):
     if token not in tank_plants:
-        errors.append(f"{TANK_PLANTS.relative_to(ROOT)}: truthful Plant Health entry missing: {token}")
+        errors.append(f"{TANK_PLANTS.relative_to(ROOT)}: direct plant/card photo flow missing: {token}")
+
+if "plantHealthEntry" in read(TANK_PLANTS_LAYOUT):
+    errors.append(f"{TANK_PLANTS_LAYOUT.relative_to(ROOT)}: duplicate health-list entry remains")
+try:
+    card = ET.fromstring(read(PLANT_CARD_LAYOUT))
+    photo = next(node for node in card.iter()
+                 if node.get(android + "id") == "@+id/btnPlantPhoto")
+    for dimension in ("layout_width", "layout_height"):
+        if photo.get(android + dimension) != "@dimen/aqua_size_48":
+            errors.append("Separate plant photo button must retain its 48dp touch target")
+    if photo.get("style") != "@style/Widget.Aqua.Button.IconToggle":
+        errors.append("Plant photo button must use the shared Aqua icon button style")
+except (ET.ParseError, StopIteration):
+    errors.append("Separate plant photo button is missing or malformed")
 
 for strings_file in (ENTITY_STRINGS, ENTITY_STRINGS_TR):
     text = read(strings_file)
@@ -190,6 +231,7 @@ for strings_file in (ENTITY_STRINGS, ENTITY_STRINGS_TR):
 for strings_file in (PLANT_STRINGS, PLANT_STRINGS_TR):
     text = read(strings_file)
     for token in (
+        'name="plant_health_detail_action_description"',
         'name="plant_health_status_no_observation"',
         'name="plant_health_tab_overview"',
         'name="plant_health_tab_observations"',
@@ -207,6 +249,6 @@ if errors:
     raise SystemExit(1)
 
 print(
-    "Plant Health UI architecture guard passed: assigned plants are the source of truth, "
-    "detail tabs are present, fake health copy is removed, and analysis/algae navigation is deferred."
+    "Plant Health UI architecture guard passed: tank plant cards open detail directly, "
+    "photo actions stay separate, detail tabs are present, and analysis/algae navigation is deferred."
 )

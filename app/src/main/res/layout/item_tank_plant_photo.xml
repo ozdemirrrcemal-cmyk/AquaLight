@@ -70,9 +70,10 @@
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_14"
+            android:layout_marginEnd="@dimen/aqua_size_8"
             android:orientation="vertical"
             app:layout_constraintStart_toEndOf="@id/plantPhotoFrame"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivPlantDetailArrow"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
 
@@ -98,9 +99,28 @@
                 android:textSize="@dimen/aqua_text_size_body" />
 
         </LinearLayout>
+        <ImageView
+            android:id="@+id/ivPlantDetailArrow"
+            android:layout_width="@dimen/aqua_size_20"
+            android:layout_height="@dimen/aqua_size_20"
+            android:layout_marginEnd="@dimen/aqua_size_8"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_arrow_right"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnPlantPhoto"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/aqua_card_text_secondary" />
 
-
-
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPlantPhoto"
+            style="@style/Widget.Aqua.Button.IconToggle"
+            android:layout_width="@dimen/aqua_size_48"
+            android:layout_height="@dimen/aqua_size_48"
+            app:icon="@drawable/ic_camera_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

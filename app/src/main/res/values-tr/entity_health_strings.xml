@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="screen_title_plant_health">Bitki Sağlığı</string>
     <string name="screen_title_livestock_health">Canlı Sağlığı</string>
 
-    <string name="plant_health_entry_title">Bitki Sağlığı</string>
     <string name="livestock_health_entry_title">Canlı Sağlığı</string>
     <string name="livestock_health_entry_no_active_followups">Aktif takip yok</string>
     <plurals name="livestock_health_entry_record_count">

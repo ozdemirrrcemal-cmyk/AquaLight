@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="plant_health_search_hint">Tank bitkilerinde ara</string>
-    <string name="plant_health_home_info_title">Bu tankın bitki sağlığı</string>
-    <string name="plant_health_home_info_body">Yalnız bu tanka atanmış bitkileri takip edin. Katalog bakım profilini, gözlemler ise sağlık geçmişini oluşturur.</string>
-    <string name="plant_health_no_plants_title">Bu tanka atanmış bitki yok</string>
-    <string name="plant_health_no_plants_body">Bitki sağlığı takibine başlamadan önce Bitkiler sekmesinden bitki ekleyin.</string>
     <string name="plant_health_status_no_observation">Henüz gözlem yok</string>
+    <string name="plant_health_detail_action_description">%1$s için bitki detayını aç</string>
     <string name="plant_health_detail_title">Bitki Detayı</string>
     <string name="plant_health_tab_overview">Genel Bakış</string>
     <string name="plant_health_tab_observations">Gözlemler</string>
@@ -124,8 +120,4 @@
     <string name="plant_health_placement_epiphyte">Epifit</string>
     <string name="plant_health_placement_surface">Yüzey</string>
     <string name="plant_health_placement_surface_leaves">Yüzey yapraklı</string>
-    <plurals name="plant_health_entry_assigned_count">
-        <item quantity="one">%d atanmış bitki</item>
-        <item quantity="other">%d atanmış bitki</item>
-    </plurals>
 </resources>
