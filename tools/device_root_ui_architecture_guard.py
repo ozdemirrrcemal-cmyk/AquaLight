@@ -1003,19 +1003,28 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
             "Light must construct exactly one owner-scoped runtime state owner",
         ),
         (
-            "DeviceLightRuntimeRepository(commandGateway, lightStateOwner)",
-            "main Light runtime must share the central state owner",
-        ),
-        (
-            "DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateOwner)",
-            "Light protection runtime must share the central state owner",
-        ),
-        (
-            "DeviceLightThermalRuntimeRepository(commandGateway, lightStateOwner)",
-            "Light thermal runtime must share the central state owner",
+            "private val lightOperationGate = DeviceLightDeviceOperationGate(",
+            "Light must construct exactly one shared device-operation gate",
         ),
     ):
         _require(LIGHT_RUNTIME_PROVIDER, provider, errors, token, reason)
+
+    # The same state owner and operation gate must reach every Light module.
+    # Permit whitespace/line breaks without weakening constructor identity checks.
+    for constructor, reason in (
+        ("DeviceLightRuntimeRepository", "main Light runtime"),
+        ("DeviceLightTemperatureProtectionRuntimeRepository", "Light protection runtime"),
+        ("DeviceLightThermalRuntimeRepository", "Light thermal runtime"),
+    ):
+        signature = (
+            rf"\\b{re.escape(constructor)}\\("
+            r"\\s*commandGateway\\s*,\\s*lightStateOwner\\s*,"
+            r"\\s*lightOperationGate\\s*\\)"
+        )
+        if not re.search(signature, provider):
+            errors.append(
+                f"{LIGHT_RUNTIME_PROVIDER}: {reason} must share Light state owner and operation gate"
+            )
 
     production_owner_constructions: list[tuple[Path, int]] = []
     main_source_root = repository_root / MAIN_SOURCE_ROOT
