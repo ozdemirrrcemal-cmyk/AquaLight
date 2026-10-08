@@ -9,6 +9,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
+import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
@@ -200,7 +201,9 @@ internal class OwnerViewModelFactory(
                         cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
                         reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
                     ),
-                    notificationPreferences = notificationPreferenceUseCase
+                    operationDependencies = AquariumTankOperationDependencies(
+                        notificationPreferences = notificationPreferenceUseCase
+                    )
                 )
             )
             MaintenanceViewModel::class.java -> MaintenanceViewModel(

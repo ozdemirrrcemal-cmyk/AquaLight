@@ -9,15 +9,19 @@ import org.junit.Test
 /** Visible labels may change with language; persisted taxonomy codes must never change. */
 class AquariumTankTaxonomyTextTest {
     private val turkishLabels = mapOf(
-        R.string.aquarium_tank_type_fish to "Balık",
-        R.string.aquarium_tank_type_shrimp to "Karides",
-        R.string.aquarium_tank_type_planted to "Bitkili",
-        R.string.aquarium_tank_type_marine to "Deniz",
-        R.string.aquarium_tank_type_softies to "Yumuşak Mercan",
-        R.string.aquarium_tank_type_mixed_reef to "Karma Resif",
-        R.string.aquarium_tank_type_sps to "SPS",
-        R.string.aquarium_tank_type_coral to "Mercan",
-        R.string.aquarium_tank_type_other to "Diğer",
+        R.string.aquarium_water_environment_freshwater to "Tatlı Su",
+        R.string.aquarium_water_environment_brackish to "Acı Su",
+        R.string.aquarium_water_environment_marine to "Deniz",
+        R.string.aquarium_tank_profile_freshwater_fish to "Balık / Genel",
+        R.string.aquarium_tank_profile_planted to "Bitkili",
+        R.string.aquarium_tank_profile_shrimp to "Karides",
+        R.string.aquarium_tank_profile_brackish_general to "Acı Su",
+        R.string.aquarium_tank_profile_marine_fish to "Balık / FOWLR",
+        R.string.aquarium_tank_profile_soft_coral_reef to "Yumuşak Mercan",
+        R.string.aquarium_tank_profile_lps_reef to "LPS Resif",
+        R.string.aquarium_tank_profile_sps_reef to "SPS Resif",
+        R.string.aquarium_tank_profile_mixed_reef to "Karma Resif",
+        R.string.aquarium_tank_profile_other to "Diğer",
         R.string.aquarium_text_nature_aquarium to "Doğa Akvaryumu",
         R.string.aquarium_style_iwagumi to "Iwagumi",
         R.string.aquarium_style_dutch to "Hollanda",
@@ -29,38 +33,47 @@ class AquariumTankTaxonomyTextTest {
         R.string.aquarium_style_island to "Ada"
     )
 
+    private val resolver = AquariumTankTaxonomyTextResolver(::labelFor)
+
     private fun labelFor(resId: Int): String = requireNotNull(turkishLabels[resId])
 
     @Test
-    fun translatedTankTypeIsConvertedToStableCode() {
+    fun translatedEnvironmentAndTankProfileUseStableCodes() {
         assertEquals(
-            AquariumTankTaxonomy.TYPE_SHRIMP,
-            AquariumTankTaxonomyText.canonicalTankType("Karides", ::labelFor)
+            AquariumTankTaxonomy.WATER_ENVIRONMENT_BRACKISH,
+            resolver.canonicalWaterEnvironment("Acı Su")
         )
         assertEquals(
             AquariumTankTaxonomy.TYPE_SHRIMP,
-            AquariumTankTaxonomyText.canonicalTankType("Shrimp", ::labelFor)
+            resolver.canonicalTankType("Karides")
         )
         assertEquals(
-            "Karides",
-            AquariumTankTaxonomyText.tankTypeLabel("Shrimp", ::labelFor)
+            AquariumTankTaxonomy.TYPE_SHRIMP,
+            resolver.canonicalTankType("Shrimp")
         )
-        assertNull(AquariumTankTaxonomyText.canonicalTankType("Bilinmeyen", ::labelFor))
+        assertEquals("Karides", resolver.tankTypeLabel("Shrimp"))
+        assertNull(resolver.canonicalTankType("Bilinmeyen"))
+    }
+
+    @Test
+    fun ambiguousOtherLabelCannotBecomeAnArbitraryStableProfile() {
+        assertNull(resolver.canonicalTankType("Diğer"))
+        assertEquals(
+            "Diğer",
+            resolver.tankTypeLabel(AquariumTankTaxonomy.TYPE_OTHER_MARINE)
+        )
     }
 
     @Test
     fun presetStyleUsesStableCodeWhileCustomStyleRemainsUserText() {
         assertEquals(
             AquariumTankTaxonomy.STYLE_DUTCH,
-            AquariumTankTaxonomyText.canonicalTankStyle("Hollanda", ::labelFor)
+            resolver.canonicalTankStyle("Hollanda")
         )
-        assertEquals(
-            "Hollanda",
-            AquariumTankTaxonomyText.tankStyleLabel("Dutch", ::labelFor)
-        )
+        assertEquals("Hollanda", resolver.tankStyleLabel("Dutch"))
         assertEquals(
             "Benim Stilim",
-            AquariumTankTaxonomyText.canonicalTankStyle(" Benim Stilim ", ::labelFor)
+            resolver.canonicalTankStyle(" Benim Stilim ")
         )
     }
 }

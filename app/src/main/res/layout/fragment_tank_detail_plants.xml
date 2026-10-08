@@ -21,13 +21,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <include
-            android:id="@+id/plantHealthEntry"
-            layout="@layout/item_aquarium_health_entry_card"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_size_86"
-            android:layout_marginBottom="@dimen/aqua_size_16" />
-
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/plantsHeaderRow"
             android:layout_width="match_parent"

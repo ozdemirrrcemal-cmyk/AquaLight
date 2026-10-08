@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.notifications.NotificationPreferenceReposi
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.notifications.NotificationRenderer
 import com.aqua.aqualight.application.notifications.NotificationScheduler
+import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -33,7 +34,7 @@ class PlantPhotoIsolationInstrumentedTest {
     private val store = AquariumTankDataStoreManager(context)
 
     @Test
-    fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking {
+    fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking<Unit> {
         val owner = "plant-target-${UUID.randomUUID()}"
         UserDataScope.withOwnerUid(owner) {
             val draft = draft()
@@ -63,7 +64,7 @@ class PlantPhotoIsolationInstrumentedTest {
     }
 
     @Test
-    fun foreignOwnerWrongScopeMissingPlantAndSharedFileAreRejected() = runBlocking {
+    fun foreignOwnerWrongScopeMissingPlantAndSharedFileAreRejected() = runBlocking<Unit> {
         val owner = "plant-owner-${UUID.randomUUID()}"
         val other = "${owner}_other"
         val foreign = pending(other)
@@ -98,7 +99,7 @@ class PlantPhotoIsolationInstrumentedTest {
     }
 
     @Test
-    fun applicationBoundaryRejectsChangedOwnerAndPreservesForeignOrReferencedFiles() = runBlocking {
+    fun applicationBoundaryRejectsChangedOwnerAndPreservesForeignOrReferencedFiles() = runBlocking<Unit> {
         val owner = "plant-application-${UUID.randomUUID()}"
         val foreignOwner = "${owner}_other"
         val foreign = pending(foreignOwner)
@@ -152,12 +153,14 @@ class PlantPhotoIsolationInstrumentedTest {
             cancelCareTaskReminder = { _, _ -> error("Unexpected notification access") },
             reconcileCareReminders = { error("Unexpected notification access") }
         ),
-        notificationPreferences = NotificationPreferenceUseCase(
-            repository = unused(NotificationPreferenceRepository::class.java),
-            permissionPolicy = unused(NotificationPermissionPolicy::class.java),
-            scheduler = unused(NotificationScheduler::class.java),
-            deviceUpdateWorkCoordinator = unused(DeviceUpdateNotificationWorkCoordinator::class.java),
-            renderer = unused(NotificationRenderer::class.java)
+        operationDependencies = AquariumTankOperationDependencies(
+            notificationPreferences = NotificationPreferenceUseCase(
+                repository = unused(NotificationPreferenceRepository::class.java),
+                permissionPolicy = unused(NotificationPermissionPolicy::class.java),
+                scheduler = unused(NotificationScheduler::class.java),
+                deviceUpdateWorkCoordinator = unused(DeviceUpdateNotificationWorkCoordinator::class.java),
+                renderer = unused(NotificationRenderer::class.java)
+            )
         )
     )
 

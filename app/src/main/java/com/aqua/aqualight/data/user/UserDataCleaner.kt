@@ -78,20 +78,12 @@ class UserDataCleaner private constructor(
             issues += CleanupIssue(step = step, error = error)
         }
 
-        val aquariumPhotoUris = runCatching {
-            tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .flatMap { tank -> tank.photoUris() }
-        }.getOrElse { error ->
-            recordIssue(Step.AQUARIUM_TANKS, error)
-            emptyList()
-        }
-
-        val profilePhotoUri = runCatching {
-            userPreferencesManager.profilePhotoUrlForOwner(targetOwnerUid)
-        }.getOrElse { error ->
-            recordIssue(Step.USER_PREFERENCES, error)
-            ""
-        }
+        val mediaSnapshot = UserDataCleanupSnapshotter.capture(
+            ownerUid = targetOwnerUid,
+            tankStore = tankDataStoreManager,
+            preferences = userPreferencesManager
+        )
+        issues += mediaSnapshot.issues
 
         suspend fun runStep(step: Step, block: suspend () -> Unit) {
             runCatching { block() }.onFailure { error ->
@@ -110,32 +102,22 @@ class UserDataCleaner private constructor(
             }
         }
 
-        runStep(Step.CARE_TASKS) {
-            NotificationPlatform.get(appContext)
-                .preferenceUseCase
-                .cancelOwner(targetOwnerUid)
-            CareTaskDataStoreManager.create(appContext)
-                .clearAllTasks(ownerUid = targetOwnerUid)
-        }
-
-        runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
-
-        runStep(Step.DEVICE_ASSIGNMENTS) {
-            TankDeviceAssignmentStore.get(appContext)
-                .clearOwnerAssignments(ownerUid = targetOwnerUid)
+        clearOwnerStores(
+            ownerUid = targetOwnerUid,
+            tankStore = tankDataStoreManager
+        ) { step, block ->
+            runStep(step, block)
         }
 
         runStep(Step.PROVISIONING_SESSIONS) {
             clearProvisioningData(targetOwnerUid)
         }
 
-        clearDeviceStores(targetOwnerUid) { step, block -> runStep(step, block) }
-
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
                 ownerUid = targetOwnerUid,
-                profilePhotoUri = profilePhotoUri,
-                aquariumPhotoUris = aquariumPhotoUris
+                profilePhotoUri = mediaSnapshot.profilePhotoUri,
+                aquariumPhotoUris = mediaSnapshot.aquariumPhotoUris
             )
         }
 
@@ -148,10 +130,25 @@ class UserDataCleaner private constructor(
         return CleanupResult(issues = issues.toList())
     }
 
-    private suspend fun clearDeviceStores(
+    private suspend fun clearOwnerStores(
         ownerUid: String,
+        tankStore: AquariumTankDataStoreManager,
         runStep: suspend (Step, suspend () -> Unit) -> Unit
     ) {
+        runStep(Step.CARE_TASKS) {
+            NotificationPlatform.get(appContext)
+                .preferenceUseCase
+                .cancelOwner(ownerUid)
+            CareTaskDataStoreManager.create(appContext)
+                .clearAllTasks(ownerUid = ownerUid)
+        }
+        runStep(Step.AQUARIUM_TANKS) {
+            tankStore.clearAllTanks(ownerUid)
+        }
+        runStep(Step.DEVICE_ASSIGNMENTS) {
+            TankDeviceAssignmentStore.get(appContext)
+                .clearOwnerAssignments(ownerUid = ownerUid)
+        }
         runStep(Step.KNOWN_DEVICES) {
             DeviceKnownStore(
                 context = appContext,
@@ -307,9 +304,3 @@ class UserDataCleaner private constructor(
     }
 }
 
-private fun com.aqua.aqualight.data.aquarium.model.SavedAquariumTank.photoUris(): List<String> =
-    buildList {
-        photoUri?.takeIf(String::isNotBlank)?.let(::add)
-        plants.mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
-        livestock.mapNotNull { item -> item.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
-    }

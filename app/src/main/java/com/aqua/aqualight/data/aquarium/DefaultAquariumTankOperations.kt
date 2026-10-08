@@ -33,17 +33,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
+data class AquariumTankOperationDependencies(
+    val notificationPreferences: NotificationPreferenceUseCase
+)
+
 class DefaultAquariumTankOperations(
     context: Context,
     private val tankStore: AquariumTankDataStoreManager,
     private val tankDataCleaner: OwnerTankDataCleaner,
-    private val notificationPreferences: NotificationPreferenceUseCase,
+    operationDependencies: AquariumTankOperationDependencies,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AquariumTankOperations,
     AquariumPlantPhotoOperations by DefaultPlantPhotoOperations(context, tankStore, dispatcher),
     AquariumLivestockPhotoOperations by DefaultLivestockPhotoOperations(context, tankStore, dispatcher) {
 
     private val appContext = context.applicationContext
+    private val notificationPreferences = operationDependencies.notificationPreferences
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->

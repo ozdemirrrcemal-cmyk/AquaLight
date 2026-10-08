@@ -38,7 +38,6 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private var tankId: Long = 0L
     private var currentTank: AquariumTankSnapshot? = null
     private var isOpeningSettings: Boolean = false
-    private var isOpeningHealth: Boolean = false
     private var isUpdatingVolumeUnit: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,24 +56,9 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     override fun onResume() {
         super.onResume()
         isOpeningSettings = false
-        isOpeningHealth = false
     }
 
     private fun setupClickListeners() {
-        binding.cardTankHealth.setOnClickListener {
-            if (isOpeningHealth) {
-                return@setOnClickListener
-            }
-
-            val didNavigate = findNavController().navigateSafelyFrom(
-                sourceDestinationId = R.id.tankDetailFragment,
-                directions = TankDetailFragmentDirections
-                    .actionTankDetailFragmentToTankHealthFragment(tankId)
-            )
-
-            isOpeningHealth = didNavigate
-        }
-
         binding.cardTankValue.setOnClickListener {
             toggleTankVolumeUnit()
         }

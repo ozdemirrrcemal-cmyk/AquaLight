@@ -479,7 +479,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragmentManager = childFragmentManager,
             mode = TankSettingsEditorBottomSheet.Mode.TYPE,
             title = getString(R.string.aquarium_tank_type_title),
-            currentText = AquariumTankTaxonomyText.tankTypeLabel(requireContext(), tank.tankType)
+            currentText = tank.tankType
         )
     }
 
