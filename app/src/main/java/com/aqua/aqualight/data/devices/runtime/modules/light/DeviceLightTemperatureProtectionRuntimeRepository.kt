@@ -50,14 +50,22 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
     ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {
-        val expectedGeneration = stateOwner.currentGeneration(deviceUid)
+        val expectedGeneration = stateOwner.currentGeneration(
+            deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+        )
         return operationGate.withMutation(deviceUid) {
             if (
-                expectedGeneration != null &&
-                stateOwner.currentGeneration(deviceUid) == expectedGeneration &&
-                stateOwner.isAuthoritative(
-                    DeviceLightRuntimeProjection.STATUS, deviceUid, expectedGeneration
-                )
+                expectedGeneration == null ||
+                (
+                    stateOwner.currentGeneration(
+                        deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+                    ) == expectedGeneration &&
+                        stateOwner.isAuthoritative(
+                            DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                            deviceUid,
+                            expectedGeneration
+                        )
+                    )
             ) {
                 setThresholdWithinGate(deviceUid, payload)
             } else {

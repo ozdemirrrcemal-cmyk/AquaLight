@@ -47,14 +47,22 @@ class DeviceLightThermalRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         payload: DeviceLightThermalConfigApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> {
-        val expectedGeneration = stateOwner.currentGeneration(deviceUid)
+        val expectedGeneration = stateOwner.currentGeneration(
+            deviceUid, DeviceLightRuntimeProjection.THERMAL
+        )
         return operationGate.withMutation(deviceUid) {
             if (
-                expectedGeneration != null &&
-                stateOwner.currentGeneration(deviceUid) == expectedGeneration &&
-                stateOwner.isAuthoritative(
-                    DeviceLightRuntimeProjection.STATUS, deviceUid, expectedGeneration
-                )
+                expectedGeneration == null ||
+                (
+                    stateOwner.currentGeneration(
+                        deviceUid, DeviceLightRuntimeProjection.THERMAL
+                    ) == expectedGeneration &&
+                        stateOwner.isAuthoritative(
+                            DeviceLightRuntimeProjection.THERMAL,
+                            deviceUid,
+                            expectedGeneration
+                        )
+                    )
             ) {
                 applyConfigWithinGate(deviceUid, payload)
             } else {

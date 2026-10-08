@@ -159,8 +159,11 @@ internal class DeviceLightRuntimeStateOwner {
         }
     }
 
-    fun currentGeneration(deviceUid: DeviceUid): DeviceRuntimeConnectionGeneration? =
-        authorityCoordinator.currentGeneration(DeviceLightRuntimeProjection.STATUS, deviceUid)
+    fun currentGeneration(
+        deviceUid: DeviceUid,
+        projection: DeviceLightRuntimeProjection = DeviceLightRuntimeProjection.STATUS
+    ): DeviceRuntimeConnectionGeneration? =
+        authorityCoordinator.currentGeneration(projection, deviceUid)
 
     fun beginStatusRequest(deviceUid: DeviceUid): DeviceLightStatusRequestToken? =
         synchronized(lock) {
