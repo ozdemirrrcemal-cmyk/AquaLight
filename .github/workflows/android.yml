@@ -317,6 +317,10 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
 
+      # Compile instrumentation sources in main CI to catch API/constructor drift before emulator startup.
+      - name: Compile Debug instrumentation tests
+        run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon
+
       - name: Verify merged manifest telemetry policy
         run: python3 tools/firebase_telemetry_guard.py --scan-build-output
 
