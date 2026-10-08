@@ -9,7 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 
 class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    private val stateOwner: DeviceLightRuntimeStateOwner
+    private val stateOwner: DeviceLightRuntimeStateOwner,
+    private val operationGate: DeviceLightDeviceOperationGate = DeviceLightDeviceOperationGate()
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
         stateOwner.temperatureProtection
@@ -46,6 +47,12 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     }
 
     suspend fun setThreshold(
+        deviceUid: DeviceUid,
+        payload: DeviceLightTemperatureProtectionSetPayload
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> =
+        operationGate.withMutation(deviceUid) { setThresholdWithinGate(deviceUid, payload) }
+
+    private suspend fun setThresholdWithinGate(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
     ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {

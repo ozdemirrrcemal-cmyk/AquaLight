@@ -45,6 +45,29 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         }
 
     @Test
+    fun `bootstrap requests only status and full Light hydration remains on demand`() = runTest {
+        val fixture = fixture(generationOne)
+        assertTrue(
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne) is
+                DeviceLightRuntimeBootstrapResult.Hydrated
+        )
+        assertEquals(listOf(DeviceLightRuntimeContract.Action.STATUS_GET), fixture.gateway.actions)
+        assertNotNull(fixture.runtime.currentStatus(deviceUid))
+        assertNull(
+            fixture.runtime.currentDashboard(
+                deviceUid, DeviceLightDashboardReadAuthority.AUTHORITATIVE
+            )
+        )
+
+        assertTrue(fixture.coordinator.refreshAll(deviceUid).isSuccess())
+        assertNotNull(fixture.runtime.currentAuthoritativeSurface())
+        assertEquals(
+            listOf(DeviceLightRuntimeContract.Action.STATUS_GET) + expectedRefreshActions,
+            fixture.gateway.actions
+        )
+    }
+
+    @Test
     fun `central refresh hydrates managed AUTO plan only when firmware reports it installed`() =
         runTest {
             val fixture = fixture(
@@ -82,12 +105,70 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         assertEquals(expectedRefreshActions, fixture.gateway.actions)
     }
 
+    @Test
+    fun `new connection generation does not reuse stale Light refresh flight`() = runTest {
+        val statusGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, statusGate)
+        val oldRefresh = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.refreshGeneration(deviceUid, generationOne)
+        }
+        assertEquals(
+            listOf(DeviceLightRuntimeContract.Action.STATUS_GET),
+            fixture.gateway.actions
+        )
+
+        fixture.owner.invalidate(deviceUid, generationOne)
+        fixture.owner.beginGeneration(deviceUid, generationTwo)
+        fixture.gateway.generation = generationTwo
+        val newRefresh = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.refreshGeneration(deviceUid, generationTwo)
+        }
+        statusGate.complete(Unit)
+
+        assertTrue(oldRefresh.await() is DeviceLightRuntimeRefreshResult.RejectedStale)
+        assertTrue(newRefresh.await().isSuccess())
+        assertEquals(
+            listOf(DeviceLightRuntimeContract.Action.STATUS_GET) + expectedRefreshActions,
+            fixture.gateway.actions
+        )
+    }
+
+    @Test
+    fun `Light mutation and central refresh share one device operation gate`() = runTest {
+        val mutationGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, mutationGate = mutationGate)
+        assertTrue(fixture.runtime.requestStatus(deviceUid) is DeviceRuntimeCommandOutcome.Success)
+        fixture.gateway.actions.clear()
+
+        val mutation = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.runtime.productCommand(
+                deviceUid = deviceUid,
+                action = DeviceLightRuntimeContract.Action.MANUAL_OFF,
+                parser = { _, _ -> Unit }
+            )
+        }
+        assertEquals(listOf(DeviceLightRuntimeContract.Action.MANUAL_OFF), fixture.gateway.actions)
+        val refresh = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.refreshAll(deviceUid)
+        }
+        assertEquals(listOf(DeviceLightRuntimeContract.Action.MANUAL_OFF), fixture.gateway.actions)
+
+        mutationGate.complete(Unit)
+        assertTrue(mutation.await() is DeviceRuntimeCommandOutcome.Success)
+        assertTrue(refresh.await().isSuccess())
+        assertEquals(
+            listOf(DeviceLightRuntimeContract.Action.MANUAL_OFF) + expectedRefreshActions,
+            fixture.gateway.actions
+        )
+    }
+
     private fun fixture(
         generation: DeviceRuntimeConnectionGeneration,
         statusGate: CompletableDeferred<Unit>? = null,
-        managedPlanInstalled: Boolean = false
+        managedPlanInstalled: Boolean = false,
+        mutationGate: CompletableDeferred<Unit>? = null
     ): RefreshFixture {
-        val gateway = FixtureGateway(generation, statusGate, managedPlanInstalled)
+        val gateway = FixtureGateway(generation, statusGate, managedPlanInstalled, mutationGate)
         val owner = DeviceLightRuntimeStateOwner()
         owner.beginGeneration(deviceUid, generation)
         val runtime = DeviceLightRuntimeRepository(gateway, owner)
@@ -113,7 +194,8 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
     private class FixtureGateway(
         var generation: DeviceRuntimeConnectionGeneration,
         private val statusGate: CompletableDeferred<Unit>?,
-        private val managedPlanInstalled: Boolean
+        private val managedPlanInstalled: Boolean,
+        private val mutationGate: CompletableDeferred<Unit>?
     ) : DeviceRuntimeCommandGateway {
         val actions = mutableListOf<String>()
 
@@ -125,6 +207,9 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             actions += command.action
             if (command.action == DeviceLightRuntimeContract.Action.STATUS_GET) {
                 statusGate?.await()
+            }
+            if (command.action == DeviceLightRuntimeContract.Action.MANUAL_OFF) {
+                mutationGate?.await()
             }
             val response = AqlWsIncomingMessage.Response(
                 id = "refresh-${actions.size}",
@@ -155,6 +240,7 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
                 managedAutoPlan()
             }
             DeviceLightRuntimeContract.Action.GRAPH_GET -> DeviceLightRuntimeFixtures.graph()
+            DeviceLightRuntimeContract.Action.MANUAL_OFF -> JSONObject()
             else -> error("Unexpected Light refresh action: $action")
         }
     }

@@ -11,7 +11,8 @@ import org.json.JSONObject
 /** One product-neutral Light V1 data source for WRGB Pro Elite and RGB Pro Slim. */
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    internal val stateOwner: DeviceLightRuntimeStateOwner
+    internal val stateOwner: DeviceLightRuntimeStateOwner,
+    internal val operationGate: DeviceLightDeviceOperationGate = DeviceLightDeviceOperationGate()
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateOwner.statuses
     val stateRevision: StateFlow<Long> = stateOwner.stateRevision
@@ -30,6 +31,7 @@ class DeviceLightRuntimeRepository internal constructor(
     ) = stateOwner.invalidate(deviceUid, generation)
 
     suspend fun requestStatus(deviceUid: DeviceUid): DeviceRuntimeCommandOutcome<DeviceLightStatus> {
+        val requestToken = stateOwner.beginStatusRequest(deviceUid)
         val outcome = gateway.execute(
             deviceUid,
             lightCommand(
@@ -38,7 +40,7 @@ class DeviceLightRuntimeRepository internal constructor(
             )
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value)
+            stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value, requestToken)
         }
         return outcome
     }
@@ -120,6 +122,20 @@ class DeviceLightRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         product: DeviceLightProduct,
         command: DeviceLightProductCommand<T>
+    ): DeviceRuntimeCommandOutcome<T> =
+        if (command.action.endsWith(".get")) {
+            executeProductCommandRaw(deviceUid, product, command)
+        } else {
+            // Readback and writes share one device gate; raw .get calls run inside central refresh.
+            operationGate.withMutation(deviceUid) {
+                executeProductCommandRaw(deviceUid, product, command)
+            }
+        }
+
+    private suspend fun <T> executeProductCommandRaw(
+        deviceUid: DeviceUid,
+        product: DeviceLightProduct,
+        command: DeviceLightProductCommand<T>
     ): DeviceRuntimeCommandOutcome<T> {
         val outcome = gateway.execute(
             deviceUid,
@@ -150,6 +166,15 @@ internal data class DeviceLightProductCommand<T>(
     val parser: (JSONObject, DeviceLightProduct) -> T,
     val refreshStatus: Boolean
 )
+
+internal fun DeviceLightRuntimeRepository.isCurrentGeneration(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = stateOwner.currentGeneration(deviceUid) == generation
+
+internal fun DeviceLightRuntimeRepository.currentConnectionGeneration(
+    deviceUid: DeviceUid
+): DeviceRuntimeConnectionGeneration? = stateOwner.currentGeneration(deviceUid)
 
 internal fun DeviceLightRuntimeRepository.isAuthoritative(
     deviceUid: DeviceUid,

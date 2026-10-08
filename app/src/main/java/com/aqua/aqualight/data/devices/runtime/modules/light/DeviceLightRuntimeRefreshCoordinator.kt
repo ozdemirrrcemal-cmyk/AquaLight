@@ -21,26 +21,65 @@ internal class DeviceLightRuntimeRefreshCoordinator(
     private val dashboardRefresh: DeviceLightDashboardRefreshCoordinator =
         DeviceLightDashboardRefreshCoordinator(runtime)
 ) {
+    private enum class RefreshKind { ALL, GENERATION, COMMITTED }
+
+    private data class RefreshKey(
+        val deviceUid: DeviceUid,
+        val generation: DeviceRuntimeConnectionGeneration,
+        val kind: RefreshKind,
+        val expectedMode: DeviceLightMode? = null
+    )
+
     private val inFlight = ConcurrentHashMap<
-        DeviceUid,
+        RefreshKey,
         CompletableDeferred<DeviceLightRuntimeRefreshResult>
         >()
 
-    suspend fun refreshAll(deviceUid: DeviceUid): DeviceLightRuntimeRefreshResult =
-        refresh(deviceUid) { refreshAllWithinFlight(deviceUid) }
+    suspend fun refreshAll(deviceUid: DeviceUid): DeviceLightRuntimeRefreshResult {
+        val generation = runtime.currentConnectionGeneration(deviceUid)
+            ?: return DeviceLightRuntimeRefreshResult.RejectedStale
+        return refresh(RefreshKey(deviceUid, generation, RefreshKind.ALL)) {
+            refreshAllWithinFlight(deviceUid)
+        }
+    }
 
     suspend fun refreshGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): DeviceLightRuntimeRefreshResult = refresh(deviceUid) {
-        refreshGenerationWithinFlight(deviceUid, generation)
-    }.forGeneration(generation)
+    ): DeviceLightRuntimeRefreshResult =
+        refresh(RefreshKey(deviceUid, generation, RefreshKind.GENERATION)) {
+            refreshGenerationWithinFlight(deviceUid, generation)
+        }
+
+    /** Only required Light status blocks RTC boot; detailed firmware reads remain on-demand. */
+    suspend fun hydrateStatus(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): DeviceLightRuntimeBootstrapResult = runtime.operationGate.withDevice(deviceUid) {
+        if (!runtime.isCurrentGeneration(deviceUid, generation)) {
+            DeviceLightRuntimeBootstrapResult.RejectedStale
+        } else {
+            when (val status = runtime.requestStatus(deviceUid)) {
+                is DeviceRuntimeCommandOutcome.Success -> if (
+                    status.generation == generation &&
+                    runtime.isAuthoritative(deviceUid, generation)
+                ) {
+                    DeviceLightRuntimeBootstrapResult.Hydrated(generation)
+                } else {
+                    DeviceLightRuntimeBootstrapResult.RejectedStale
+                }
+                else -> DeviceLightRuntimeBootstrapResult.Failed(status)
+            }
+        }
+    }
 
     suspend fun reconcileCommitted(
         deviceUid: DeviceUid,
         expectedMode: DeviceLightMode,
         generation: DeviceRuntimeConnectionGeneration
-    ): DeviceLightRuntimeRefreshResult = refresh(deviceUid) {
+    ): DeviceLightRuntimeRefreshResult = refresh(
+        RefreshKey(deviceUid, generation, RefreshKind.COMMITTED, expectedMode)
+    ) {
         val current = runtime.currentDashboard(
             deviceUid,
             DeviceLightDashboardReadAuthority.AUTHORITATIVE
@@ -77,23 +116,37 @@ internal class DeviceLightRuntimeRefreshCoordinator(
     }
 
     private suspend fun refresh(
-        deviceUid: DeviceUid,
+        key: RefreshKey,
         producer: suspend () -> DeviceLightRuntimeRefreshResult
     ): DeviceLightRuntimeRefreshResult {
+        if (!runtime.isCurrentGeneration(key.deviceUid, key.generation)) {
+            return DeviceLightRuntimeRefreshResult.RejectedStale
+        }
         val pending = CompletableDeferred<DeviceLightRuntimeRefreshResult>()
-        val existing = inFlight.putIfAbsent(deviceUid, pending)
+        val existing = inFlight.putIfAbsent(key, pending)
         if (existing != null) return existing.await()
 
         return try {
-            val result = producer()
-            pending.complete(result)
-            result
+            val result = runtime.operationGate.withDevice(key.deviceUid) {
+                if (!runtime.isCurrentGeneration(key.deviceUid, key.generation)) {
+                    DeviceLightRuntimeRefreshResult.RejectedStale
+                } else {
+                    producer()
+                }
+            }
+            val accepted = if (runtime.isCurrentGeneration(key.deviceUid, key.generation)) {
+                result.forGeneration(key.generation)
+            } else {
+                DeviceLightRuntimeRefreshResult.RejectedStale
+            }
+            pending.complete(accepted)
+            accepted
         } catch (cancellation: CancellationException) {
             pending.complete(DeviceLightRuntimeRefreshResult.RejectedStale)
             throw cancellation
         } finally {
             pending.complete(DeviceLightRuntimeRefreshResult.Malformed)
-            inFlight.remove(deviceUid, pending)
+            inFlight.remove(key, pending)
         }
     }
 
@@ -254,6 +307,18 @@ internal class DeviceLightRuntimeRefreshCoordinator(
             DeviceLightRuntimeRefreshResult.RejectedStale
         }
     }
+}
+
+internal sealed interface DeviceLightRuntimeBootstrapResult {
+    data class Hydrated(
+        val generation: DeviceRuntimeConnectionGeneration
+    ) : DeviceLightRuntimeBootstrapResult
+
+    data class Failed(
+        val outcome: DeviceRuntimeCommandOutcome<*>
+    ) : DeviceLightRuntimeBootstrapResult
+
+    data object RejectedStale : DeviceLightRuntimeBootstrapResult
 }
 
 internal sealed interface DeviceLightRuntimeRefreshResult {

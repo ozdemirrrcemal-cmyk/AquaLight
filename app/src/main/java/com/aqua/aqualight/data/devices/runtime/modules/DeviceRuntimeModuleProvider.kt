@@ -17,8 +17,10 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRu
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCommittedReconciliationScheduler
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDeviceOperationGate
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightEventApplyResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeBootstrapResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshCoordinator
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
@@ -52,6 +54,11 @@ class DeviceRuntimeModuleProvider internal constructor(
     reconciliationScope: CoroutineScope? = null
 ) {
     private val lightStateOwner = DeviceLightRuntimeStateOwner()
+    private val lightOperationGate = DeviceLightDeviceOperationGate(
+        cancelOptionalReconciliation = { uid ->
+            lightCommittedReconciliationScheduler?.cancel(uid)
+        }
+    )
     private val lightEventReducer = DeviceLightTypedEventReducer(lightStateOwner)
     private val timerStateStore = DeviceTimerRuntimeStateStore()
 
@@ -69,10 +76,14 @@ class DeviceRuntimeModuleProvider internal constructor(
     )
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
-    val light = DeviceLightRuntimeRepository(commandGateway, lightStateOwner)
+    val light = DeviceLightRuntimeRepository(commandGateway, lightStateOwner, lightOperationGate)
     val lightTemperatureProtection =
-        DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateOwner)
-    val lightThermal = DeviceLightThermalRuntimeRepository(commandGateway, lightStateOwner)
+        DeviceLightTemperatureProtectionRuntimeRepository(
+            commandGateway, lightStateOwner, lightOperationGate
+        )
+    val lightThermal = DeviceLightThermalRuntimeRepository(
+        commandGateway, lightStateOwner, lightOperationGate
+    )
     private val lightRuntimeRefreshCoordinator = DeviceLightRuntimeRefreshCoordinator(
         runtime = light,
         thermal = lightThermal,
@@ -216,14 +227,14 @@ private class LightRuntimeBootstrapPort(
     override suspend fun hydrate(
         context: DeviceRuntimeBootstrapContext
     ): DeviceRuntimeDomainHydrationResult {
-        var refresh = refreshCoordinator.refreshGeneration(
+        var refresh = refreshCoordinator.hydrateStatus(
             context.deviceUid,
             context.connectionGeneration
         )
         var remainingAttempts = DOMAIN_BOOTSTRAP_MAX_ATTEMPTS - 1
         while (refresh.isTransientBootstrapFailure() && remainingAttempts > 0) {
             delay(DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS)
-            refresh = refreshCoordinator.refreshGeneration(
+            refresh = refreshCoordinator.hydrateStatus(
                 context.deviceUid,
                 context.connectionGeneration
             )
@@ -233,20 +244,19 @@ private class LightRuntimeBootstrapPort(
     }
 }
 
-private fun DeviceLightRuntimeRefreshResult.toHydrationResult(
+private fun DeviceLightRuntimeBootstrapResult.toHydrationResult(
     domain: DeviceRuntimeDomain
 ): DeviceRuntimeDomainHydrationResult = when (this) {
-    is DeviceLightRuntimeRefreshResult.Success ->
+    is DeviceLightRuntimeBootstrapResult.Hydrated ->
         DeviceRuntimeDomainHydrationResult.Hydrated(domain, generation)
-    is DeviceLightRuntimeRefreshResult.Failed ->
+    is DeviceLightRuntimeBootstrapResult.Failed ->
         DeviceRuntimeDomainHydrationResult.Failed(domain, outcome)
-    DeviceLightRuntimeRefreshResult.RejectedStale,
-    DeviceLightRuntimeRefreshResult.Malformed ->
+    DeviceLightRuntimeBootstrapResult.RejectedStale ->
         DeviceRuntimeDomainHydrationResult.RejectedStale(domain)
 }
 
-private fun DeviceLightRuntimeRefreshResult.isTransientBootstrapFailure(): Boolean =
-    this is DeviceLightRuntimeRefreshResult.Failed && outcome.isTransientBootstrapFailure()
+private fun DeviceLightRuntimeBootstrapResult.isTransientBootstrapFailure(): Boolean =
+    this is DeviceLightRuntimeBootstrapResult.Failed && outcome.isTransientBootstrapFailure()
 
 private class CommandBootstrapPort(
     override val domain: DeviceRuntimeDomain,

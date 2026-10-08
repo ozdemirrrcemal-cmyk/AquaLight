@@ -16,7 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
  */
 class DeviceLightThermalRuntimeRepository internal constructor(
     gateway: DeviceRuntimeCommandGateway,
-    private val stateOwner: DeviceLightRuntimeStateOwner
+    private val stateOwner: DeviceLightRuntimeStateOwner,
+    private val operationGate: DeviceLightDeviceOperationGate = DeviceLightDeviceOperationGate()
 ) {
     private val protocol = DeviceLightThermalV1RuntimeRepository(gateway)
 
@@ -43,6 +44,12 @@ class DeviceLightThermalRuntimeRepository internal constructor(
     }
 
     suspend fun applyConfig(
+        deviceUid: DeviceUid,
+        payload: DeviceLightThermalConfigApplyPayload
+    ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> =
+        operationGate.withMutation(deviceUid) { applyConfigWithinGate(deviceUid, payload) }
+
+    private suspend fun applyConfigWithinGate(
         deviceUid: DeviceUid,
         payload: DeviceLightThermalConfigApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> {

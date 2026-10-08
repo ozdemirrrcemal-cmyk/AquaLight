@@ -33,6 +33,11 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = authorityFor(projection).isAuthoritative(deviceUid, generation)
 
+    fun currentGeneration(
+        projection: DeviceLightRuntimeProjection,
+        deviceUid: DeviceUid
+    ): DeviceRuntimeConnectionGeneration? = authorityFor(projection).currentGeneration(deviceUid)
+
     fun isCurrentlyAuthoritative(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid
