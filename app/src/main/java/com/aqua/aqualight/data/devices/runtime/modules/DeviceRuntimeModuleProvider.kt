@@ -29,7 +29,6 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeS
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
-import com.aqua.aqualight.data.devices.runtime.modules.light.isCurrentGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
@@ -161,16 +160,6 @@ class DeviceRuntimeModuleProvider internal constructor(
         if (event.type == DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED) {
             consumeLightStatusChanged(event, lightResult)
         }
-        if (
-            event.type == DeviceRuntimeTypedEvent.Type.TIME_STATUS_CHANGED &&
-            light.isCurrentGeneration(event.deviceUid, event.generation) &&
-            light.currentStatus(event.deviceUid) != null
-        ) {
-            // Only an already authenticated Light status can authorize clock rehydration.
-            // Avoid the full graph/library flight on RTC sync and never probe non-Light devices.
-            lightRuntimeRefreshCoordinator.hydrateStatus(event.deviceUid, event.generation)
-        }
-
         if (
             event.type == DeviceRuntimeTypedEvent.Type.LIGHT_THERMAL_STATUS_CHANGED &&
             event.payload is DeviceRuntimeEventPayload.CommandResult &&

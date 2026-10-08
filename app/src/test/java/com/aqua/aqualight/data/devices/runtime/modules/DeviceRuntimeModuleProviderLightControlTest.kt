@@ -55,54 +55,6 @@ class DeviceRuntimeModuleProviderLightControlTest {
             assertEquals(emptyList<String>(), gateway.actions)
         }
 
-    @Test
-    fun `clock event refreshes only authoritative Light status without graph reads`() =
-        kotlinx.coroutines.runBlocking {
-            val gateway = FixtureGateway()
-            val provider = DeviceRuntimeModuleProvider(
-                commandGateway = gateway,
-                revokeLocalCredential = { Result.success(Unit) },
-                timerAccessProvider = { DeviceTimerRuntimeAccess.UNAVAILABLE }
-            )
-            provider.beginRuntimeGeneration(DEVICE_UID, GENERATION)
-            provider.refreshLightRuntime(DEVICE_UID)
-            gateway.actions.clear()
-
-            provider.acceptTypedRuntimeEvent(
-                DeviceRuntimeTypedEvent(
-                    deviceUid = DEVICE_UID,
-                    generation = GENERATION,
-                    messageId = "evt-time-light",
-                    type = DeviceRuntimeTypedEvent.Type.TIME_STATUS_CHANGED,
-                    payload = DeviceRuntimeEventPayload.Snapshot(JSONObject())
-                )
-            )
-            assertEquals(listOf(DeviceLightRuntimeContract.Action.STATUS_GET), gateway.actions)
-        }
-
-    @Test
-    fun `clock event for unrelated device does not issue Light requests`() =
-        kotlinx.coroutines.runBlocking {
-            val gateway = FixtureGateway()
-            val provider = DeviceRuntimeModuleProvider(
-                commandGateway = gateway,
-                revokeLocalCredential = { Result.success(Unit) },
-                timerAccessProvider = { DeviceTimerRuntimeAccess.UNAVAILABLE }
-            )
-            val timerDevice = DeviceUid("timer-clock-event")
-            provider.beginRuntimeGeneration(timerDevice, GENERATION)
-            provider.acceptTypedRuntimeEvent(
-                DeviceRuntimeTypedEvent(
-                    deviceUid = timerDevice,
-                    generation = GENERATION,
-                    messageId = "evt-time-timer",
-                    type = DeviceRuntimeTypedEvent.Type.TIME_STATUS_CHANGED,
-                    payload = DeviceRuntimeEventPayload.Snapshot(JSONObject())
-                )
-            )
-            assertEquals(emptyList<String>(), gateway.actions)
-        }
-
     private class FixtureGateway : DeviceRuntimeCommandGateway {
         val actions = mutableListOf<String>()
 
