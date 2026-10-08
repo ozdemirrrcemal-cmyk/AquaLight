@@ -12,6 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.health.PlantObservationRules
 import com.aqua.aqualight.application.aquarium.health.PlantObservationSnapshot
 import com.aqua.aqualight.base.BaseActivity
@@ -29,7 +30,9 @@ import kotlinx.coroutines.launch
 class PlantObservationRecordFragment : Fragment(R.layout.fragment_plant_observation_record) {
     private val args: PlantObservationRecordFragmentArgs by navArgs()
     private val tanks: AquariumTankViewModel by activityViewModels()
-    private val health: PlantHealthViewModel by viewModels()
+    private val health: PlantHealthViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private var _binding: FragmentPlantObservationRecordBinding? = null
     private val binding get() = _binding!!
     private var current: PlantObservationSnapshot? = null

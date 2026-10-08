@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentPlantHealthHistoryBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -24,7 +25,9 @@ import kotlinx.coroutines.launch
 class PlantHealthHistoryFragment : Fragment(R.layout.fragment_plant_health_history) {
     private val args: PlantHealthHistoryFragmentArgs by navArgs()
     private val tanks: AquariumTankViewModel by activityViewModels()
-    private val health: PlantHealthViewModel by viewModels()
+    private val health: PlantHealthViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private var _binding: FragmentPlantHealthHistoryBinding? = null
     private val binding get() = _binding!!
     private val records = PlantObservationAdapter(::openRecord)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect the Plant Health UI flow until the analysis engine is connected."""
+"""Protect assigned-plant observations and keep the future analysis engine disconnected."""
 
 from pathlib import Path
 import sys
@@ -12,6 +12,7 @@ RES = ROOT / "app/src/main/res"
 DETAIL = APP / "ui/tabs/aquarium/detail/health/PlantHealthDetailFragment.kt"
 DETAIL_BINDER = APP / "ui/tabs/aquarium/detail/health/PlantHealthDetailUiBinder.kt"
 OBSERVATION = APP / "ui/tabs/aquarium/detail/health/PlantHealthObservationFragment.kt"
+RECORD = APP / "ui/tabs/aquarium/detail/health/PlantObservationRecordFragment.kt"
 HISTORY = APP / "ui/tabs/aquarium/detail/health/PlantHealthHistoryFragment.kt"
 ANALYSIS_RESULT = APP / "ui/tabs/aquarium/detail/health/PlantHealthAnalysisResultFragment.kt"
 ALGAE_DETECTION = APP / "ui/tabs/aquarium/detail/health/PlantHealthAlgaeDetectionFragment.kt"
@@ -37,6 +38,7 @@ required = (
     DETAIL,
     DETAIL_BINDER,
     OBSERVATION,
+    RECORD,
     HISTORY,
     ANALYSIS_RESULT,
     ALGAE_DETECTION,
@@ -177,10 +179,14 @@ try:
 except (ET.ParseError, StopIteration):
     errors.append("Direct tank-to-plant-detail navigation contract is missing or malformed")
 
-for source in (DETAIL, OBSERVATION, HISTORY, ANALYSIS_RESULT, ALGAE_DETECTION, ALGAE_CONTROL):
+for source in (DETAIL, OBSERVATION, RECORD, HISTORY, ANALYSIS_RESULT, ALGAE_DETECTION, ALGAE_CONTROL):
     text = read(source)
     if "setupAquaHeader" not in text:
         errors.append(f"{source.relative_to(ROOT)}: shared AquaHeader is required")
+
+for source in (DETAIL, OBSERVATION, RECORD, HISTORY):
+    if "requireAppContainer().defaultViewModelFactory" not in read(source):
+        errors.append(f"{source.relative_to(ROOT)}: injected plant ViewModels require the owner factory")
 
 tank_plants = read(TANK_PLANTS)
 for forbidden in (

@@ -296,7 +296,9 @@ class LivestockPhotoIsolationInstrumentedTest {
                 error("Photo mutation unexpectedly deleted livestock health records")
             },
             deleteLivestockHealthForLivestock =
-                LivestockHealthDataStoreManager(context, store)::deleteForLivestock
+                LivestockHealthDataStoreManager(context, store)::deleteForLivestock,
+            deletePlantHealthForTank = { error("Livestock photo mutation deleted plant health records") },
+            reconcilePlantHealthForTank = { error("Livestock photo mutation changed plant health records") }
         )
     )
 

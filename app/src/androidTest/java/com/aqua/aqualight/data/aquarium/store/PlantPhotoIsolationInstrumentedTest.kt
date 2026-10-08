@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.notifications.NotificationScheduler
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.health.PlantHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.user.UserDataScope
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith
 class PlantPhotoIsolationInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val store = AquariumTankDataStoreManager(context)
+    private val plantHealthStore = PlantHealthDataStoreManager(context, store)
 
     @Test
     fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking<Unit> {
@@ -171,7 +173,9 @@ class PlantPhotoIsolationInstrumentedTest {
             },
             deleteLivestockHealthForLivestock = { _, _ ->
                 error("Photo mutation unexpectedly deleted livestock health records")
-            }
+            },
+            deletePlantHealthForTank = plantHealthStore::deleteForTank,
+            reconcilePlantHealthForTank = plantHealthStore::reconcileTankPlants
         )
     )
 

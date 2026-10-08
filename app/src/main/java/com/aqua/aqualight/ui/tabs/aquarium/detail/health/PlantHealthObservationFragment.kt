@@ -12,6 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.application.aquarium.health.PlantObservationRules
 import com.aqua.aqualight.databinding.FragmentPlantHealthObservationBinding
@@ -31,7 +32,9 @@ class PlantHealthObservationFragment : TankRecordPhotoFragment(
 ) {
     private val args: PlantHealthObservationFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val draft: PlantObservationDraftViewModel by viewModels()
+    private val draft: PlantObservationDraftViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private var _binding: FragmentPlantHealthObservationBinding? = null
     private val binding get() = _binding!!
     private var symptomGrid: PlantSymptomGrid? = null

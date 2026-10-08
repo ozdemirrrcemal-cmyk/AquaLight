@@ -13,6 +13,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.databinding.FragmentPlantHealthDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -22,7 +23,9 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class PlantHealthDetailFragment : Fragment(R.layout.fragment_plant_health_detail) {
 
-    private val health: PlantHealthViewModel by viewModels()
+    private val health: PlantHealthViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private val args: PlantHealthDetailFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 

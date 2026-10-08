@@ -38,6 +38,8 @@ import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
 import com.aqua.aqualight.data.aquarium.health.DefaultLivestockHealthOperations
 import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
+import com.aqua.aqualight.data.aquarium.health.PlantHealthDataStoreManager
+import com.aqua.aqualight.data.aquarium.health.DefaultPlantHealthOperations
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
@@ -84,6 +86,8 @@ import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantObservationDraftViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
@@ -215,6 +219,7 @@ private class ReleaseSmokeViewModelFactory(
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
     private val livestockHealthStore = LivestockHealthDataStoreManager(appContext, tankStore)
+    private val plantHealthStore = PlantHealthDataStoreManager(appContext, tankStore)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,
@@ -239,8 +244,9 @@ private class ReleaseSmokeViewModelFactory(
     )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
-            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
+            modelClass != PlantObservationDraftViewModel::class.java) {
+            "${modelClass.simpleName} requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
             modelClass = modelClass,
@@ -254,7 +260,8 @@ private class ReleaseSmokeViewModelFactory(
     ): T = createInternal(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
-            modelClass == DeviceLightQuickSetupViewModel::class.java
+            modelClass == DeviceLightQuickSetupViewModel::class.java ||
+            modelClass == PlantObservationDraftViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -266,7 +273,17 @@ private class ReleaseSmokeViewModelFactory(
         modelClass: Class<T>,
         quickSetupSavedStateHandle: SavedStateHandle?
     ): T {
-        val viewModel = createPrimaryViewModel(modelClass)
+        val plantViewModel = when (modelClass) {
+            PlantHealthViewModel::class.java -> PlantHealthViewModel(
+                DefaultPlantHealthOperations(plantHealthStore, SMOKE_OWNER_UID)
+            )
+            PlantObservationDraftViewModel::class.java -> PlantObservationDraftViewModel(
+                DefaultPlantHealthOperations(plantHealthStore, SMOKE_OWNER_UID),
+                checkNotNull(quickSetupSavedStateHandle)
+            )
+            else -> null
+        }
+        val viewModel = plantViewModel ?: createPrimaryViewModel(modelClass)
             ?: createDeviceRootViewModel(modelClass, quickSetupSavedStateHandle)
             ?: createTankDeviceViewModel(modelClass)
             ?: error("Release smoke factory has no binding for ${modelClass.name}")
@@ -362,7 +379,9 @@ private class ReleaseSmokeViewModelFactory(
                     notificationPreferences = notificationPreferences,
                     deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank,
                     deleteLivestockHealthForTank = livestockHealthStore::deleteForTank,
-                    deleteLivestockHealthForLivestock = livestockHealthStore::deleteForLivestock
+                    deleteLivestockHealthForLivestock = livestockHealthStore::deleteForLivestock,
+                    deletePlantHealthForTank = plantHealthStore::deleteForTank,
+                    reconcilePlantHealthForTank = plantHealthStore::reconcileTankPlants
                 )
             )
         )
