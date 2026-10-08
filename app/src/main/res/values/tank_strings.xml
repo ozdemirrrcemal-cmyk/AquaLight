@@ -115,15 +115,8 @@
     <string name="aquarium_tank_profile_sps_reef">SPS Reef</string>
     <string name="aquarium_tank_profile_mixed_reef">Mixed Reef</string>
     <string name="aquarium_tank_profile_other">Other</string>
-    <string name="aquarium_tank_type_coral">Coral</string>
     <string name="aquarium_tank_type_fish">Fish</string>
-    <string name="aquarium_tank_type_marine">Marine</string>
-    <string name="aquarium_tank_type_mixed_reef">Mixed Reef</string>
-    <string name="aquarium_tank_type_other">Other</string>
-    <string name="aquarium_tank_type_planted">Planted</string>
     <string name="aquarium_tank_type_shrimp">Shrimp</string>
-    <string name="aquarium_tank_type_softies">Softies</string>
-    <string name="aquarium_tank_type_sps">SPS</string>
     <string name="aquarium_tank_type_title">Tank Type</string>
     <string name="aquarium_type_title">Type</string>
     <string name="aquarium_unit_centimeters">centimeters</string>
