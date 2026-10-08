@@ -1017,9 +1017,9 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
         ("DeviceLightThermalRuntimeRepository", "Light thermal runtime"),
     ):
         signature = (
-            rf"\\b{re.escape(constructor)}\\("
-            r"\\s*commandGateway\\s*,\\s*lightStateOwner\\s*,"
-            r"\\s*lightOperationGate\\s*\\)"
+            rf"\b{re.escape(constructor)}\("
+            r"\s*commandGateway\s*,\s*lightStateOwner\s*,"
+            r"\s*lightOperationGate\s*\)"
         )
         if not re.search(signature, provider):
             errors.append(
