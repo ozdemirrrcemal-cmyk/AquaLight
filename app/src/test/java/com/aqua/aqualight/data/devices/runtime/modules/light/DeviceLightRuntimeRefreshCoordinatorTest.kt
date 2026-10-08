@@ -162,6 +162,36 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         )
     }
 
+    @Test
+    fun `queued Light write from an invalidated generation is never sent`() = runTest {
+        val statusGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, statusGate)
+        val firstStatus = DeviceLightStatusParser.parse(status(managedPlanInstalled = false))
+        assertTrue(fixture.owner.recordStatus(deviceUid, generationOne, firstStatus))
+
+        val refresh = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.refreshAll(deviceUid)
+        }
+        assertEquals(listOf(DeviceLightRuntimeContract.Action.STATUS_GET), fixture.gateway.actions)
+        val queuedMutation = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.runtime.productCommand(
+                deviceUid = deviceUid,
+                action = DeviceLightRuntimeContract.Action.MANUAL_OFF,
+                parser = { _, _ -> Unit }
+            )
+        }
+        fixture.owner.invalidate(deviceUid, generationOne)
+        fixture.owner.beginGeneration(deviceUid, generationTwo)
+        fixture.gateway.generation = generationTwo
+        statusGate.complete(Unit)
+
+        assertTrue(refresh.await() is DeviceLightRuntimeRefreshResult.RejectedStale)
+        assertTrue(queuedMutation.await() is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
+        assertEquals(
+            listOf(DeviceLightRuntimeContract.Action.STATUS_GET), fixture.gateway.actions
+        )
+    }
+
     private fun fixture(
         generation: DeviceRuntimeConnectionGeneration,
         statusGate: CompletableDeferred<Unit>? = null,

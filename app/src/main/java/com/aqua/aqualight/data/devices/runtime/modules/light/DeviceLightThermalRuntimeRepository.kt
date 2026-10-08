@@ -46,8 +46,25 @@ class DeviceLightThermalRuntimeRepository internal constructor(
     suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceLightThermalConfigApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> =
-        operationGate.withMutation(deviceUid) { applyConfigWithinGate(deviceUid, payload) }
+    ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> {
+        val expectedGeneration = stateOwner.currentGeneration(deviceUid)
+        return operationGate.withMutation(deviceUid) {
+            if (
+                expectedGeneration != null &&
+                stateOwner.currentGeneration(deviceUid) == expectedGeneration &&
+                stateOwner.isAuthoritative(
+                    DeviceLightRuntimeProjection.STATUS, deviceUid, expectedGeneration
+                )
+            ) {
+                applyConfigWithinGate(deviceUid, payload)
+            } else {
+                DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+                    deviceUid, DeviceLightRuntimeContract.MODULE,
+                    DeviceLightThermalV1Contract.Action.CONFIG_APPLY
+                )
+            }
+        }
+    }
 
     private suspend fun applyConfigWithinGate(
         deviceUid: DeviceUid,

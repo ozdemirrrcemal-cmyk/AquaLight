@@ -122,15 +122,24 @@ class DeviceLightRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         product: DeviceLightProduct,
         command: DeviceLightProductCommand<T>
-    ): DeviceRuntimeCommandOutcome<T> =
+    ): DeviceRuntimeCommandOutcome<T> {
         if (command.action.endsWith(".get")) {
-            executeProductCommandRaw(deviceUid, product, command)
-        } else {
-            // Readback and writes share one device gate; raw .get calls run inside central refresh.
-            operationGate.withMutation(deviceUid) {
+            return executeProductCommandRaw(deviceUid, product, command)
+        }
+        // A queued user intent must not execute against a replacement connection generation.
+        val expectedGeneration = currentConnectionGeneration(deviceUid)
+        return operationGate.withMutation(deviceUid) {
+            if (
+                expectedGeneration != null &&
+                isCurrentGeneration(deviceUid, expectedGeneration) &&
+                currentStatus(deviceUid)?.product == product
+            ) {
                 executeProductCommandRaw(deviceUid, product, command)
+            } else {
+                unsupported(deviceUid, command.action)
             }
         }
+    }
 
     private suspend fun <T> executeProductCommandRaw(
         deviceUid: DeviceUid,
