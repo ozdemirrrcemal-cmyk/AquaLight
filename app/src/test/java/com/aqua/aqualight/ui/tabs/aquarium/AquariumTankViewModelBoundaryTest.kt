@@ -62,6 +62,13 @@ class AquariumTankViewModelBoundaryTest {
     }
 
     @Test
+    fun `photo mutation preserves selected owner tank and plant identities`() = runTest {
+        val fake = FakeAquariumTankOperations()
+        AquariumTankViewModel(fake).updatePlantPhoto(7L, 42L, "photo-uri", "owner-a")
+        assertEquals(listOf(7L, 42L, "photo-uri", "owner-a"), fake.photoUpdate)
+    }
+
+    @Test
     fun `returns typed delete result without exposing data errors`() = runTest {
         val expected = DeleteAquariumTanksResult.Deleted(
             tankIds = listOf(7L),
@@ -106,7 +113,20 @@ private class FakeAquariumTankOperations(
         deletedTankIds = tankIds.toList()
         return deleteResult
     }
+    override suspend fun saveLivestockWithPhoto(
+        tankId: Long, livestock: AquariumLivestock, expectedOwnerUid: String,
+        isNew: Boolean, photoChanged: Boolean
+    ) = Unit
+    override suspend fun removeLivestockWithPhoto(
+        tankId: Long, livestockId: Long, expectedOwnerUid: String
+    ) = Unit
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) = Unit
+    var photoUpdate: List<Any?>? = null
+    override suspend fun updatePlantPhoto(
+        tankId: Long, plantId: Long, photoUri: String?, expectedOwnerUid: String
+    ) {
+        photoUpdate = listOf(tankId, plantId, photoUri, expectedOwnerUid)
+    }
     override suspend fun updateTankName(tankId: Long, name: String) {
         latestUpdate = Triple(tankId, name, latestUpdate?.third ?: true)
     }

@@ -20,7 +20,7 @@
     <string name="device_add_scan_secure_qr_action">Güvenli QR kodunu tara</string>
     <string name="device_add_setup_rules_title">Kurulum kuralları</string>
     <string name="device_add_setup_rules_message">İlk kurulumda QR kodunu kullanın. Daha önce eşleştirilmiş bir cihaz için cihazı kurulum moduna alın, ardından Manuel BLE Tarama seçeneğine basın. AquaLight, Wi-Fi bilgilerini göndermeden önce aygıt yazılımı durumunu doğrular.</string>
-    <string name="device_add_manual_scan_hint">Cihazı yalnızca kurulum modu açıldıktan sonra seçin. AquaLight, Wi-Fi bilgilerini göndermeden önce DeviceInfo verisini doğrular.</string>
+    <string name="device_add_manual_scan_hint">Cihazı kurulum moduna aldıktan sonra seçin. AquaLight, Wi-Fi bilgilerinizi göndermeden önce cihazın güvenli ve kuruluma hazır olduğunu doğrular.</string>
     <string name="device_setup_method_secure_qr">Güvenli QR Kurulumu</string>
     <string name="device_setup_method_manual_ble">Manuel BLE Kurulumu</string>
     <string name="device_status_empty_title">Etkin cihaz yok</string>
@@ -66,9 +66,9 @@
     <string name="device_family_dosing">Dozajlama</string>
     <string name="device_family_timer">Zamanlayıcı</string>
     <string name="device_family_cooling">Soğutma</string>
-    <string name="device_menu_manual_control_title">Manuel kontrol</string>
+    <string name="device_menu_manual_control_title">Manuel Kontrol</string>
     <string name="device_menu_manual_control_description">Desteklenen aydınlatma çıkışları için doğrudan kanal kontrolü.</string>
-    <string name="device_menu_quick_setup_title">Hızlı kurulum</string>
+    <string name="device_menu_quick_setup_title">Hızlı Kurulum</string>
     <string name="device_menu_quick_setup_description">Aygıt yazılımının desteklediği aydınlatma ön ayarları ve profilleriyle hızlı kurulum.</string>
     <string name="device_menu_programs_title">Programlar</string>
     <string name="device_menu_programs_description">Günlük aydınlatma programları oluşturun ve yönetin.</string>

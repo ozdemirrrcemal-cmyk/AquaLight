@@ -7,22 +7,19 @@ import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DosePro4NoPublishedArtifactRegressionTest {
 
     @Test
-    fun `dose pro 4 without a published artifact is a neutral no-update result`() {
-        val availability = DeviceFirmwareUpdatePlanner().evaluateUpdate(
+    fun `dose pro 4 rejects a signed manifest for another exact product`() {
+        val failure = DeviceFirmwareUpdatePlanner().evaluateUpdate(
             snapshot = dosePro4Snapshot(),
             manifest = manifestContainingOnlyDosePro2()
-        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
+        ).exceptionOrNull()
 
-        assertEquals(CURRENT_VERSION, availability.currentVersion)
-        assertEquals(CURRENT_VERSION, availability.latestVersion)
-        assertTrue(!availability.releaseContent.isPresent)
+        assertTrue(failure is IllegalArgumentException)
     }
 
     private fun dosePro4Snapshot() = DeviceSnapshot(

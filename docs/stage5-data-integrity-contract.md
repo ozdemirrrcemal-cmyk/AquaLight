@@ -1,4 +1,4 @@
-# Stage 5 — Commercial tank and care data integrity
+# Stage 5 — Commercial owner data integrity
 
 This stage defines the first commercial local-store contract for AquaLight.
 The application has not shipped a previous public store schema, so this work
@@ -9,10 +9,11 @@ intentionally provides no legacy compatibility or downgrade path.
 - Aquarium tanks
 - Care tasks
 - Encrypted user preferences
+- Light Library records
 
 ## Required guarantees
 
-1. Every persisted root store carries schema version `1`.
+1. Every persisted root store carries its explicit current schema version. Aquarium Tanks is version `2`; Care Tasks, encrypted User Preferences, and Light Library remain version `1`.
 2. Aquarium tank calendar-only setup and livestock-added dates are stored as epoch days, never epoch milliseconds.
 3. Unsupported or missing schema versions fail closed as corruption.
 4. Owner identifiers are canonical and every record is owner-scoped.
@@ -23,6 +24,8 @@ intentionally provides no legacy compatibility or downgrade path.
 9. Manual and generated care-task IDs are allocated inside the atomic `DataStore.updateData` transaction.
 10. Tank deletion and dependent Care Task cleanup use a durable compensating transaction. Care-task writes are blocked before snapshots are captured, care tasks are removed before the tank, failed tank writes restore the snapshots, and owner-session startup resolves interrupted transactions.
 11. Serializer, corruption, owner-isolation, schema-policy, recovery, and concurrent-write tests are release gates.
+12. Light Library names are canonical and unique within one owner and record type; product channel sets and custom time points are stored exactly.
+13. Light Library records never persist a device UID, firmware revision, or loaded-state flag.
 
 ## Care schedule product limits
 
@@ -40,18 +43,21 @@ intentionally provides no legacy compatibility or downgrade path.
 
 ## Migration status
 
-**Status: N/A for the first commercial release schema.**
+**Aquarium Tanks schema version `2` is a deliberate clean cutover.**
 
-AquaLight has not shipped a public Tank, Care Task, or encrypted User
-Preferences schema. Therefore there is no legitimate source schema to migrate
-and no legacy `DataMigration` is installed. Clean installation is the required
-validation baseline for this unreleased build.
+The livestock catalog integration adds a stable `catalogEntryId` to tank livestock records. AquaLight
+does not infer catalog identity from a saved display name and does not retain a compatibility reader
+for the pre-catalog tank schema. Version `1` tank stores are rejected by the same fail-closed schema
+gate used for unknown versions; no legacy `DataMigration` is installed.
 
-Version `1` is explicit and tested for all three stores. Missing version `0`
-and unknown future versions fail closed. The first post-release schema change
-must increment the relevant version constant, add an explicit reviewed
-migration when a legitimate public source schema exists, and include upgrade,
-interruption, rollback-safety, and downgrade-rejection tests before release.
+Every livestock record has a non-blank stable identity. Catalog-backed livestock uses its exact
+`catalogEntryId`; user-defined livestock uses `custom:<livestockId>`. Blank identities are invalid and
+there is no name/category inference fallback. Water-requirement data remains canonical in the bundled
+livestock catalog and is resolved only by that stable id instead of being duplicated into every tank
+record.
+
+Care Task, Light Library, and encrypted User Preferences stores remain on version `1`. Missing or
+unsupported versions for every store continue to fail closed.
 
 ## Delivery rule
 

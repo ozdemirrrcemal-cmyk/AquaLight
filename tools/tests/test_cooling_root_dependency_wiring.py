@@ -17,9 +17,6 @@ CONTROL_OPERATION_WIRING = {
     "production": "controlOperations = DefaultDeviceCoolingControlOperations(",
     "releaseSmoke": "controlOperations = DefaultDeviceCoolingControlOperations(",
 }
-DEBUG_COMPOSITION = ROOT / (
-    "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugDeviceFixtureAppContainer.kt"
-)
 
 
 class CoolingRootDependencyWiringTest(unittest.TestCase):
@@ -59,20 +56,6 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
                 )
                 self.assertIn("DefaultDeviceCoolingAutomaticSettingsOperations(", text)
                 self.assertIn("controlSurfacePreparationOperations =", text)
-
-    def test_debug_composition_does_not_override_cooling_production_wiring(self) -> None:
-        debug_text = DEBUG_COMPOSITION.read_text(encoding="utf-8")
-
-        self.assertIn("else -> return delegate.create(modelClass)", debug_text)
-        for forbidden in (
-            "DeviceCooling",
-            "DebugFixtureCooling",
-            "DefaultDeviceCooling",
-            "coolingControlOperations",
-            "createCooling",
-        ):
-            self.assertNotIn(forbidden, debug_text)
-
 
 if __name__ == "__main__":
     unittest.main()

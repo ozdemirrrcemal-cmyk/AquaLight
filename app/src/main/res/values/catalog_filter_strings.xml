@@ -1,0 +1,813 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official filter brand and product names are not translated. -->
+    <string name="catalog_filter_brand_eden_oase" translatable="false">EDEN / OASE</string>
+    <string name="catalog_filter_brand_fluval" translatable="false">Fluval</string>
+    <string name="catalog_filter_brand_tetra" translatable="false">Tetra</string>
+    <string name="catalog_filter_brand_sicce" translatable="false">SICCE</string>
+    <string name="catalog_filter_brand_seachem" translatable="false">Seachem</string>
+    <string name="catalog_filter_brand_sera" translatable="false">sera</string>
+    <string name="catalog_filter_brand_tunze" translatable="false">TUNZE</string>
+    <string name="catalog_filter_brand_juwel" translatable="false">JUWEL</string>
+    <string name="catalog_filter_brand_ferplast_hydor" translatable="false">Ferplast / Hydor</string>
+    <string name="catalog_filter_brand_marineland" translatable="false">Marineland</string>
+    <string name="catalog_filter_brand_aqueon" translatable="false">Aqueon</string>
+    <string name="catalog_filter_brand_penn_plax" translatable="false">Penn-Plax</string>
+    <string name="catalog_filter_brand_aquatop" translatable="false">AQUATOP</string>
+    <string name="catalog_filter_brand_newa" translatable="false">NEWA</string>
+    <string name="catalog_filter_brand_ciano" translatable="false">Ciano</string>
+    <string name="catalog_filter_brand_gex" translatable="false">GEX</string>
+    <string name="catalog_filter_brand_hailea" translatable="false">Hailea</string>
+    <string name="catalog_filter_brand_resun" translatable="false">Resun</string>
+    <string name="catalog_filter_brand_boyu" translatable="false">BOYU</string>
+    <string name="catalog_filter_brand_atman" translatable="false">Atman</string>
+    <string name="catalog_filter_brand_dophin" translatable="false">Dophin</string>
+    <string name="catalog_filter_brand_sobo" translatable="false">SOBO</string>
+    <string name="catalog_filter_brand_aquawing" translatable="false">AquaWing</string>
+    <string name="catalog_filter_brand_venusaqua" translatable="false">VenusAqua</string>
+    <string name="catalog_filter_brand_aqua_master" translatable="false">Aqua Master</string>
+    <string name="catalog_filter_brand_xlpro" translatable="false">XLPRO</string>
+    <string name="catalog_filter_brand_xinyou" translatable="false">Xinyou</string>
+    <string name="catalog_filter_brand_rs_electrical" translatable="false">RS Electrical</string>
+    <string name="catalog_filter_brand_jingye" translatable="false">Jingye</string>
+    <string name="catalog_filter_brand_atlantik" translatable="false">Atlantik</string>
+    <string name="catalog_filter_brand_leecom" translatable="false">Leecom</string>
+    <string name="catalog_filter_brand_haqos" translatable="false">Haqos</string>
+    <string name="catalog_filter_brand_ejet" translatable="false">EJet</string>
+    <string name="catalog_filter_brand_eurostar" translatable="false">EuroStar</string>
+    <string name="catalog_filter_brand_jeneca" translatable="false">Jeneca</string>
+    <string name="catalog_filter_brand_waterbear" translatable="false">WaterBear</string>
+
+    <string name="catalog_material_filter_0001_name" translatable="false">EHEIM classic 150</string>
+    <string name="catalog_material_filter_0002_name" translatable="false">EHEIM classic 250</string>
+    <string name="catalog_material_filter_0003_name" translatable="false">EHEIM classic 350</string>
+    <string name="catalog_material_filter_0004_name" translatable="false">EHEIM classic 600</string>
+    <string name="catalog_material_filter_0005_name" translatable="false">EHEIM classic 1500XL</string>
+    <string name="catalog_material_filter_0006_name" translatable="false">EHEIM eXperience 150</string>
+    <string name="catalog_material_filter_0007_name" translatable="false">EHEIM eXperience 250</string>
+    <string name="catalog_material_filter_0008_name" translatable="false">EHEIM eXperience 350</string>
+    <string name="catalog_material_filter_0009_name" translatable="false">EHEIM ecco pro 130</string>
+    <string name="catalog_material_filter_0010_name" translatable="false">EHEIM ecco pro 200</string>
+    <string name="catalog_material_filter_0011_name" translatable="false">EHEIM ecco pro 300</string>
+    <string name="catalog_material_filter_0012_name" translatable="false">EHEIM professionel 4+ 250</string>
+    <string name="catalog_material_filter_0013_name" translatable="false">EHEIM professionel 4+ 350</string>
+    <string name="catalog_material_filter_0014_name" translatable="false">EHEIM professionel 4+ 600</string>
+    <string name="catalog_material_filter_0015_name" translatable="false">EHEIM professionel 4+ 250T</string>
+    <string name="catalog_material_filter_0016_name" translatable="false">EHEIM professionel 4+ 350T</string>
+    <string name="catalog_material_filter_0017_name" translatable="false">EHEIM professionel 5e 350</string>
+    <string name="catalog_material_filter_0018_name" translatable="false">EHEIM professionel 5e 450</string>
+    <string name="catalog_material_filter_0019_name" translatable="false">EHEIM professionel 5e 700</string>
+    <string name="catalog_material_filter_0020_name" translatable="false">EHEIM professionel 5e 600T</string>
+    <string name="catalog_material_filter_0021_name" translatable="false">EHEIM LiBERTY 75</string>
+    <string name="catalog_material_filter_0022_name" translatable="false">EHEIM LiBERTY 130</string>
+    <string name="catalog_material_filter_0023_name" translatable="false">EHEIM LiBERTY 200</string>
+    <string name="catalog_material_filter_0024_name" translatable="false">EHEIM pickup 45</string>
+    <string name="catalog_material_filter_0025_name" translatable="false">EHEIM pickup 60</string>
+    <string name="catalog_material_filter_0026_name" translatable="false">EHEIM pickup 160</string>
+    <string name="catalog_material_filter_0027_name" translatable="false">EHEIM pickup 200</string>
+    <string name="catalog_material_filter_0028_name" translatable="false">EHEIM aquaball 60</string>
+    <string name="catalog_material_filter_0029_name" translatable="false">EHEIM aquaball 130</string>
+    <string name="catalog_material_filter_0030_name" translatable="false">EHEIM aquaball 180</string>
+    <string name="catalog_material_filter_0031_name" translatable="false">EHEIM biopower 160</string>
+    <string name="catalog_material_filter_0032_name" translatable="false">EHEIM biopower 200</string>
+    <string name="catalog_material_filter_0033_name" translatable="false">EHEIM biopower 240</string>
+    <string name="catalog_material_filter_0034_name" translatable="false">EHEIM aqua 60</string>
+    <string name="catalog_material_filter_0035_name" translatable="false">EHEIM aqua 160</string>
+    <string name="catalog_material_filter_0036_name" translatable="false">EHEIM aqua 200</string>
+    <string name="catalog_material_filter_0037_name" translatable="false">EHEIM PowerLine 200</string>
+    <string name="catalog_material_filter_0038_name" translatable="false">EHEIM PowerLine XL</string>
+    <string name="catalog_material_filter_0039_name" translatable="false">EHEIM miniUP</string>
+    <string name="catalog_material_filter_0040_name" translatable="false">EHEIM Airfilter</string>
+    <string name="catalog_material_filter_0041_name" translatable="false">OASE BioMaster² 150</string>
+    <string name="catalog_material_filter_0042_name" translatable="false">OASE BioMaster² 250</string>
+    <string name="catalog_material_filter_0043_name" translatable="false">OASE BioMaster² 350</string>
+    <string name="catalog_material_filter_0044_name" translatable="false">OASE BioMaster² 600</string>
+    <string name="catalog_material_filter_0045_name" translatable="false">OASE BioMaster² 850</string>
+    <string name="catalog_material_filter_0046_name" translatable="false">OASE BioMaster² Thermo 150</string>
+    <string name="catalog_material_filter_0047_name" translatable="false">OASE BioMaster² Thermo 250</string>
+    <string name="catalog_material_filter_0048_name" translatable="false">OASE BioMaster² Thermo 350</string>
+    <string name="catalog_material_filter_0049_name" translatable="false">OASE BioMaster² Thermo 600</string>
+    <string name="catalog_material_filter_0050_name" translatable="false">OASE BioMaster² Thermo 850</string>
+    <string name="catalog_material_filter_0051_name" translatable="false">OASE FiltoSmart 60</string>
+    <string name="catalog_material_filter_0052_name" translatable="false">OASE FiltoSmart 100</string>
+    <string name="catalog_material_filter_0053_name" translatable="false">OASE FiltoSmart 200</string>
+    <string name="catalog_material_filter_0054_name" translatable="false">OASE FiltoSmart 300</string>
+    <string name="catalog_material_filter_0055_name" translatable="false">OASE FiltoSmart Thermo 100</string>
+    <string name="catalog_material_filter_0056_name" translatable="false">OASE FiltoSmart Thermo 200</string>
+    <string name="catalog_material_filter_0057_name" translatable="false">OASE FiltoSmart Thermo 300</string>
+    <string name="catalog_material_filter_0058_name" translatable="false">OASE BioStyle 75</string>
+    <string name="catalog_material_filter_0059_name" translatable="false">OASE BioStyle 115</string>
+    <string name="catalog_material_filter_0060_name" translatable="false">OASE BioStyle 180</string>
+    <string name="catalog_material_filter_0061_name" translatable="false">OASE BioCompact 25</string>
+    <string name="catalog_material_filter_0062_name" translatable="false">OASE BioCompact 50</string>
+    <string name="catalog_material_filter_0063_name" translatable="false">OASE BioPlus 50</string>
+    <string name="catalog_material_filter_0064_name" translatable="false">OASE BioPlus 100</string>
+    <string name="catalog_material_filter_0065_name" translatable="false">OASE BioPlus 200</string>
+    <string name="catalog_material_filter_0066_name" translatable="false">OASE BioPlus Thermo 50</string>
+    <string name="catalog_material_filter_0067_name" translatable="false">OASE BioPlus Thermo 100</string>
+    <string name="catalog_material_filter_0068_name" translatable="false">OASE BioPlus Thermo 200</string>
+    <string name="catalog_material_filter_0069_name" translatable="false">OASE EcoFlow 60</string>
+    <string name="catalog_material_filter_0070_name" translatable="false">OASE EcoFlow 100</string>
+    <string name="catalog_material_filter_0071_name" translatable="false">OASE EcoFlow 150</string>
+    <string name="catalog_material_filter_0072_name" translatable="false">OASE EcoFlow 200</string>
+    <string name="catalog_material_filter_0073_name" translatable="false">EDEN FES 60</string>
+    <string name="catalog_material_filter_0074_name" translatable="false">EDEN FES 100</string>
+    <string name="catalog_material_filter_0075_name" translatable="false">EDEN FET 100 Thermo</string>
+    <string name="catalog_material_filter_0076_name" translatable="false">Fluval 107 Canister Filter</string>
+    <string name="catalog_material_filter_0077_name" translatable="false">Fluval 207 Canister Filter</string>
+    <string name="catalog_material_filter_0078_name" translatable="false">Fluval 307 Canister Filter</string>
+    <string name="catalog_material_filter_0079_name" translatable="false">Fluval 407 Canister Filter</string>
+    <string name="catalog_material_filter_0080_name" translatable="false">Fluval FX2 Canister Filter</string>
+    <string name="catalog_material_filter_0081_name" translatable="false">Fluval FX4 Canister Filter</string>
+    <string name="catalog_material_filter_0082_name" translatable="false">Fluval FX6 Canister Filter</string>
+    <string name="catalog_material_filter_0083_name" translatable="false">Fluval AC20 Power Filter</string>
+    <string name="catalog_material_filter_0084_name" translatable="false">Fluval AC30 Power Filter</string>
+    <string name="catalog_material_filter_0085_name" translatable="false">Fluval AC50 Power Filter</string>
+    <string name="catalog_material_filter_0086_name" translatable="false">Fluval AC70 Power Filter</string>
+    <string name="catalog_material_filter_0087_name" translatable="false">Fluval AC110 Power Filter</string>
+    <string name="catalog_material_filter_0088_name" translatable="false">Fluval C2 Power Filter</string>
+    <string name="catalog_material_filter_0089_name" translatable="false">Fluval C3 Power Filter</string>
+    <string name="catalog_material_filter_0090_name" translatable="false">Fluval C4 Power Filter</string>
+    <string name="catalog_material_filter_0091_name" translatable="false">Fluval U1 Underwater Filter</string>
+    <string name="catalog_material_filter_0092_name" translatable="false">Fluval U2 Underwater Filter</string>
+    <string name="catalog_material_filter_0093_name" translatable="false">Fluval U3 Underwater Filter</string>
+    <string name="catalog_material_filter_0094_name" translatable="false">Fluval U4 Underwater Filter</string>
+    <string name="catalog_material_filter_0095_name" translatable="false">AQUAEL ULTRAMAX 1000</string>
+    <string name="catalog_material_filter_0096_name" translatable="false">AQUAEL ULTRAMAX 1500</string>
+    <string name="catalog_material_filter_0097_name" translatable="false">AQUAEL ULTRAMAX 2000</string>
+    <string name="catalog_material_filter_0098_name" translatable="false">AQUAEL ULTRAMAX BT</string>
+    <string name="catalog_material_filter_0099_name" translatable="false">AQUAEL HYPERMAX 4500 BT</string>
+    <string name="catalog_material_filter_0100_name" translatable="false">AQUAEL HYPERMAX LINK</string>
+    <string name="catalog_material_filter_0101_name" translatable="false">AQUAEL ULTRA FILTER 900</string>
+    <string name="catalog_material_filter_0102_name" translatable="false">AQUAEL ULTRA FILTER 1200</string>
+    <string name="catalog_material_filter_0103_name" translatable="false">AQUAEL ULTRA FILTER 1400</string>
+    <string name="catalog_material_filter_0104_name" translatable="false">AQUAEL MULTIKANI 1000</string>
+    <string name="catalog_material_filter_0105_name" translatable="false">AQUAEL FZN PRO 400</string>
+    <string name="catalog_material_filter_0106_name" translatable="false">AQUAEL FZN PRO 700</string>
+    <string name="catalog_material_filter_0107_name" translatable="false">AQUAEL FZN PRO 1000</string>
+    <string name="catalog_material_filter_0108_name" translatable="false">AQUAEL FZN PRO 1500</string>
+    <string name="catalog_material_filter_0109_name" translatable="false">AQUAEL VERSAMAX MINI</string>
+    <string name="catalog_material_filter_0110_name" translatable="false">AQUAEL VERSAMAX 1</string>
+    <string name="catalog_material_filter_0111_name" translatable="false">AQUAEL VERSAMAX 2</string>
+    <string name="catalog_material_filter_0112_name" translatable="false">AQUAEL VERSAMAX 3</string>
+    <string name="catalog_material_filter_0113_name" translatable="false">AQUAEL TURBO FILTER 500</string>
+    <string name="catalog_material_filter_0114_name" translatable="false">AQUAEL TURBO FILTER 1000</string>
+    <string name="catalog_material_filter_0115_name" translatable="false">AQUAEL TURBO FILTER 1500</string>
+    <string name="catalog_material_filter_0116_name" translatable="false">AQUAEL TURBO FILTER 2000</string>
+    <string name="catalog_material_filter_0117_name" translatable="false">AQUAEL TURBO MINI</string>
+    <string name="catalog_material_filter_0118_name" translatable="false">AQUAEL TURBO MINI BIO</string>
+    <string name="catalog_material_filter_0119_name" translatable="false">AQUAEL ASAP 300</string>
+    <string name="catalog_material_filter_0120_name" translatable="false">AQUAEL ASAP 500</string>
+    <string name="catalog_material_filter_0121_name" translatable="false">AQUAEL ASAP 700</string>
+    <string name="catalog_material_filter_0122_name" translatable="false">AQUAEL PAT MINI</string>
+    <string name="catalog_material_filter_0123_name" translatable="false">AQUAEL UNIFILTER UV 500</string>
+    <string name="catalog_material_filter_0124_name" translatable="false">AQUAEL UNIFILTER UV 750</string>
+    <string name="catalog_material_filter_0125_name" translatable="false">AQUAEL UNIFILTER UV 1000</string>
+    <string name="catalog_material_filter_0126_name" translatable="false">AQUAEL FAN MIKRO PLUS</string>
+    <string name="catalog_material_filter_0127_name" translatable="false">AQUAEL FAN MINI PLUS</string>
+    <string name="catalog_material_filter_0128_name" translatable="false">AQUAEL FAN 1 PLUS</string>
+    <string name="catalog_material_filter_0129_name" translatable="false">AQUAEL FAN 2 PLUS</string>
+    <string name="catalog_material_filter_0130_name" translatable="false">AQUAEL FAN 3 PLUS</string>
+    <string name="catalog_material_filter_0131_name" translatable="false">AQUAEL NEO 300</string>
+    <string name="catalog_material_filter_0132_name" translatable="false">JBL CRISTALPROFI e402 greenline</string>
+    <string name="catalog_material_filter_0133_name" translatable="false">JBL CRISTALPROFI e702 greenline</string>
+    <string name="catalog_material_filter_0134_name" translatable="false">JBL CRISTALPROFI e902 greenline</string>
+    <string name="catalog_material_filter_0135_name" translatable="false">JBL CRISTALPROFI e1502 greenline</string>
+    <string name="catalog_material_filter_0136_name" translatable="false">JBL CRISTALPROFI e1902 greenline</string>
+    <string name="catalog_material_filter_0137_name" translatable="false">JBL PROCRISTAL i30</string>
+    <string name="catalog_material_filter_0138_name" translatable="false">JBL CRISTALPROFI i60 greenline</string>
+    <string name="catalog_material_filter_0139_name" translatable="false">JBL CRISTALPROFI i80 greenline</string>
+    <string name="catalog_material_filter_0140_name" translatable="false">JBL CRISTALPROFI i100 greenline</string>
+    <string name="catalog_material_filter_0141_name" translatable="false">JBL CRISTALPROFI i200 greenline</string>
+    <string name="catalog_material_filter_0142_name" translatable="false">JBL CristalProfi m greenline</string>
+    <string name="catalog_material_filter_0143_name" translatable="false">Tetra EX 500 Plus</string>
+    <string name="catalog_material_filter_0144_name" translatable="false">Tetra EX 700 Plus</string>
+    <string name="catalog_material_filter_0145_name" translatable="false">Tetra EX 1000 Plus</string>
+    <string name="catalog_material_filter_0146_name" translatable="false">Tetra EX 1500 Plus</string>
+    <string name="catalog_material_filter_0147_name" translatable="false">Tetra IN 300 plus</string>
+    <string name="catalog_material_filter_0148_name" translatable="false">Tetra IN 400 plus</string>
+    <string name="catalog_material_filter_0149_name" translatable="false">Tetra IN 600 plus</string>
+    <string name="catalog_material_filter_0150_name" translatable="false">Tetra IN 800 plus</string>
+    <string name="catalog_material_filter_0151_name" translatable="false">Tetra IN 1000 plus</string>
+    <string name="catalog_material_filter_0152_name" translatable="false">Tetra INX 50</string>
+    <string name="catalog_material_filter_0153_name" translatable="false">Tetra INX 100</string>
+    <string name="catalog_material_filter_0154_name" translatable="false">Tetra INX 150</string>
+    <string name="catalog_material_filter_0155_name" translatable="false">Tetra INX 200</string>
+    <string name="catalog_material_filter_0156_name" translatable="false">Tetra INX 250</string>
+    <string name="catalog_material_filter_0157_name" translatable="false">Tetra EasyCrystal 250</string>
+    <string name="catalog_material_filter_0158_name" translatable="false">Tetra EasyCrystal 300 Box</string>
+    <string name="catalog_material_filter_0159_name" translatable="false">Tetra EasyCrystal 600 Box</string>
+    <string name="catalog_material_filter_0160_name" translatable="false">Tetra FilterJet 400</string>
+    <string name="catalog_material_filter_0161_name" translatable="false">Tetra FilterJet 600</string>
+    <string name="catalog_material_filter_0162_name" translatable="false">Tetra FilterJet 900</string>
+    <string name="catalog_material_filter_0163_name" translatable="false">Tetra Brillant Filter</string>
+    <string name="catalog_material_filter_0164_name" translatable="false">SICCE SPACE EKO 120</string>
+    <string name="catalog_material_filter_0165_name" translatable="false">SICCE SPACE EKO 220</string>
+    <string name="catalog_material_filter_0166_name" translatable="false">SICCE SPACE EKO 320</string>
+    <string name="catalog_material_filter_0167_name" translatable="false">SICCE WHALE 120</string>
+    <string name="catalog_material_filter_0168_name" translatable="false">SICCE WHALE 200</string>
+    <string name="catalog_material_filter_0169_name" translatable="false">SICCE WHALE 350</string>
+    <string name="catalog_material_filter_0170_name" translatable="false">SICCE WHALE 500</string>
+    <string name="catalog_material_filter_0171_name" translatable="false">SICCE MEGA FILTRA 650</string>
+    <string name="catalog_material_filter_0172_name" translatable="false">SICCE MEGA FILTRA 900</string>
+    <string name="catalog_material_filter_0173_name" translatable="false">SICCE MEGA FILTRA 950 SDC</string>
+    <string name="catalog_material_filter_0174_name" translatable="false">SICCE NANO MICRON</string>
+    <string name="catalog_material_filter_0175_name" translatable="false">SICCE MICRON</string>
+    <string name="catalog_material_filter_0176_name" translatable="false">SICCE SHARK ADV 400</string>
+    <string name="catalog_material_filter_0177_name" translatable="false">SICCE SHARK ADV 600</string>
+    <string name="catalog_material_filter_0178_name" translatable="false">SICCE SHARK ADV 800</string>
+    <string name="catalog_material_filter_0179_name" translatable="false">SICCE SHARK PRO NANO 250</string>
+    <string name="catalog_material_filter_0180_name" translatable="false">SICCE SHARK PRO NANO 320</string>
+    <string name="catalog_material_filter_0181_name" translatable="false">SICCE SHARK PRO 500</string>
+    <string name="catalog_material_filter_0182_name" translatable="false">SICCE SHARK PRO 700</string>
+    <string name="catalog_material_filter_0183_name" translatable="false">SICCE SHARK PRO 900</string>
+    <string name="catalog_material_filter_0184_name" translatable="false">SICCE AQUA FILTRA 10</string>
+    <string name="catalog_material_filter_0185_name" translatable="false">SICCE AQUA FILTRA 20</string>
+    <string name="catalog_material_filter_0186_name" translatable="false">SICCE AQUA FILTRA 40</string>
+    <string name="catalog_material_filter_0187_name" translatable="false">Seachem Tidal 35</string>
+    <string name="catalog_material_filter_0188_name" translatable="false">Seachem Tidal 55</string>
+    <string name="catalog_material_filter_0189_name" translatable="false">Seachem Tidal 75</string>
+    <string name="catalog_material_filter_0190_name" translatable="false">Seachem Tidal 110</string>
+    <string name="catalog_material_filter_0191_name" translatable="false">sera fil bioactive 130</string>
+    <string name="catalog_material_filter_0192_name" translatable="false">sera fil bioactive 250</string>
+    <string name="catalog_material_filter_0193_name" translatable="false">sera fil bioactive 130 + UV</string>
+    <string name="catalog_material_filter_0194_name" translatable="false">sera fil bioactive 250 + UV</string>
+    <string name="catalog_material_filter_0195_name" translatable="false">sera fil bioactive 400 + UV</string>
+    <string name="catalog_material_filter_0196_name" translatable="false">sera UVC-Xtreme 800</string>
+    <string name="catalog_material_filter_0197_name" translatable="false">sera UVC-Xtreme 1200</string>
+    <string name="catalog_material_filter_0198_name" translatable="false">sera X-Edge 300</string>
+    <string name="catalog_material_filter_0199_name" translatable="false">sera X-Edge 450</string>
+    <string name="catalog_material_filter_0200_name" translatable="false">sera X-Edge 700</string>
+    <string name="catalog_material_filter_0201_name" translatable="false">sera fil 60</string>
+    <string name="catalog_material_filter_0202_name" translatable="false">sera fil 120</string>
+    <string name="catalog_material_filter_0203_name" translatable="false">sera bioactive IF 400 + UV</string>
+    <string name="catalog_material_filter_0204_name" translatable="false">sera F 400 adjustable</string>
+    <string name="catalog_material_filter_0205_name" translatable="false">sera F 700 adjustable</string>
+    <string name="catalog_material_filter_0206_name" translatable="false">sera F 1200 adjustable</string>
+    <string name="catalog_material_filter_0207_name" translatable="false">sera L 60</string>
+    <string name="catalog_material_filter_0208_name" translatable="false">sera L 150</string>
+    <string name="catalog_material_filter_0209_name" translatable="false">sera L 300</string>
+    <string name="catalog_material_filter_0210_name" translatable="false">sera PrefiX Filter</string>
+    <string name="catalog_material_filter_0211_name" translatable="false">ADA Super Jet Filter ES-150 Ver.2</string>
+    <string name="catalog_material_filter_0212_name" translatable="false">ADA Super Jet Filter ES-300 Ver.2</string>
+    <string name="catalog_material_filter_0213_name" translatable="false">ADA Super Jet Filter ES-600</string>
+    <string name="catalog_material_filter_0214_name" translatable="false">ADA Super Jet Filter ES-900</string>
+    <string name="catalog_material_filter_0215_name" translatable="false">ADA Super Jet Filter ES-1200</string>
+    <string name="catalog_material_filter_0216_name" translatable="false">ADA Super Jet Filter ES-2400</string>
+    <string name="catalog_material_filter_0217_name" translatable="false">TUNZE Comline Nanofilter 3161</string>
+    <string name="catalog_material_filter_0218_name" translatable="false">TUNZE Comline Filter 3162</string>
+    <string name="catalog_material_filter_0219_name" translatable="false">TUNZE Comline Streamfilter 3163</string>
+    <string name="catalog_material_filter_0220_name" translatable="false">TUNZE Comline Multifilter 3168</string>
+    <string name="catalog_material_filter_0221_name" translatable="false">Dennerle Corner Filter 40</string>
+    <string name="catalog_material_filter_0222_name" translatable="false">Dennerle Corner Filter 60</string>
+    <string name="catalog_material_filter_0223_name" translatable="false">Dennerle Corner Filter 100</string>
+    <string name="catalog_material_filter_0224_name" translatable="false">Dennerle Scaper\'s Flow</string>
+    <string name="catalog_material_filter_0225_name" translatable="false">JUWEL Bioflow ONE</string>
+    <string name="catalog_material_filter_0226_name" translatable="false">JUWEL Bioflow Super</string>
+    <string name="catalog_material_filter_0227_name" translatable="false">JUWEL Bioflow M</string>
+    <string name="catalog_material_filter_0228_name" translatable="false">JUWEL Bioflow L</string>
+    <string name="catalog_material_filter_0229_name" translatable="false">JUWEL Bioflow XL</string>
+    <string name="catalog_material_filter_0230_name" translatable="false">Hydor PRIME 10</string>
+    <string name="catalog_material_filter_0231_name" translatable="false">Hydor PRIME 20</string>
+    <string name="catalog_material_filter_0232_name" translatable="false">Hydor PRIME 30</string>
+    <string name="catalog_material_filter_0233_name" translatable="false">Ferplast PROFESSIONAL 2.0 250</string>
+    <string name="catalog_material_filter_0234_name" translatable="false">Ferplast PROFESSIONAL 2.0 350</string>
+    <string name="catalog_material_filter_0235_name" translatable="false">Ferplast PROFESSIONAL 2.0 450</string>
+    <string name="catalog_material_filter_0236_name" translatable="false">Ferplast BLUEXTREME 700</string>
+    <string name="catalog_material_filter_0237_name" translatable="false">Ferplast BLUEXTREME 1100</string>
+    <string name="catalog_material_filter_0238_name" translatable="false">Ferplast BLUEXTREME 1500</string>
+    <string name="catalog_material_filter_0239_name" translatable="false">Ferplast BLUWAVE 03</string>
+    <string name="catalog_material_filter_0240_name" translatable="false">Ferplast BLUWAVE 05</string>
+    <string name="catalog_material_filter_0241_name" translatable="false">Ferplast BLUWAVE 07</string>
+    <string name="catalog_material_filter_0242_name" translatable="false">Marineland Magniflow 160</string>
+    <string name="catalog_material_filter_0243_name" translatable="false">Marineland Magniflow 220</string>
+    <string name="catalog_material_filter_0244_name" translatable="false">Marineland Magniflow 360</string>
+    <string name="catalog_material_filter_0245_name" translatable="false">Marineland Penguin PRO 125</string>
+    <string name="catalog_material_filter_0246_name" translatable="false">Marineland Penguin PRO 175</string>
+    <string name="catalog_material_filter_0247_name" translatable="false">Marineland Penguin PRO 275</string>
+    <string name="catalog_material_filter_0248_name" translatable="false">Marineland Penguin PRO 375</string>
+    <string name="catalog_material_filter_0249_name" translatable="false">Aqueon QuietFlow Canister Filter 200</string>
+    <string name="catalog_material_filter_0250_name" translatable="false">Aqueon QuietFlow Canister Filter 300</string>
+    <string name="catalog_material_filter_0251_name" translatable="false">Aqueon QuietFlow Canister Filter 400</string>
+    <string name="catalog_material_filter_0252_name" translatable="false">Aqueon QuietFlow LED PRO Power Filter 10</string>
+    <string name="catalog_material_filter_0253_name" translatable="false">Aqueon QuietFlow LED PRO Power Filter 20</string>
+    <string name="catalog_material_filter_0254_name" translatable="false">Aqueon QuietFlow LED PRO Power Filter 30</string>
+    <string name="catalog_material_filter_0255_name" translatable="false">Aqueon QuietFlow LED PRO Power Filter 50</string>
+    <string name="catalog_material_filter_0256_name" translatable="false">Aqueon QuietFlow LED PRO Power Filter 75</string>
+    <string name="catalog_material_filter_0257_name" translatable="false">Aqueon PRO QuietFlow Power Filter 20</string>
+    <string name="catalog_material_filter_0258_name" translatable="false">Aqueon PRO QuietFlow Power Filter 30</string>
+    <string name="catalog_material_filter_0259_name" translatable="false">Aqueon PRO QuietFlow Power Filter 50</string>
+    <string name="catalog_material_filter_0260_name" translatable="false">Aqueon PRO QuietFlow Power Filter 75</string>
+    <string name="catalog_material_filter_0261_name" translatable="false">Aqueon QuietFlow Internal Power Filter with SmartClean Size 5</string>
+    <string name="catalog_material_filter_0262_name" translatable="false">Aqueon QuietFlow Internal Power Filter with SmartClean Size 15</string>
+    <string name="catalog_material_filter_0263_name" translatable="false">Aqueon QuietFlow Internal Power Filter with SmartClean Size 30</string>
+    <string name="catalog_material_filter_0264_name" translatable="false">Penn-Plax Cascade 500</string>
+    <string name="catalog_material_filter_0265_name" translatable="false">Penn-Plax Cascade 700</string>
+    <string name="catalog_material_filter_0266_name" translatable="false">Penn-Plax Cascade 1000</string>
+    <string name="catalog_material_filter_0267_name" translatable="false">Penn-Plax Cascade 1200</string>
+    <string name="catalog_material_filter_0268_name" translatable="false">Penn-Plax Cascade 1500</string>
+    <string name="catalog_material_filter_0269_name" translatable="false">Penn-Plax Cascade Max-Flow CMF1</string>
+    <string name="catalog_material_filter_0270_name" translatable="false">Penn-Plax Cascade 80 Hang-On Filter</string>
+    <string name="catalog_material_filter_0271_name" translatable="false">Penn-Plax Cascade 100 Power Hang-On Filter</string>
+    <string name="catalog_material_filter_0272_name" translatable="false">Penn-Plax Cascade 170 Internal Filter</string>
+    <string name="catalog_material_filter_0273_name" translatable="false">Penn-Plax Cascade 300 Internal Filter</string>
+    <string name="catalog_material_filter_0274_name" translatable="false">Penn-Plax Cascade 400 Internal Filter</string>
+    <string name="catalog_material_filter_0275_name" translatable="false">Penn-Plax Cascade 600 Internal Filter</string>
+    <string name="catalog_material_filter_0276_name" translatable="false">AQUATOP CF-300MKII</string>
+    <string name="catalog_material_filter_0277_name" translatable="false">AQUATOP CF-400UVMKII</string>
+    <string name="catalog_material_filter_0278_name" translatable="false">AQUATOP CF-500UVMKII</string>
+    <string name="catalog_material_filter_0279_name" translatable="false">AQUATOP Forza FZ3-UV</string>
+    <string name="catalog_material_filter_0280_name" translatable="false">AQUATOP Forza FZ7</string>
+    <string name="catalog_material_filter_0281_name" translatable="false">AQUATOP Forza FZ9</string>
+    <string name="catalog_material_filter_0282_name" translatable="false">AQUATOP Forza FZ13</string>
+    <string name="catalog_material_filter_0283_name" translatable="false">AQUATOP Forza FZ15-UV</string>
+    <string name="catalog_material_filter_0284_name" translatable="false">AQUATOP PFE-MINI</string>
+    <string name="catalog_material_filter_0285_name" translatable="false">AQUATOP PFE-1</string>
+    <string name="catalog_material_filter_0286_name" translatable="false">AQUATOP PFE-3</string>
+    <string name="catalog_material_filter_0287_name" translatable="false">AQUATOP PFE-4</string>
+    <string name="catalog_material_filter_0288_name" translatable="false">AQUATOP PFE-6</string>
+    <string name="catalog_material_filter_0289_name" translatable="false">AQUATOP PFE-9</string>
+    <string name="catalog_material_filter_0290_name" translatable="false">AQUATOP PFEM-PRO</string>
+    <string name="catalog_material_filter_0291_name" translatable="false">AQUATOP CAF-180</string>
+    <string name="catalog_material_filter_0292_name" translatable="false">AQUATOP PowerFlow Internal Sponge Filter 1</string>
+    <string name="catalog_material_filter_0293_name" translatable="false">AQUATOP PowerFlow Internal Sponge Filter 2</string>
+    <string name="catalog_material_filter_0294_name" translatable="false">AQUATOP IF7-UV</string>
+    <string name="catalog_material_filter_0295_name" translatable="false">AQUATOP IF9-UV</string>
+    <string name="catalog_material_filter_0296_name" translatable="false">NEWA Kanist NKF250</string>
+    <string name="catalog_material_filter_0297_name" translatable="false">NEWA Kanist NKF350</string>
+    <string name="catalog_material_filter_0298_name" translatable="false">NEWA Kanist NKF450</string>
+    <string name="catalog_material_filter_0299_name" translatable="false">NEWA Kanist NKF700</string>
+    <string name="catalog_material_filter_0300_name" translatable="false">NEWA Cobra CF MINI</string>
+    <string name="catalog_material_filter_0301_name" translatable="false">NEWA Cobra CF75</string>
+    <string name="catalog_material_filter_0302_name" translatable="false">NEWA Cobra CF130</string>
+    <string name="catalog_material_filter_0303_name" translatable="false">NEWA Cobra CF175</string>
+    <string name="catalog_material_filter_0304_name" translatable="false">NEWA Duetto DJ50</string>
+    <string name="catalog_material_filter_0305_name" translatable="false">NEWA Duetto DJ100</string>
+    <string name="catalog_material_filter_0306_name" translatable="false">NEWA Duetto DJ150</string>
+    <string name="catalog_material_filter_0307_name" translatable="false">NEWA Micro MCF40</string>
+    <string name="catalog_material_filter_0308_name" translatable="false">NEWA Micro MCF70</string>
+    <string name="catalog_material_filter_0309_name" translatable="false">NEWA Motion NWM300</string>
+    <string name="catalog_material_filter_0310_name" translatable="false">Ciano CF20</string>
+    <string name="catalog_material_filter_0311_name" translatable="false">Ciano CF40</string>
+    <string name="catalog_material_filter_0312_name" translatable="false">Ciano CF80</string>
+    <string name="catalog_material_filter_0313_name" translatable="false">Ciano CFSTONE 40</string>
+    <string name="catalog_material_filter_0314_name" translatable="false">Ciano CFSTONE 80</string>
+    <string name="catalog_material_filter_0315_name" translatable="false">GEX Slim Filter DC-X SS1</string>
+    <string name="catalog_material_filter_0316_name" translatable="false">GEX Slim Filter DC-X S2</string>
+    <string name="catalog_material_filter_0317_name" translatable="false">GEX Slim Filter DC-X M3</string>
+    <string name="catalog_material_filter_0318_name" translatable="false">GEX Slim Filter DC-X L4</string>
+    <string name="catalog_material_filter_0319_name" translatable="false">GEX Slim Filter SSN</string>
+    <string name="catalog_material_filter_0320_name" translatable="false">GEX Slim Filter S</string>
+    <string name="catalog_material_filter_0321_name" translatable="false">GEX Slim Filter M</string>
+    <string name="catalog_material_filter_0322_name" translatable="false">GEX Slim Filter L</string>
+    <string name="catalog_material_filter_0323_name" translatable="false">GEX Aquarista Ga SLIM FILTER PRO DC-X M</string>
+    <string name="catalog_material_filter_0324_name" translatable="false">GEX Aquarista Ga SLIM FILTER PRO DC-X L</string>
+    <string name="catalog_material_filter_0325_name" translatable="false">GEX Ga RAKUFIL PRO SLIM</string>
+    <string name="catalog_material_filter_0326_name" translatable="false">GEX Ga RAKUFIL PRO POWER</string>
+    <string name="catalog_material_filter_0327_name" translatable="false">GEX Ga POWER CUSTOM FILTER M</string>
+    <string name="catalog_material_filter_0328_name" translatable="false">GEX Ga POWER CUSTOM FILTER L</string>
+    <string name="catalog_material_filter_0329_name" translatable="false">GEX Silent Flow Slim</string>
+    <string name="catalog_material_filter_0330_name" translatable="false">GEX Rakufil Slim</string>
+    <string name="catalog_material_filter_0331_name" translatable="false">GEX Aqua Clear S1</string>
+    <string name="catalog_material_filter_0332_name" translatable="false">GEX Aqua Clear L2</string>
+    <string name="catalog_material_filter_0333_name" translatable="false">GEX Side Flow Filter STON</string>
+    <string name="catalog_material_filter_0334_name" translatable="false">Hailea SL-306</string>
+    <string name="catalog_material_filter_0335_name" translatable="false">Hailea SL-106</string>
+    <string name="catalog_material_filter_0336_name" translatable="false">Hailea RP-600</string>
+    <string name="catalog_material_filter_0337_name" translatable="false">Hailea RP-400</string>
+    <string name="catalog_material_filter_0338_name" translatable="false">Hailea RP-200</string>
+    <string name="catalog_material_filter_0339_name" translatable="false">Hailea HL-BT100</string>
+    <string name="catalog_material_filter_0340_name" translatable="false">Hailea HL-BT200</string>
+    <string name="catalog_material_filter_0341_name" translatable="false">Hailea HL-BT400</string>
+    <string name="catalog_material_filter_0342_name" translatable="false">Hailea HL-BT700</string>
+    <string name="catalog_material_filter_0343_name" translatable="false">Hailea HL-BT1000</string>
+    <string name="catalog_material_filter_0344_name" translatable="false">Hailea HT-10</string>
+    <string name="catalog_material_filter_0345_name" translatable="false">Hailea HT-20</string>
+    <string name="catalog_material_filter_0346_name" translatable="false">Hailea HT-30</string>
+    <string name="catalog_material_filter_0347_name" translatable="false">Hailea H-12</string>
+    <string name="catalog_material_filter_0348_name" translatable="false">Hailea HF-150</string>
+    <string name="catalog_material_filter_0349_name" translatable="false">Hailea HF-300</string>
+    <string name="catalog_material_filter_0350_name" translatable="false">Resun CYCLONE External Filter</string>
+    <string name="catalog_material_filter_0351_name" translatable="false">Resun EVO Canister Filter</string>
+    <string name="catalog_material_filter_0352_name" translatable="false">Resun XTREME EF1200U</string>
+    <string name="catalog_material_filter_0353_name" translatable="false">Resun XTREME EF1600</string>
+    <string name="catalog_material_filter_0354_name" translatable="false">Resun XTREME EF1600U</string>
+    <string name="catalog_material_filter_0355_name" translatable="false">Resun BIOCLEAR Power Filter</string>
+    <string name="catalog_material_filter_0356_name" translatable="false">Resun AQUA SIGNAL Power Filter</string>
+    <string name="catalog_material_filter_0357_name" translatable="false">Resun STREAMAX Power Filter</string>
+    <string name="catalog_material_filter_0358_name" translatable="false">Resun CORNER FILTER PRO</string>
+    <string name="catalog_material_filter_0359_name" translatable="false">Resun EDGE FLOW CORNER FILTER</string>
+    <string name="catalog_material_filter_0360_name" translatable="false">Resun CORNER FILTER</string>
+    <string name="catalog_material_filter_0361_name" translatable="false">Resun CLEARMAX Internal Filter</string>
+    <string name="catalog_material_filter_0362_name" translatable="false">Resun CRUISER Internal Filter</string>
+    <string name="catalog_material_filter_0363_name" translatable="false">Resun MAGI Internal Filter</string>
+    <string name="catalog_material_filter_0364_name" translatable="false">Resun Aqua Bio Filter BF80</string>
+    <string name="catalog_material_filter_0365_name" translatable="false">Resun Aqua Bio Filter BF100</string>
+    <string name="catalog_material_filter_0366_name" translatable="false">Resun Aqua Bio Filter BF200</string>
+    <string name="catalog_material_filter_0367_name" translatable="false">SunSun HW-602B</string>
+    <string name="catalog_material_filter_0368_name" translatable="false">SunSun HW-603B</string>
+    <string name="catalog_material_filter_0369_name" translatable="false">SunSun HW-503B</string>
+    <string name="catalog_material_filter_0370_name" translatable="false">SunSun HW-302</string>
+    <string name="catalog_material_filter_0371_name" translatable="false">SunSun HW-303A</string>
+    <string name="catalog_material_filter_0372_name" translatable="false">SunSun HW-303B</string>
+    <string name="catalog_material_filter_0373_name" translatable="false">SunSun HW-304A</string>
+    <string name="catalog_material_filter_0374_name" translatable="false">SunSun HW-304B</string>
+    <string name="catalog_material_filter_0375_name" translatable="false">SunSun HW-402A</string>
+    <string name="catalog_material_filter_0376_name" translatable="false">SunSun HW-402B</string>
+    <string name="catalog_material_filter_0377_name" translatable="false">SunSun HW-403A</string>
+    <string name="catalog_material_filter_0378_name" translatable="false">SunSun HW-403B</string>
+    <string name="catalog_material_filter_0379_name" translatable="false">SunSun HW-404A</string>
+    <string name="catalog_material_filter_0380_name" translatable="false">SunSun HW-404B</string>
+    <string name="catalog_material_filter_0381_name" translatable="false">SunSun HW-3000</string>
+    <string name="catalog_material_filter_0382_name" translatable="false">SunSun HW-4000</string>
+    <string name="catalog_material_filter_0383_name" translatable="false">SunSun HW-5000</string>
+    <string name="catalog_material_filter_0384_name" translatable="false">SunSun XBL-300</string>
+    <string name="catalog_material_filter_0385_name" translatable="false">SunSun XBL-400</string>
+    <string name="catalog_material_filter_0386_name" translatable="false">SunSun XBL-500</string>
+    <string name="catalog_material_filter_0387_name" translatable="false">SunSun XBL-600</string>
+    <string name="catalog_material_filter_0388_name" translatable="false">SunSun HBL-801</string>
+    <string name="catalog_material_filter_0389_name" translatable="false">SunSun HBL-802</string>
+    <string name="catalog_material_filter_0390_name" translatable="false">SunSun HBL-803</string>
+    <string name="catalog_material_filter_0391_name" translatable="false">SunSun CBG-500</string>
+    <string name="catalog_material_filter_0392_name" translatable="false">SunSun CBG-500S</string>
+    <string name="catalog_material_filter_0393_name" translatable="false">SunSun CBG-800</string>
+    <string name="catalog_material_filter_0394_name" translatable="false">SunSun CBG-800S</string>
+    <string name="catalog_material_filter_0395_name" translatable="false">SunSun JP-022F</string>
+    <string name="catalog_material_filter_0396_name" translatable="false">SunSun JP-023F</string>
+    <string name="catalog_material_filter_0397_name" translatable="false">SunSun JP-024F</string>
+    <string name="catalog_material_filter_0398_name" translatable="false">SunSun JP-025F</string>
+    <string name="catalog_material_filter_0399_name" translatable="false">SunSun JP-032F</string>
+    <string name="catalog_material_filter_0400_name" translatable="false">SunSun JP-033F</string>
+    <string name="catalog_material_filter_0401_name" translatable="false">SunSun HJ-111B</string>
+    <string name="catalog_material_filter_0402_name" translatable="false">SunSun HJ-311B</string>
+    <string name="catalog_material_filter_0403_name" translatable="false">SunSun HJ-532</string>
+    <string name="catalog_material_filter_0404_name" translatable="false">SunSun HJ-611B</string>
+    <string name="catalog_material_filter_0405_name" translatable="false">SunSun HJ-732</string>
+    <string name="catalog_material_filter_0406_name" translatable="false">SunSun HJ-752</string>
+    <string name="catalog_material_filter_0407_name" translatable="false">SunSun HJ-952</string>
+    <string name="catalog_material_filter_0408_name" translatable="false">SunSun CHJ-502</string>
+    <string name="catalog_material_filter_0409_name" translatable="false">SunSun CHJ-602</string>
+    <string name="catalog_material_filter_0410_name" translatable="false">SunSun CHJ-902</string>
+    <string name="catalog_material_filter_0411_name" translatable="false">SunSun CHJ-1502</string>
+    <string name="catalog_material_filter_0412_name" translatable="false">SunSun JP-012F</string>
+    <string name="catalog_material_filter_0413_name" translatable="false">SunSun JP-013F</string>
+    <string name="catalog_material_filter_0414_name" translatable="false">SunSun JP-014F</string>
+    <string name="catalog_material_filter_0415_name" translatable="false">SunSun JP-092</string>
+    <string name="catalog_material_filter_0416_name" translatable="false">SunSun JP-093</string>
+    <string name="catalog_material_filter_0417_name" translatable="false">SunSun JP-094</string>
+    <string name="catalog_material_filter_0418_name" translatable="false">BOYU DGN-410</string>
+    <string name="catalog_material_filter_0419_name" translatable="false">BOYU DGN-460</string>
+    <string name="catalog_material_filter_0420_name" translatable="false">BOYU DGN-520</string>
+    <string name="catalog_material_filter_0421_name" translatable="false">BOYU DGN-410A</string>
+    <string name="catalog_material_filter_0422_name" translatable="false">BOYU DGN-460A</string>
+    <string name="catalog_material_filter_0423_name" translatable="false">BOYU DGN-520A</string>
+    <string name="catalog_material_filter_0424_name" translatable="false">BOYU DGN-80</string>
+    <string name="catalog_material_filter_0425_name" translatable="false">BOYU DGN-80A</string>
+    <string name="catalog_material_filter_0426_name" translatable="false">BOYU DGN-120</string>
+    <string name="catalog_material_filter_0427_name" translatable="false">BOYU DGN-120A</string>
+    <string name="catalog_material_filter_0428_name" translatable="false">BOYU EFU-10</string>
+    <string name="catalog_material_filter_0429_name" translatable="false">BOYU EFU-15</string>
+    <string name="catalog_material_filter_0430_name" translatable="false">BOYU EFU-20</string>
+    <string name="catalog_material_filter_0431_name" translatable="false">BOYU EFU-25</string>
+    <string name="catalog_material_filter_0432_name" translatable="false">BOYU EFU-35</string>
+    <string name="catalog_material_filter_0433_name" translatable="false">BOYU EFU-45</string>
+    <string name="catalog_material_filter_0434_name" translatable="false">BOYU EF-10</string>
+    <string name="catalog_material_filter_0435_name" translatable="false">BOYU EF-15</string>
+    <string name="catalog_material_filter_0436_name" translatable="false">BOYU EF-20</string>
+    <string name="catalog_material_filter_0437_name" translatable="false">BOYU EF-25</string>
+    <string name="catalog_material_filter_0438_name" translatable="false">BOYU EF-35</string>
+    <string name="catalog_material_filter_0439_name" translatable="false">BOYU EF-45</string>
+    <string name="catalog_material_filter_0440_name" translatable="false">BOYU FEF-230</string>
+    <string name="catalog_material_filter_0441_name" translatable="false">BOYU FEF-230A</string>
+    <string name="catalog_material_filter_0442_name" translatable="false">BOYU FEF-280</string>
+    <string name="catalog_material_filter_0443_name" translatable="false">BOYU FEF-280A</string>
+    <string name="catalog_material_filter_0444_name" translatable="false">BOYU WF-2015</string>
+    <string name="catalog_material_filter_0445_name" translatable="false">BOYU WF-2025</string>
+    <string name="catalog_material_filter_0446_name" translatable="false">BOYU WF-2035</string>
+    <string name="catalog_material_filter_0447_name" translatable="false">BOYU WF-2045</string>
+    <string name="catalog_material_filter_0448_name" translatable="false">BOYU WF-2055</string>
+    <string name="catalog_material_filter_0449_name" translatable="false">BOYU XFP-500F</string>
+    <string name="catalog_material_filter_0450_name" translatable="false">BOYU XFP-1000F</string>
+    <string name="catalog_material_filter_0451_name" translatable="false">BOYU XFP-1500F</string>
+    <string name="catalog_material_filter_0452_name" translatable="false">BOYU WF-200</string>
+    <string name="catalog_material_filter_0453_name" translatable="false">BOYU WF-400</string>
+    <string name="catalog_material_filter_0454_name" translatable="false">BOYU WF-600</string>
+    <string name="catalog_material_filter_0455_name" translatable="false">BOYU FP-08E</string>
+    <string name="catalog_material_filter_0456_name" translatable="false">BOYU FP-18E</string>
+    <string name="catalog_material_filter_0457_name" translatable="false">BOYU FP-28E</string>
+    <string name="catalog_material_filter_0458_name" translatable="false">BOYU FP-38E</string>
+    <string name="catalog_material_filter_0459_name" translatable="false">BOYU SP-1000C</string>
+    <string name="catalog_material_filter_0460_name" translatable="false">BOYU SP-1300C</string>
+    <string name="catalog_material_filter_0461_name" translatable="false">BOYU SP-2300B</string>
+    <string name="catalog_material_filter_0462_name" translatable="false">BOYU SP-2500B</string>
+    <string name="catalog_material_filter_0463_name" translatable="false">BOYU SF-101</string>
+    <string name="catalog_material_filter_0464_name" translatable="false">BOYU SF-102</string>
+    <string name="catalog_material_filter_0465_name" translatable="false">BOYU SF-104</string>
+    <string name="catalog_material_filter_0466_name" translatable="false">Atman CF-600</string>
+    <string name="catalog_material_filter_0467_name" translatable="false">Atman CF-800</string>
+    <string name="catalog_material_filter_0468_name" translatable="false">Atman CF-1000</string>
+    <string name="catalog_material_filter_0469_name" translatable="false">Atman CF-1200</string>
+    <string name="catalog_material_filter_0470_name" translatable="false">Atman CF-3200</string>
+    <string name="catalog_material_filter_0471_name" translatable="false">Atman HF-0100</string>
+    <string name="catalog_material_filter_0472_name" translatable="false">Atman HF-0300</string>
+    <string name="catalog_material_filter_0473_name" translatable="false">Atman HF-0400</string>
+    <string name="catalog_material_filter_0474_name" translatable="false">Atman HF-0600</string>
+    <string name="catalog_material_filter_0475_name" translatable="false">Atman AT-F201</string>
+    <string name="catalog_material_filter_0476_name" translatable="false">Atman AT-F202</string>
+    <string name="catalog_material_filter_0477_name" translatable="false">Atman AT-F203</string>
+    <string name="catalog_material_filter_0478_name" translatable="false">Atman AT-F301</string>
+    <string name="catalog_material_filter_0479_name" translatable="false">Dophin C500</string>
+    <string name="catalog_material_filter_0480_name" translatable="false">Dophin C700</string>
+    <string name="catalog_material_filter_0481_name" translatable="false">Dophin C1000</string>
+    <string name="catalog_material_filter_0482_name" translatable="false">Dophin C1300</string>
+    <string name="catalog_material_filter_0483_name" translatable="false">Dophin C1600</string>
+    <string name="catalog_material_filter_0484_name" translatable="false">Dophin C2400</string>
+    <string name="catalog_material_filter_0485_name" translatable="false">Dophin CF-300 Mini</string>
+    <string name="catalog_material_filter_0486_name" translatable="false">Dophin H80</string>
+    <string name="catalog_material_filter_0487_name" translatable="false">Dophin H100</string>
+    <string name="catalog_material_filter_0488_name" translatable="false">Dophin H200</string>
+    <string name="catalog_material_filter_0489_name" translatable="false">Dophin H300</string>
+    <string name="catalog_material_filter_0490_name" translatable="false">Dophin H500</string>
+    <string name="catalog_material_filter_0491_name" translatable="false">Dophin H800</string>
+    <string name="catalog_material_filter_0492_name" translatable="false">Dophin KF150</string>
+    <string name="catalog_material_filter_0493_name" translatable="false">Dophin KF160</string>
+    <string name="catalog_material_filter_0494_name" translatable="false">Dophin KF200</string>
+    <string name="catalog_material_filter_0495_name" translatable="false">Dophin KF350</string>
+    <string name="catalog_material_filter_0496_name" translatable="false">Dophin 950F</string>
+    <string name="catalog_material_filter_0497_name" translatable="false">Dophin 960F</string>
+    <string name="catalog_material_filter_0498_name" translatable="false">Dophin 970F</string>
+    <string name="catalog_material_filter_0499_name" translatable="false">Dophin 980F</string>
+    <string name="catalog_material_filter_0500_name" translatable="false">Dophin FB1000F</string>
+    <string name="catalog_material_filter_0501_name" translatable="false">Dophin FB2000F</string>
+    <string name="catalog_material_filter_0502_name" translatable="false">Dophin FB3000F</string>
+    <string name="catalog_material_filter_0503_name" translatable="false">Dophin FB4000F</string>
+    <string name="catalog_material_filter_0504_name" translatable="false">Dophin SFP-15</string>
+    <string name="catalog_material_filter_0505_name" translatable="false">Dophin SFP-16</string>
+    <string name="catalog_material_filter_0506_name" translatable="false">Dophin SFP-33</string>
+    <string name="catalog_material_filter_0507_name" translatable="false">Dophin SFP-34</string>
+    <string name="catalog_material_filter_0508_name" translatable="false">SOBO SF-650F</string>
+    <string name="catalog_material_filter_0509_name" translatable="false">SOBO SF-850F</string>
+    <string name="catalog_material_filter_0510_name" translatable="false">SOBO SF-1000F</string>
+    <string name="catalog_material_filter_0511_name" translatable="false">SOBO SF-1200F</string>
+    <string name="catalog_material_filter_0512_name" translatable="false">SOBO SF-1500F</string>
+    <string name="catalog_material_filter_0513_name" translatable="false">SOBO SF-1800F</string>
+    <string name="catalog_material_filter_0514_name" translatable="false">SOBO SF-2200F</string>
+    <string name="catalog_material_filter_0515_name" translatable="false">SOBO SF-1200F-UV</string>
+    <string name="catalog_material_filter_0516_name" translatable="false">SOBO SF-1500F-UV</string>
+    <string name="catalog_material_filter_0517_name" translatable="false">SOBO SF-1800F-UV</string>
+    <string name="catalog_material_filter_0518_name" translatable="false">SOBO SF-2200F-UV</string>
+    <string name="catalog_material_filter_0519_name" translatable="false">SOBO AQ-903F</string>
+    <string name="catalog_material_filter_0520_name" translatable="false">SOBO AQ-905F</string>
+    <string name="catalog_material_filter_0521_name" translatable="false">SOBO AQ-907F</string>
+    <string name="catalog_material_filter_0522_name" translatable="false">SOBO AQ-909F</string>
+    <string name="catalog_material_filter_0523_name" translatable="false">SOBO AQ-911F</string>
+    <string name="catalog_material_filter_0524_name" translatable="false">SOBO AQ-913F</string>
+    <string name="catalog_material_filter_0525_name" translatable="false">SOBO WP-206H</string>
+    <string name="catalog_material_filter_0526_name" translatable="false">SOBO WP-303H</string>
+    <string name="catalog_material_filter_0527_name" translatable="false">SOBO WP-408H</string>
+    <string name="catalog_material_filter_0528_name" translatable="false">SOBO WP-508H</string>
+    <string name="catalog_material_filter_0529_name" translatable="false">SOBO WP-518H</string>
+    <string name="catalog_material_filter_0530_name" translatable="false">SOBO WP-606H</string>
+    <string name="catalog_material_filter_0531_name" translatable="false">SOBO WP-618H</string>
+    <string name="catalog_material_filter_0532_name" translatable="false">SOBO WP-628H</string>
+    <string name="catalog_material_filter_0533_name" translatable="false">SOBO WP-638H</string>
+    <string name="catalog_material_filter_0534_name" translatable="false">SOBO WP-607H</string>
+    <string name="catalog_material_filter_0535_name" translatable="false">SOBO WP-658H</string>
+    <string name="catalog_material_filter_0536_name" translatable="false">SOBO WP-698H</string>
+    <string name="catalog_material_filter_0537_name" translatable="false">SOBO WP-698H-UV</string>
+    <string name="catalog_material_filter_0538_name" translatable="false">SOBO AQ-15H</string>
+    <string name="catalog_material_filter_0539_name" translatable="false">SOBO AQ-16H</string>
+    <string name="catalog_material_filter_0540_name" translatable="false">SOBO AQ-17H</string>
+    <string name="catalog_material_filter_0541_name" translatable="false">SOBO AQ-18H</string>
+    <string name="catalog_material_filter_0542_name" translatable="false">SOBO SF-150F</string>
+    <string name="catalog_material_filter_0543_name" translatable="false">SOBO SF-350F</string>
+    <string name="catalog_material_filter_0544_name" translatable="false">SOBO SF-550F</string>
+    <string name="catalog_material_filter_0545_name" translatable="false">SOBO WP-6001</string>
+    <string name="catalog_material_filter_0546_name" translatable="false">SOBO WP-5001</string>
+    <string name="catalog_material_filter_0547_name" translatable="false">SOBO WP-4001</string>
+    <string name="catalog_material_filter_0548_name" translatable="false">SOBO WP-2001</string>
+    <string name="catalog_material_filter_0549_name" translatable="false">SOBO WP-1302F</string>
+    <string name="catalog_material_filter_0550_name" translatable="false">SOBO WP-1301F</string>
+    <string name="catalog_material_filter_0551_name" translatable="false">SOBO WP-1300F</string>
+    <string name="catalog_material_filter_0552_name" translatable="false">SOBO FK-1504</string>
+    <string name="catalog_material_filter_0553_name" translatable="false">SOBO FK-1502</string>
+    <string name="catalog_material_filter_0554_name" translatable="false">SOBO FE-1504</string>
+    <string name="catalog_material_filter_0555_name" translatable="false">SOBO FD-1501</string>
+    <string name="catalog_material_filter_0556_name" translatable="false">SOBO FC-1001</string>
+    <string name="catalog_material_filter_0557_name" translatable="false">SOBO WP-3300A</string>
+    <string name="catalog_material_filter_0558_name" translatable="false">SOBO WP-2200F</string>
+    <string name="catalog_material_filter_0559_name" translatable="false">SOBO WP-350F</string>
+    <string name="catalog_material_filter_0560_name" translatable="false">SOBO WP-340F</string>
+    <string name="catalog_material_filter_0561_name" translatable="false">SOBO WP-1120F</string>
+    <string name="catalog_material_filter_0562_name" translatable="false">SOBO WP-1108F</string>
+    <string name="catalog_material_filter_0563_name" translatable="false">SOBO WP-377F</string>
+    <string name="catalog_material_filter_0564_name" translatable="false">SOBO WP-277F</string>
+    <string name="catalog_material_filter_0565_name" translatable="false">SOBO WP-177F</string>
+    <string name="catalog_material_filter_0566_name" translatable="false">SOBO AQ-104F</string>
+    <string name="catalog_material_filter_0567_name" translatable="false">SOBO AQ-103F</string>
+    <string name="catalog_material_filter_0568_name" translatable="false">SOBO AQ-102F</string>
+    <string name="catalog_material_filter_0569_name" translatable="false">SOBO AQ-1000F</string>
+    <string name="catalog_material_filter_0570_name" translatable="false">SOBO 500F</string>
+    <string name="catalog_material_filter_0571_name" translatable="false">SOBO 1000F</string>
+    <string name="catalog_material_filter_0572_name" translatable="false">SOBO 1500F</string>
+    <string name="catalog_material_filter_0573_name" translatable="false">SOBO WP-950F</string>
+    <string name="catalog_material_filter_0574_name" translatable="false">SOBO SK-03</string>
+    <string name="catalog_material_filter_0575_name" translatable="false">SOBO WP-880F</string>
+    <string name="catalog_material_filter_0576_name" translatable="false">SOBO WP-1880F</string>
+    <string name="catalog_material_filter_0577_name" translatable="false">SOBO WP-2880F</string>
+    <string name="catalog_material_filter_0578_name" translatable="false">SOBO WP-3880F</string>
+    <string name="catalog_material_filter_0579_name" translatable="false">SOBO WP-4880F</string>
+    <string name="catalog_material_filter_0580_name" translatable="false">SOBO FA-30</string>
+    <string name="catalog_material_filter_0581_name" translatable="false">SOBO FA-60</string>
+    <string name="catalog_material_filter_0582_name" translatable="false">SOBO FA-90</string>
+    <string name="catalog_material_filter_0583_name" translatable="false">SOBO FA-120</string>
+    <string name="catalog_material_filter_0584_name" translatable="false">SOBO AQ-152H</string>
+    <string name="catalog_material_filter_0585_name" translatable="false">SOBO AQ-162H</string>
+    <string name="catalog_material_filter_0586_name" translatable="false">SOBO AQ-172H</string>
+    <string name="catalog_material_filter_0587_name" translatable="false">SOBO AQ-182H</string>
+    <string name="catalog_material_filter_0588_name" translatable="false">SOBO SB-933</string>
+    <string name="catalog_material_filter_0589_name" translatable="false">SOBO SB-1200</string>
+    <string name="catalog_material_filter_0590_name" translatable="false">SOBO SB-3330</string>
+    <string name="catalog_material_filter_0591_name" translatable="false">SOBO SB-2602</string>
+    <string name="catalog_material_filter_0592_name" translatable="false">SOBO SB-2601</string>
+    <string name="catalog_material_filter_0593_name" translatable="false">SOBO SB-2330</string>
+    <string name="catalog_material_filter_0594_name" translatable="false">SOBO SB-1330</string>
+    <string name="catalog_material_filter_0595_name" translatable="false">SOBO SB-2812</string>
+    <string name="catalog_material_filter_0596_name" translatable="false">SOBO SB-2811</string>
+    <string name="catalog_material_filter_0597_name" translatable="false">SOBO SB-2802</string>
+    <string name="catalog_material_filter_0598_name" translatable="false">SOBO SB-2801</string>
+    <string name="catalog_material_filter_0599_name" translatable="false">AquaWing AQF350</string>
+    <string name="catalog_material_filter_0600_name" translatable="false">AquaWing AQF380</string>
+    <string name="catalog_material_filter_0601_name" translatable="false">AquaWing AQF500</string>
+    <string name="catalog_material_filter_0602_name" translatable="false">AquaWing AQ301HF</string>
+    <string name="catalog_material_filter_0603_name" translatable="false">AquaWing AQ501HF</string>
+    <string name="catalog_material_filter_0604_name" translatable="false">AquaWing AQ111F</string>
+    <string name="catalog_material_filter_0605_name" translatable="false">AquaWing AQ201F</string>
+    <string name="catalog_material_filter_0606_name" translatable="false">AquaWing AQ203F</string>
+    <string name="catalog_material_filter_0607_name" translatable="false">AquaWing AQ205F</string>
+    <string name="catalog_material_filter_0608_name" translatable="false">AquaWing AQ310F</string>
+    <string name="catalog_material_filter_0609_name" translatable="false">AquaWing AQ320F</string>
+    <string name="catalog_material_filter_0610_name" translatable="false">AquaWing AQ510F</string>
+    <string name="catalog_material_filter_0611_name" translatable="false">AquaWing AQ920FB</string>
+    <string name="catalog_material_filter_0612_name" translatable="false">AquaWing AQ-WP750FA</string>
+    <string name="catalog_material_filter_0613_name" translatable="false">AquaWing AQ-WP750FB</string>
+    <string name="catalog_material_filter_0614_name" translatable="false">AquaWing AQ-WP850FA</string>
+    <string name="catalog_material_filter_0615_name" translatable="false">AquaWing AQ-WP850FB</string>
+    <string name="catalog_material_filter_0616_name" translatable="false">AquaWing AQ-WP950FA</string>
+    <string name="catalog_material_filter_0617_name" translatable="false">AquaWing AQ-WP950FB</string>
+    <string name="catalog_material_filter_0618_name" translatable="false">AquaWing AQ-WP1000FA</string>
+    <string name="catalog_material_filter_0619_name" translatable="false">AquaWing AQ-WP1000FB</string>
+    <string name="catalog_material_filter_0620_name" translatable="false">AquaWing AQ-WP2300A</string>
+    <string name="catalog_material_filter_0621_name" translatable="false">AquaWing AQ-WP3300A</string>
+    <string name="catalog_material_filter_0622_name" translatable="false">AquaWing AQ-WP3300B</string>
+    <string name="catalog_material_filter_0623_name" translatable="false">AquaWing AQ-WP3300C</string>
+    <string name="catalog_material_filter_0624_name" translatable="false">AquaWing AQ780</string>
+    <string name="catalog_material_filter_0625_name" translatable="false">AquaWing AQ088</string>
+    <string name="catalog_material_filter_0626_name" translatable="false">AquaWing AQ188</string>
+    <string name="catalog_material_filter_0627_name" translatable="false">AquaWing AQ388</string>
+    <string name="catalog_material_filter_0628_name" translatable="false">AquaWing AQ1000F</string>
+    <string name="catalog_material_filter_0629_name" translatable="false">AquaWing AQ1300F</string>
+    <string name="catalog_material_filter_0630_name" translatable="false">AquaWing AQ1500F</string>
+    <string name="catalog_material_filter_0631_name" translatable="false">AquaWing AQ1800F</string>
+    <string name="catalog_material_filter_0632_name" translatable="false">AquaWing AQ155</string>
+    <string name="catalog_material_filter_0633_name" translatable="false">VenusAqua VS501HF</string>
+    <string name="catalog_material_filter_0634_name" translatable="false">VenusAqua VS502HF</string>
+    <string name="catalog_material_filter_0635_name" translatable="false">VenusAqua VS-301HF</string>
+    <string name="catalog_material_filter_0636_name" translatable="false">VenusAqua VS-302HF</string>
+    <string name="catalog_material_filter_0637_name" translatable="false">VenusAqua AQ350</string>
+    <string name="catalog_material_filter_0638_name" translatable="false">VenusAqua AQ380</string>
+    <string name="catalog_material_filter_0639_name" translatable="false">VenusAqua AQ500</string>
+    <string name="catalog_material_filter_0640_name" translatable="false">VenusAqua VS-1303F</string>
+    <string name="catalog_material_filter_0641_name" translatable="false">VenusAqua VS-3800F</string>
+    <string name="catalog_material_filter_0642_name" translatable="false">VenusAqua VS-2800F</string>
+    <string name="catalog_material_filter_0643_name" translatable="false">VenusAqua VS-920FA</string>
+    <string name="catalog_material_filter_0644_name" translatable="false">VenusAqua VS-920FB</string>
+    <string name="catalog_material_filter_0645_name" translatable="false">VenusAqua VS-920FC</string>
+    <string name="catalog_material_filter_0646_name" translatable="false">VenusAqua VS-1800F</string>
+    <string name="catalog_material_filter_0647_name" translatable="false">VenusAqua VS-410F</string>
+    <string name="catalog_material_filter_0648_name" translatable="false">VenusAqua VS-210F</string>
+    <string name="catalog_material_filter_0649_name" translatable="false">VenusAqua 420F</string>
+    <string name="catalog_material_filter_0650_name" translatable="false">VenusAqua 230F</string>
+    <string name="catalog_material_filter_0651_name" translatable="false">VenusAqua 2001F</string>
+    <string name="catalog_material_filter_0652_name" translatable="false">VenusAqua 2002F</string>
+    <string name="catalog_material_filter_0653_name" translatable="false">VenusAqua 2003F</string>
+    <string name="catalog_material_filter_0654_name" translatable="false">VenusAqua 2004F</string>
+    <string name="catalog_material_filter_0655_name" translatable="false">VenusAqua 2005F</string>
+    <string name="catalog_material_filter_0656_name" translatable="false">VenusAqua 3003F</string>
+    <string name="catalog_material_filter_0657_name" translatable="false">VenusAqua 3004F</string>
+    <string name="catalog_material_filter_0658_name" translatable="false">VenusAqua 3005F</string>
+    <string name="catalog_material_filter_0659_name" translatable="false">VenusAqua 6001F</string>
+    <string name="catalog_material_filter_0660_name" translatable="false">VenusAqua 6002F</string>
+    <string name="catalog_material_filter_0661_name" translatable="false">VenusAqua 6003F</string>
+    <string name="catalog_material_filter_0662_name" translatable="false">VenusAqua 6004F</string>
+    <string name="catalog_material_filter_0663_name" translatable="false">VenusAqua 6005F</string>
+    <string name="catalog_material_filter_0664_name" translatable="false">VenusAqua 6006F</string>
+    <string name="catalog_material_filter_0665_name" translatable="false">VenusAqua SK-680</string>
+    <string name="catalog_material_filter_0666_name" translatable="false">VenusAqua 601T</string>
+    <string name="catalog_material_filter_0667_name" translatable="false">VenusAqua 602T</string>
+    <string name="catalog_material_filter_0668_name" translatable="false">VenusAqua 603T</string>
+    <string name="catalog_material_filter_0669_name" translatable="false">VenusAqua VS25F</string>
+    <string name="catalog_material_filter_0670_name" translatable="false">Aqua Master PRO-1000</string>
+    <string name="catalog_material_filter_0671_name" translatable="false">Aqua Master PRO-1200</string>
+    <string name="catalog_material_filter_0672_name" translatable="false">Aqua Master PRO-1500</string>
+    <string name="catalog_material_filter_0673_name" translatable="false">XLPRO MINI-230</string>
+    <string name="catalog_material_filter_0674_name" translatable="false">XLPRO MINI-500</string>
+    <string name="catalog_material_filter_0675_name" translatable="false">XLPRO EX-1000</string>
+    <string name="catalog_material_filter_0676_name" translatable="false">XLPRO EX-1200</string>
+    <string name="catalog_material_filter_0677_name" translatable="false">XLPRO EX-1500</string>
+    <string name="catalog_material_filter_0678_name" translatable="false">Xinyou XY-180</string>
+    <string name="catalog_material_filter_0679_name" translatable="false">Xinyou XY-280</string>
+    <string name="catalog_material_filter_0680_name" translatable="false">Xinyou XY-380</string>
+    <string name="catalog_material_filter_0681_name" translatable="false">Xinyou XY-2008</string>
+    <string name="catalog_material_filter_0682_name" translatable="false">Xinyou XY-2010</string>
+    <string name="catalog_material_filter_0683_name" translatable="false">Xinyou XY-2820</string>
+    <string name="catalog_material_filter_0684_name" translatable="false">Xinyou XY-2830</string>
+    <string name="catalog_material_filter_0685_name" translatable="false">Xinyou XY-2831</string>
+    <string name="catalog_material_filter_0686_name" translatable="false">Xinyou XY-2880</string>
+    <string name="catalog_material_filter_0687_name" translatable="false">Xinyou XY-2881</string>
+    <string name="catalog_material_filter_0688_name" translatable="false">Xinyou XY-2882</string>
+    <string name="catalog_material_filter_0689_name" translatable="false">Xinyou XY-2900</string>
+    <string name="catalog_material_filter_0690_name" translatable="false">Xinyou XY-2901</string>
+    <string name="catalog_material_filter_0691_name" translatable="false">Xinyou XY-2902</string>
+    <string name="catalog_material_filter_0692_name" translatable="false">Xinyou PK-XY001</string>
+    <string name="catalog_material_filter_0693_name" translatable="false">Xinyou PK-XY002</string>
+    <string name="catalog_material_filter_0694_name" translatable="false">RS Electrical RS-800A</string>
+    <string name="catalog_material_filter_0695_name" translatable="false">RS Electrical RS-900A</string>
+    <string name="catalog_material_filter_0696_name" translatable="false">RS Electrical RS-1000</string>
+    <string name="catalog_material_filter_0697_name" translatable="false">RS Electrical RS-2000</string>
+    <string name="catalog_material_filter_0698_name" translatable="false">RS Electrical RS-6000</string>
+    <string name="catalog_material_filter_0699_name" translatable="false">RS Electrical RS-072A</string>
+    <string name="catalog_material_filter_0700_name" translatable="false">RS Electrical RS-082A</string>
+    <string name="catalog_material_filter_0701_name" translatable="false">RS Electrical RS-118F</string>
+    <string name="catalog_material_filter_0702_name" translatable="false">RS Electrical RS-128F</string>
+    <string name="catalog_material_filter_0703_name" translatable="false">RS Electrical RS-03</string>
+    <string name="catalog_material_filter_0704_name" translatable="false">RS Electrical RS-99 UV</string>
+    <string name="catalog_material_filter_0705_name" translatable="false">RS Electrical RS-3002</string>
+    <string name="catalog_material_filter_0706_name" translatable="false">RS Electrical RS-3004</string>
+    <string name="catalog_material_filter_0707_name" translatable="false">RS Electrical RS-613</string>
+    <string name="catalog_material_filter_0708_name" translatable="false">RS Electrical RS-602</string>
+    <string name="catalog_material_filter_0709_name" translatable="false">RS Electrical RS-2002</string>
+    <string name="catalog_material_filter_0710_name" translatable="false">RS Electrical RS-2003</string>
+    <string name="catalog_material_filter_0711_name" translatable="false">RS Electrical RS-400A</string>
+    <string name="catalog_material_filter_0712_name" translatable="false">RS Electrical RS-1506</string>
+    <string name="catalog_material_filter_0713_name" translatable="false">RS Electrical RS-1608</string>
+    <string name="catalog_material_filter_0714_name" translatable="false">RS Electrical RS-760</string>
+    <string name="catalog_material_filter_0715_name" translatable="false">RS Electrical RS-188</string>
+    <string name="catalog_material_filter_0716_name" translatable="false">RS Electrical RS-288</string>
+    <string name="catalog_material_filter_0717_name" translatable="false">RS Electrical RS-388</string>
+    <string name="catalog_material_filter_0718_name" translatable="false">RS Electrical RS-230K</string>
+    <string name="catalog_material_filter_0719_name" translatable="false">RS Electrical RS-430K</string>
+    <string name="catalog_material_filter_0720_name" translatable="false">Jingye JY-400F</string>
+    <string name="catalog_material_filter_0721_name" translatable="false">Jingye JY-401F</string>
+    <string name="catalog_material_filter_0722_name" translatable="false">Jingye JY-600F</string>
+    <string name="catalog_material_filter_0723_name" translatable="false">Jingye JY-800F</string>
+    <string name="catalog_material_filter_0724_name" translatable="false">Jingye JY-8000F</string>
+    <string name="catalog_material_filter_0725_name" translatable="false">Jingye JY-8100F</string>
+    <string name="catalog_material_filter_0726_name" translatable="false">Jingye JY-8200F</string>
+    <string name="catalog_material_filter_0727_name" translatable="false">Atlantik ATL-150 Bio Filter</string>
+    <string name="catalog_material_filter_0728_name" translatable="false">Atlantik ATL-300 Bio Filter</string>
+    <string name="catalog_material_filter_0729_name" translatable="false">Atlantik ATL-400 Bio Filter</string>
+    <string name="catalog_material_filter_0730_name" translatable="false">Atlantik 600F</string>
+    <string name="catalog_material_filter_0731_name" translatable="false">Atlantik 1200T</string>
+    <string name="catalog_material_filter_0732_name" translatable="false">Atlantik 1800F</string>
+    <string name="catalog_material_filter_0733_name" translatable="false">Atlantik 1800T</string>
+    <string name="catalog_material_filter_0734_name" translatable="false">Leecom IF730</string>
+    <string name="catalog_material_filter_0735_name" translatable="false">Leecom IF732</string>
+    <string name="catalog_material_filter_0736_name" translatable="false">Leecom IF733</string>
+    <string name="catalog_material_filter_0737_name" translatable="false">Haqos EXP-500</string>
+    <string name="catalog_material_filter_0738_name" translatable="false">Haqos EXP-500AT</string>
+    <string name="catalog_material_filter_0739_name" translatable="false">Haqos EX-500AT</string>
+    <string name="catalog_material_filter_0740_name" translatable="false">Haqos EX-1200AT</string>
+    <string name="catalog_material_filter_0741_name" translatable="false">Haqos EX-1500AT</string>
+    <string name="catalog_material_filter_0742_name" translatable="false">EJet 3358</string>
+    <string name="catalog_material_filter_0743_name" translatable="false">EJet 3368</string>
+    <string name="catalog_material_filter_0744_name" translatable="false">EJet 3378</string>
+    <string name="catalog_material_filter_0745_name" translatable="false">EJet 3388</string>
+    <string name="catalog_material_filter_0746_name" translatable="false">EuroStar HBL802</string>
+    <string name="catalog_material_filter_0747_name" translatable="false">Jeneca YL-5</string>
+    <string name="catalog_material_filter_0748_name" translatable="false">WaterBear WB-880F</string>
+    <string name="catalog_material_filter_0749_name" translatable="false">WaterBear WB-2880F</string>
+
+    <!-- Filter search aliases. Localized aliases live in values-tr. -->
+    <string name="catalog_filter_keyword_aquarium_filter">aquarium filter</string>
+    <string name="catalog_filter_keyword_external_filter">external filter</string>
+    <string name="catalog_filter_keyword_canister_filter">canister filter</string>
+    <string name="catalog_filter_keyword_hang_on_filter">hang on filter</string>
+    <string name="catalog_filter_keyword_hob_filter">hob filter</string>
+    <string name="catalog_filter_keyword_waterfall_filter">waterfall filter</string>
+    <string name="catalog_filter_keyword_power_filter">power filter</string>
+    <string name="catalog_filter_keyword_internal_filter">internal filter</string>
+    <string name="catalog_filter_keyword_air_driven_filter">air driven filter</string>
+    <string name="catalog_filter_keyword_sponge_filter">sponge filter</string>
+    <string name="catalog_filter_keyword_corner_filter">corner filter</string>
+    <string name="catalog_filter_keyword_prefilter">prefilter</string>
+    <string name="catalog_filter_keyword_filter_system">filter system</string>
+    <string name="catalog_filter_keyword_breeder_filter">breeder filter</string>
+    <string name="catalog_filter_keyword_top_filter">top filter</string>
+    <string name="catalog_filter_keyword_overhead_filter">overhead filter</string>
+    <string name="catalog_filter_keyword_pipe_filter">pipe filter</string>
+    <string name="catalog_filter_keyword_mini_external_filter">mini external filter</string>
+    <string name="catalog_filter_keyword_biological_filter">biological filter</string>
+    <string name="catalog_filter_keyword_heated_filter">heated filter</string>
+    <string name="catalog_filter_keyword_uv_filter">uv filter</string>
+</resources>

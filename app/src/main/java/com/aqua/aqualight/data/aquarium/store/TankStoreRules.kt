@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.aquarium.store
 
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
@@ -41,9 +43,15 @@ object TankStoreRules {
         )
 
         val ownerScopedIds = mutableSetOf<Pair<String, Long>>()
+        val plantPhotoUris = mutableSetOf<String>()
 
         store.tanksList.forEach { tank ->
             validateTank(tank)
+            tank.recordPhotoUris().forEach { uri ->
+                if (!plantPhotoUris.add(uri)) {
+                    violation("Photo files must not be shared between records.")
+                }
+            }
 
             val ownerKey = canonicalOwnerUid(tank.ownerUid)
             if (!ownerScopedIds.add(ownerKey to tank.id)) {
@@ -96,6 +104,11 @@ object TankStoreRules {
                 violation("Duplicate plant id ${plant.id} in tank ${tank.id}.")
             }
             requireCanonicalRequiredText(
+                "plant.catalogId",
+                plant.catalogId,
+                MAX_PRODUCT_ID_CHARS
+            )
+            requireCanonicalRequiredText(
                 "plant.plantName",
                 plant.plantName,
                 MAX_ENTITY_NAME_CHARS
@@ -105,6 +118,7 @@ object TankStoreRules {
                 plant.category,
                 MAX_CATEGORY_CHARS
             )
+            requireCanonicalOptionalText("plant.photoUri", plant.photoUri, MAX_URI_CHARS)
             requireNormalizedMarker("plant.markerX", plant.markerX)
             requireNormalizedMarker("plant.markerY", plant.markerY)
         }
@@ -154,6 +168,19 @@ object TankStoreRules {
                 violation("Duplicate livestock id ${livestock.id} in tank ${tank.id}.")
             }
             requireCanonicalRequiredText(
+                "livestock.catalogEntryId",
+                livestock.catalogEntryId,
+                MAX_PRODUCT_ID_CHARS
+            )
+            runCatching {
+                AquariumLivestockIdentity.requireValid(
+                    livestockId = livestock.id,
+                    catalogEntryId = livestock.catalogEntryId
+                )
+            }.getOrElse { error ->
+                violation(error.message ?: "livestock.catalogEntryId is invalid.")
+            }
+            requireCanonicalRequiredText(
                 "livestock.name",
                 livestock.name,
                 MAX_ENTITY_NAME_CHARS
@@ -163,6 +190,9 @@ object TankStoreRules {
                 livestock.category,
                 MAX_CATEGORY_CHARS
             )
+            if (livestock.category !in AquariumLivestockTaxonomy.categoryCodes) {
+                violation("livestock.category is not a supported value.")
+            }
             if (livestock.quantity !in 1..100_000) {
                 violation("livestock.quantity must be between 1 and 100000.")
             }
@@ -171,6 +201,7 @@ object TankStoreRules {
                 livestock.addedDateEpochDay
             )
             requireCanonicalOptionalText("livestock.note", livestock.note, MAX_NOTE_CHARS)
+            requireCanonicalOptionalText("livestock.photoUri", livestock.photoUri, MAX_URI_CHARS)
         }
     }
 

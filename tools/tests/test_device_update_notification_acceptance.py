@@ -138,9 +138,10 @@ class DeviceUpdateNotificationAcceptanceTest(unittest.TestCase):
         self.assertIn("DeviceFirmwareManifestNotPublishedException", source)
         self.assertIn("DeviceFirmwareManifestHttpException", source)
         self.assertNotIn('message.contains("404")', source)
-        self.assertIn("noPublishedRelease(snapshot)", repository)
-        self.assertIn("return compatible.singleOrNull()", planner)
-        self.assertIn("compatibleArtifacts.singleOrNull()", probe)
+        self.assertIn("releaseNotPublished(snapshot)", repository)
+        self.assertIn("DeviceFirmwareAvailability.ReleaseNotPublished", repository)
+        self.assertIn("val artifact = manifest.artifacts.single()", planner)
+        self.assertIn("val artifact = manifest.artifacts.single()", probe)
 
     def test_availability_failures_never_enter_operation_notification_path(self) -> None:
         adapter = read(
@@ -273,8 +274,8 @@ class DeviceUpdateNotificationAcceptanceTest(unittest.TestCase):
 
         self.assertIn("ownerChangeAfterSnapshotLoadFailsClosed", runner_test)
         self.assertIn("unpublishedTimerChannelDoesNotBlockDosingAvailability", runner_test)
-        self.assertIn("dose pro 4 without a published artifact", no_artifact_test)
-        self.assertIn("unpublished product channel resolves", no_release_test)
+        self.assertIn("dose pro 4 rejects a signed manifest", no_artifact_test)
+        self.assertIn("unpublished product channel remains", no_release_test)
         self.assertIn("real transport failure remains", no_release_test)
         self.assertIn("fiveIdenticalAvailabilityFailuresNeverCreateNotificationSpam", policy_test)
         self.assertIn("executionFailureCreatesOperationFailureNotification", policy_test)

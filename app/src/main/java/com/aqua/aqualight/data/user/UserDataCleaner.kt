@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
@@ -32,6 +33,7 @@ class UserDataCleaner private constructor(
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
+        LIGHT_LIBRARY,
         DOSING_CALIBRATION_DRAFTS,
         OTA_TRANSACTIONS,
         DEVICE_CREDENTIALS,
@@ -76,20 +78,12 @@ class UserDataCleaner private constructor(
             issues += CleanupIssue(step = step, error = error)
         }
 
-        val tankPhotoUris = runCatching {
-            tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .mapNotNull { tank -> tank.photoUri }
-        }.getOrElse { error ->
-            recordIssue(Step.AQUARIUM_TANKS, error)
-            emptyList()
-        }
-
-        val profilePhotoUri = runCatching {
-            userPreferencesManager.profilePhotoUrlForOwner(targetOwnerUid)
-        }.getOrElse { error ->
-            recordIssue(Step.USER_PREFERENCES, error)
-            ""
-        }
+        val mediaSnapshot = UserDataCleanupSnapshotter.capture(
+            ownerUid = targetOwnerUid,
+            tankStore = tankDataStoreManager,
+            preferences = userPreferencesManager
+        )
+        issues += mediaSnapshot.issues
 
         suspend fun runStep(step: Step, block: suspend () -> Unit) {
             runCatching { block() }.onFailure { error ->
@@ -108,32 +102,22 @@ class UserDataCleaner private constructor(
             }
         }
 
-        runStep(Step.CARE_TASKS) {
-            NotificationPlatform.get(appContext)
-                .preferenceUseCase
-                .cancelOwner(targetOwnerUid)
-            CareTaskDataStoreManager.create(appContext)
-                .clearAllTasks(ownerUid = targetOwnerUid)
-        }
-
-        runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
-
-        runStep(Step.DEVICE_ASSIGNMENTS) {
-            TankDeviceAssignmentStore.get(appContext)
-                .clearOwnerAssignments(ownerUid = targetOwnerUid)
+        clearOwnerStores(
+            ownerUid = targetOwnerUid,
+            tankStore = tankDataStoreManager
+        ) { step, block ->
+            runStep(step, block)
         }
 
         runStep(Step.PROVISIONING_SESSIONS) {
             clearProvisioningData(targetOwnerUid)
         }
 
-        clearDeviceStores(targetOwnerUid) { step, block -> runStep(step, block) }
-
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
                 ownerUid = targetOwnerUid,
-                profilePhotoUri = profilePhotoUri,
-                tankPhotoUris = tankPhotoUris
+                profilePhotoUri = mediaSnapshot.profilePhotoUri,
+                aquariumPhotoUris = mediaSnapshot.aquariumPhotoUris
             )
         }
 
@@ -146,15 +130,36 @@ class UserDataCleaner private constructor(
         return CleanupResult(issues = issues.toList())
     }
 
-    private suspend fun clearDeviceStores(
+    private suspend fun clearOwnerStores(
         ownerUid: String,
+        tankStore: AquariumTankDataStoreManager,
         runStep: suspend (Step, suspend () -> Unit) -> Unit
     ) {
+        runStep(Step.CARE_TASKS) {
+            NotificationPlatform.get(appContext)
+                .preferenceUseCase
+                .cancelOwner(ownerUid)
+            CareTaskDataStoreManager.create(appContext)
+                .clearAllTasks(ownerUid = ownerUid)
+        }
+        runStep(Step.AQUARIUM_TANKS) {
+            tankStore.clearAllTanks(ownerUid)
+        }
+        runStep(Step.DEVICE_ASSIGNMENTS) {
+            TankDeviceAssignmentStore.get(appContext)
+                .clearOwnerAssignments(ownerUid = ownerUid)
+        }
         runStep(Step.KNOWN_DEVICES) {
             DeviceKnownStore(
                 context = appContext,
                 ownerUid = ownerUid
             ).clearOwnerData()
+        }
+        runStep(Step.LIGHT_LIBRARY) {
+            DeviceLightLibraryStore.create(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwner()
         }
         runStep(Step.DOSING_CALIBRATION_DRAFTS) {
             SharedPreferencesDeviceDosingCalibrationDraftStore.create(
@@ -229,9 +234,9 @@ class UserDataCleaner private constructor(
     private fun clearAppOwnedUserFiles(
         ownerUid: String,
         profilePhotoUri: String,
-        tankPhotoUris: List<String>
+        aquariumPhotoUris: List<String>
     ) {
-        (tankPhotoUris + profilePhotoUri)
+        (aquariumPhotoUris + profilePhotoUri)
             .filter(String::isNotBlank)
             .forEach { uri ->
                 if (!AppMediaStorage.deleteInternalMedia(appContext, uri)) {
@@ -284,6 +289,8 @@ class UserDataCleaner private constructor(
         val allowedRoots = listOf(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
+            File(appContext.filesDir, "plant_photos"),
+            File(appContext.filesDir, "livestock_photos"),
             File(appContext.cacheDir, "tank_exports"),
             File(appContext.cacheDir, "image_processing")
         )
@@ -296,3 +303,4 @@ class UserDataCleaner private constructor(
         }
     }
 }
+

@@ -26,10 +26,12 @@ data class SavedAquariumTank(
 
 data class SavedAquariumPlant(
     val id: Long,
+    val catalogId: String,
     val plantName: String,
     val category: String,
     val markerX: Float,
-    val markerY: Float
+    val markerY: Float,
+    val photoUri: String? = null
 )
 
 data class SavedAquariumMaterial(
@@ -48,5 +50,7 @@ data class SavedAquariumLivestock(
     val category: String = "",
     val quantity: Int = 1,
     val addedDateEpochDay: Long? = null,
-    val note: String = ""
+    val note: String = "",
+    val catalogEntryId: String,
+    val photoUri: String? = null
 )

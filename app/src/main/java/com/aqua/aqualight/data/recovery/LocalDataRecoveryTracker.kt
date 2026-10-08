@@ -16,6 +16,7 @@ object LocalDataRecoveryTracker {
         AQUARIUM_TANKS,
         CARE_TASKS,
         USER_PREFERENCES,
+        LIGHT_LIBRARY,
         NOTIFICATION_PREFERENCES,
         KNOWN_DEVICES,
         TANK_DEVICE_ASSIGNMENTS

@@ -49,7 +49,6 @@
     <!-- Device menu -->
     <string name="device_menu_default_title">Cihaz</string>
     <string name="device_menu_offline_dialog_title">Cihaz Çevrimdışı</string>
-    <string name="device_menu_offline_dialog_message">%1$s şu anda çevrimdışı.\n\n%2$s</string>
     <string name="device_menu_offline_message">Cihazın açık ve telefonunuzla aynı Wi-Fi ağına bağlı olduğundan emin olun.</string>
 
     <!-- Permission sheet -->

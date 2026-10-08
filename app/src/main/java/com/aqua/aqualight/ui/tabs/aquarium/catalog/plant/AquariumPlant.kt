@@ -1,21 +1,11 @@
 package com.aqua.aqualight.ui.tabs.aquarium.catalog.plant
 
-import android.content.Context
-import androidx.annotation.StringRes
-
-data class AquariumPlantDefinition(
-    @StringRes val nameRes: Int,
-    @StringRes val categoryRes: Int
-) {
-    fun resolve(context: Context): AquariumPlant {
-        return AquariumPlant(
-            name = context.getString(nameRes),
-            category = context.getString(categoryRes)
-        )
-    }
-}
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 
 data class AquariumPlant(
+    val catalogId: String,
     val name: String,
-    val category: String
+    val category: String,
+    val searchNames: Set<String>,
+    val lightDemand: AquariumPlantLightDemand
 )

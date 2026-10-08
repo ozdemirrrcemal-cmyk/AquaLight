@@ -90,13 +90,17 @@
       "name": "light.manual.set",
       "requiredFields": ["scene"],
       "completeReplacement": true,
-      "persistent": true
+      "persistent": true,
+      "selectsManualMode": true,
+      "sceneAndModePersistAtomically": true
     },
     "off": {
       "name": "light.manual.off",
       "requiredFields": [],
       "completeReplacementWithZeroScene": true,
-      "persistent": true
+      "persistent": true,
+      "selectsManualMode": true,
+      "sceneAndModePersistAtomically": true
     },
     "on": null
   },
@@ -107,6 +111,14 @@
     "manualIntensityOverrideAllowed": false,
     "previewWritesPersistentStorage": false,
     "commitOnRelease": "light.manual.set"
+  },
+  "modeEntry": {
+    "command": "light.control.set",
+    "mode": "MANUAL",
+    "copiesCurrentScheduledRequestedScene": true,
+    "copiesSafetyDeratedEffectiveScene": false,
+    "sceneAndModePersistAtomically": true,
+    "clearsPreview": true
   },
   "pipeline": [
     "SOURCE_SCENE",

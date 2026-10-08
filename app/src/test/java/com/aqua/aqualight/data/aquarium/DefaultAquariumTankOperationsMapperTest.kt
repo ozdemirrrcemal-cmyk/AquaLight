@@ -19,7 +19,57 @@ class DefaultAquariumTankOperationsMapperTest {
 
     @Test
     fun `saved tank maps every UI-facing field without owner leakage`() {
-        val source = SavedAquariumTank(
+        val source = savedTankFixture()
+
+        val mapped = source.toApplicationSnapshot()
+
+        assertEquals(7L, mapped.id)
+        assertEquals("Reef", mapped.name)
+        assertEquals("Mixed reef", mapped.description)
+        assertEquals("content://tank/7", mapped.photoUri)
+        assertEquals(100L, mapped.setupDateEpochDay)
+        assertEquals(80, mapped.widthCm)
+        assertEquals(40, mapped.lengthCm)
+        assertEquals(45, mapped.heightCm)
+        assertEquals("cm", mapped.sizeUnit)
+        assertEquals("L", mapped.volumeUnit)
+        assertEquals("Saltwater", mapped.tankType)
+        assertEquals("Mixed", mapped.tankStyle)
+        assertEquals(200L, mapped.createdAtMillis)
+        assertEquals(true, mapped.smartCareEnabled)
+        assertEquals(false, mapped.careRemindersEnabled)
+        assertEquals(
+            AquariumPlantTag(
+                11L,
+                "plant:anubias_barteri",
+                "Anubias",
+                "Rhizome",
+                0.25f,
+                0.75f,
+                "content://plant/11"
+            ),
+            mapped.plants.single()
+        )
+        assertEquals(
+            AquariumMaterialSelection(
+                id = 12L,
+                productId = "soil-1",
+                categoryKey = "substrate",
+                categoryTitle = "Substrate",
+                name = "Active Soil",
+                brand = "Aqua",
+                note = "Dark"
+            ),
+            mapped.materials.single()
+        )
+        assertEquals(
+            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair", "custom:13"),
+            mapped.livestock.single()
+        )
+    }
+
+    private fun savedTankFixture(): SavedAquariumTank {
+        return SavedAquariumTank(
             id = 7L,
             ownerUid = "owner-secret",
             name = "Reef",
@@ -39,10 +89,12 @@ class DefaultAquariumTankOperationsMapperTest {
             plants = listOf(
                 SavedAquariumPlant(
                     id = 11L,
+                    catalogId = "plant:anubias_barteri",
                     plantName = "Anubias",
                     category = "Rhizome",
                     markerX = 0.25f,
-                    markerY = 0.75f
+                    markerY = 0.75f,
+                    photoUri = "content://plant/11"
                 )
             ),
             materials = listOf(
@@ -63,57 +115,57 @@ class DefaultAquariumTankOperationsMapperTest {
                     category = "Fish",
                     quantity = 2,
                     addedDateEpochDay = 300L,
-                    note = "Pair"
+                    note = "Pair",
+                    catalogEntryId = "custom:13"
                 )
             )
-        )
-
-        val mapped = source.toApplicationSnapshot()
-
-        assertEquals(7L, mapped.id)
-        assertEquals("Reef", mapped.name)
-        assertEquals("Mixed reef", mapped.description)
-        assertEquals("content://tank/7", mapped.photoUri)
-        assertEquals(100L, mapped.setupDateEpochDay)
-        assertEquals(80, mapped.widthCm)
-        assertEquals(40, mapped.lengthCm)
-        assertEquals(45, mapped.heightCm)
-        assertEquals("cm", mapped.sizeUnit)
-        assertEquals("L", mapped.volumeUnit)
-        assertEquals("Saltwater", mapped.tankType)
-        assertEquals("Mixed", mapped.tankStyle)
-        assertEquals(200L, mapped.createdAtMillis)
-        assertEquals(true, mapped.smartCareEnabled)
-        assertEquals(false, mapped.careRemindersEnabled)
-        assertEquals(
-            AquariumPlantTag(11L, "Anubias", "Rhizome", 0.25f, 0.75f),
-            mapped.plants.single()
-        )
-        assertEquals(
-            AquariumMaterialSelection(
-                id = 12L,
-                productId = "soil-1",
-                categoryKey = "substrate",
-                categoryTitle = "Substrate",
-                name = "Active Soil",
-                brand = "Aqua",
-                note = "Dark"
-            ),
-            mapped.materials.single()
-        )
-        assertEquals(
-            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair"),
-            mapped.livestock.single()
         )
     }
 
     @Test
     fun `application draft maps nested values to persistence draft`() {
-        val source = AquariumTankDraft(
+        val source = applicationDraftFixture()
+
+        val mapped = source.toDataDraft()
+
+        assertEquals(source.name, mapped.name)
+        assertEquals(source.description, mapped.description)
+        assertEquals(source.photoUri, mapped.photoUri)
+        assertEquals(source.info, mapped.info)
+        assertEquals(source.setupDateEpochDay, mapped.setupDateEpochDay)
+        assertEquals(source.widthCm, mapped.widthCm)
+        assertEquals(source.lengthCm, mapped.lengthCm)
+        assertEquals(source.heightCm, mapped.heightCm)
+        assertEquals(source.sizeUnit, mapped.sizeUnit)
+        assertEquals(source.volumeUnit, mapped.volumeUnit)
+        assertEquals(source.tankType, mapped.tankType)
+        assertEquals(source.tankStyle, mapped.tankStyle)
+        assertEquals(21L, mapped.plants.single().id)
+        assertEquals(
+            "plant:micranthemum_tweediei_monte_carlo",
+            mapped.plants.single().catalogId
+        )
+        assertEquals("Monte Carlo", mapped.plants.single().plantName)
+        assertEquals("content://plant/21", mapped.plants.single().photoUri)
+        assertEquals(22L, mapped.materials.single().id)
+        assertEquals("Macro", mapped.materials.single().name)
+    }
+
+    private fun applicationDraftFixture() = AquariumTankDraft(
             name = "Planted",
             description = "High tech",
             photoUri = "content://draft",
-            plants = listOf(AquariumPlantTag(21L, "Monte Carlo", "Carpet", 0.1f, 0.9f)),
+            plants = listOf(
+                AquariumPlantTag(
+                    21L,
+                    "plant:micranthemum_tweediei_monte_carlo",
+                    "Monte Carlo",
+                    "Carpet",
+                    0.1f,
+                    0.9f,
+                    "content://plant/21"
+                )
+            ),
             materials = listOf(
                 AquariumMaterialSelection(
                     id = 22L,
@@ -135,26 +187,6 @@ class DefaultAquariumTankOperationsMapperTest {
             tankType = "Freshwater",
             tankStyle = "Nature"
         )
-
-        val mapped = source.toDataDraft()
-
-        assertEquals(source.name, mapped.name)
-        assertEquals(source.description, mapped.description)
-        assertEquals(source.photoUri, mapped.photoUri)
-        assertEquals(source.info, mapped.info)
-        assertEquals(source.setupDateEpochDay, mapped.setupDateEpochDay)
-        assertEquals(source.widthCm, mapped.widthCm)
-        assertEquals(source.lengthCm, mapped.lengthCm)
-        assertEquals(source.heightCm, mapped.heightCm)
-        assertEquals(source.sizeUnit, mapped.sizeUnit)
-        assertEquals(source.volumeUnit, mapped.volumeUnit)
-        assertEquals(source.tankType, mapped.tankType)
-        assertEquals(source.tankStyle, mapped.tankStyle)
-        assertEquals(21L, mapped.plants.single().id)
-        assertEquals("Monte Carlo", mapped.plants.single().plantName)
-        assertEquals(22L, mapped.materials.single().id)
-        assertEquals("Macro", mapped.materials.single().name)
-    }
 
     @Test
     fun `delete result keeps public stages and hides throwable details`() {

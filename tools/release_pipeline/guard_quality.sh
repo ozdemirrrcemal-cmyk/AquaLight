@@ -26,7 +26,9 @@ for name in \
   AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
   AQL_FIREBASE_STAGING_CONFIG_BASE64 \
   AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 \
-  AQL_FIREBASE_PRODUCTION_CONFIG_BASE64; do
+  AQL_FIREBASE_PRODUCTION_CONFIG_BASE64 \
+  AQL_OTA_MANIFEST_PUBLIC_KEY_PEM \
+  AQL_OTA_MANIFEST_KEY_ID; do
   value="${!name:-}"
   if [[ -z "${value//[[:space:]]/}" ]]; then
     echo "Required protected Firebase input is missing: ${name}" >&2
@@ -72,7 +74,8 @@ for guard in \
   firebase_telemetry_guard.py \
   privacy_legal_guard.py \
   design_system_resource_guard.py \
-  localization_accessibility_guard.py; do
+  localization_accessibility_guard.py \
+  light_quick_setup_production_guard.py; do
   python3 "tools/$guard"
 done
 

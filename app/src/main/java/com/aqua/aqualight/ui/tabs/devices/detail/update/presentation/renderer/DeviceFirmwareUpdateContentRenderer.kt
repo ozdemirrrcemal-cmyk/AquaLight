@@ -233,6 +233,7 @@ internal class DeviceFirmwareUpdateContentRenderer(
             DeviceFirmwareUpdateMode.ROLLED_BACK,
             DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
             DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
+            DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED,
             DeviceFirmwareUpdateMode.UNSUPPORTED
         )
         val INDETERMINATE_MODES = setOf(

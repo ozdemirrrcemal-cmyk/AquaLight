@@ -104,9 +104,20 @@ for token in (
 
 if re.search(r"^import\s+com\.aqua\.aqualight\.data\.", card_mapper, re.MULTILINE):
     errors.append(f"{CARD_MAPPER.relative_to(ROOT)}: compact card mapper must consume application values")
-for token in ("TankDeviceListItem", "OwnerDeviceAvailability.REACHABLE"):
+for token in ("TankDeviceListItem", "toDeviceConnectionVisualState"):
     if token not in card_mapper:
         errors.append(f"{CARD_MAPPER.relative_to(ROOT)}: application card mapping token is missing: {token}")
+
+for forbidden in (
+    "OwnerDeviceAvailability.REACHABLE",
+    "DeviceConnectionVisualState.ONLINE",
+    "DeviceConnectionVisualState.OFFLINE",
+):
+    if forbidden in card_mapper:
+        errors.append(
+            f"{CARD_MAPPER.relative_to(ROOT)}: compact card mapper duplicates connection projection: "
+            f"{forbidden}"
+        )
 
 for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
     for token in (

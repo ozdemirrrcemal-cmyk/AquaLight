@@ -354,7 +354,7 @@ class TaskDetailFragment :
     viewLifecycleOwner.lifecycleScope.launch {
       try {
         showGlobalLoading(true)
-        maintenanceViewModel.completeTask(taskId = task.id).join()
+        maintenanceViewModel.completeTask(taskId = task.id)
         findNavController().popBackStack()
       } finally {
         showGlobalLoading(false)

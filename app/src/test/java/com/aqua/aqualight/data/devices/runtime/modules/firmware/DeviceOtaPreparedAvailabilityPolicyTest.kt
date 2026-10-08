@@ -20,6 +20,7 @@ class DeviceOtaPreparedAvailabilityPolicyTest {
             completed = true,
             failed = true,
             targetVersion = "1.0.1",
+            failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS,
             lastError = "OTA download failed with HTTP status -1",
             lastErrorField = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
             httpStatus = -1
@@ -50,7 +51,10 @@ class DeviceOtaPreparedAvailabilityPolicyTest {
             active = false,
             completed = true,
             failed = true,
-            targetVersion = "1.0.1"
+            targetVersion = "1.0.1",
+            failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED,
+            lastError = "download interrupted",
+            lastErrorField = DeviceFirmwareRuntimeContract.ErrorField.STREAM
         )
 
         assertFalse(available.preservesPreparedUpdateFor(active))

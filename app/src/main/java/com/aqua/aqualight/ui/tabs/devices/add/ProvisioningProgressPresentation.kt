@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningErrorCode
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningStatus
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningStatusMessage
 import com.aqua.aqualight.application.text.AppTextResolver
+import java.util.Locale
 
 internal class ProvisioningProgressPresenter(
     private val textResolver: AppTextResolver
@@ -21,16 +22,17 @@ internal class ProvisioningProgressPresenter(
         )
 
     fun friendlyTransportError(message: String): String {
-        val normalized = message.trim()
-        return when {
-            ProvisioningFailurePolicy.isSecureSessionFailure(normalized) ->
-                string(R.string.device_provisioning_error_secure_session_ended)
-            normalized.contains("StartSession is required", ignoreCase = true) ->
-                string(R.string.device_provisioning_error_start_session)
-            normalized.contains("wifi", ignoreCase = true) ->
-                string(R.string.device_provisioning_error_wifi_failed)
-            else -> string(R.string.device_provisioning_error_unexpected)
+        if (ProvisioningFailurePolicy.isSecureSessionFailure(message)) {
+            return string(R.string.device_provisioning_error_secure_session_ended)
         }
+        val normalized = message.trim().lowercase(Locale.US)
+        val resource = TRANSPORT_ERROR_PATTERNS
+            .firstOrNull { (patterns, _) ->
+                patterns.any { pattern -> normalized.contains(pattern) }
+            }
+            ?.second
+            ?: R.string.device_provisioning_error_unexpected
+        return string(resource)
     }
 
     fun friendlySaveError(message: String?): String {
@@ -75,8 +77,15 @@ internal class ProvisioningProgressPresenter(
     }
 
     private fun ProvisioningStatusMessage.toMessage(): String {
-        if (status == ProvisioningStatus.WIFI_FAILED) {
-            return when (errorCode) {
+        val terminalErrorMessage = when (errorCode) {
+            ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT ->
+                string(R.string.device_provisioning_status_confirmation_timeout_message)
+            ProvisioningErrorCode.FINALIZE_REJECTED ->
+                string(R.string.device_provisioning_status_finalize_rejected_message)
+            else -> null
+        }
+        return terminalErrorMessage ?: if (status == ProvisioningStatus.WIFI_FAILED) {
+            when (errorCode) {
                 ProvisioningErrorCode.WIFI_AUTH_FAILED ->
                     string(R.string.device_provisioning_status_wifi_auth_failed_message)
                 ProvisioningErrorCode.WIFI_NETWORK_NOT_FOUND ->
@@ -88,15 +97,20 @@ internal class ProvisioningProgressPresenter(
                     string(R.string.device_provisioning_status_wifi_timeout_message)
                 ProvisioningErrorCode.NETWORK_SAVE_FAILED ->
                     string(R.string.device_provisioning_status_wifi_save_failed_message)
-                ProvisioningErrorCode.UNKNOWN -> message.ifBlank {
+                ProvisioningErrorCode.WIFI_CONNECT_FAILED,
+                ProvisioningErrorCode.UNKNOWN ->
                     string(R.string.device_provisioning_status_wifi_failed_message)
-                }
+                ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT ->
+                    string(R.string.device_provisioning_status_confirmation_timeout_message)
+                ProvisioningErrorCode.FINALIZE_REJECTED ->
+                    string(R.string.device_provisioning_status_finalize_rejected_message)
             }
+        } else {
+            status.toMessage()
         }
-        return status.toMessage(message)
     }
 
-    private fun ProvisioningStatus.toMessage(fallback: String): String = when (this) {
+    private fun ProvisioningStatus.toMessage(): String = when (this) {
         ProvisioningStatus.IDLE,
         ProvisioningStatus.FACTORY,
         ProvisioningStatus.PHYSICAL_RESET ->
@@ -123,9 +137,8 @@ internal class ProvisioningProgressPresenter(
         ProvisioningStatus.TIMEOUT ->
             string(R.string.device_provisioning_status_timeout_message)
         ProvisioningStatus.ERROR,
-        ProvisioningStatus.UNKNOWN -> fallback.ifBlank {
+        ProvisioningStatus.UNKNOWN ->
             string(R.string.device_provisioning_status_unknown_message)
-        }
     }
 
     private fun ProvisioningStatus.toStep(): String = when (this) {
@@ -174,16 +187,35 @@ internal class ProvisioningProgressPresenter(
                 field = DeviceProvisioningWifiCredentialField.PASSWORD
             )
             ProvisioningErrorCode.NETWORK_SAVE_FAILED -> null
-            ProvisioningErrorCode.UNKNOWN -> DeviceProvisioningWifiCredentialFailure(
-                message = string(R.string.device_wifi_provisioning_failed_error),
-                field = DeviceProvisioningWifiCredentialField.PASSWORD
-            )
+            ProvisioningErrorCode.WIFI_CONNECT_FAILED,
+            ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT,
+            ProvisioningErrorCode.FINALIZE_REJECTED,
+            ProvisioningErrorCode.UNKNOWN -> null
         }
     }
 
     private fun string(resId: Int): String = textResolver.get(resId)
 
     private companion object {
+        val TRANSPORT_ERROR_PATTERNS = listOf(
+            listOf("connection timed out") to
+                R.string.device_provisioning_error_connection_timeout,
+            listOf("service discovery", "provisioning service", "characteristics were not found") to
+                R.string.device_provisioning_error_service_unavailable,
+            listOf("connection failed", "connection could not be started") to
+                R.string.device_provisioning_error_connection_failed,
+            listOf("resolve scan is temporarily busy") to
+                R.string.device_provisioning_error_scan_busy,
+            listOf("resolve scan", "bluetooth is disabled", "adapter is unavailable") to
+                R.string.device_provisioning_error_bluetooth_unavailable,
+            listOf("permission") to R.string.device_provisioning_bluetooth_permission_message,
+            listOf("does not match") to R.string.device_provisioning_error_device_mismatch,
+            listOf("provisioning mode", "physical reset", "factory qr mode") to
+                R.string.device_provisioning_error_setup_mode,
+            listOf("startsession is required") to
+                R.string.device_provisioning_error_start_session,
+            listOf("wifi") to R.string.device_provisioning_error_wifi_failed
+        )
         val TERMINAL_STATUSES = setOf(
             ProvisioningStatus.COMPLETED,
             ProvisioningStatus.WIFI_FAILED,

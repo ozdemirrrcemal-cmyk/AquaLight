@@ -1,15 +1,10 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.TextUtils
-import android.view.Gravity
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -19,6 +14,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCategoryCata
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
+import com.aqua.aqualight.databinding.ItemTankComponentCardBinding
 import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
@@ -27,7 +23,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -185,6 +180,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
             binding.tankBioComponentsContainer.addView(
                 createTankComponentCard(
+                    parent = binding.tankBioComponentsContainer,
                     shortCode = category.shortCode(requireContext()),
                     title = category.title(requireContext()),
                     materials = selectedMaterials
@@ -199,6 +195,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
             binding.tankHardwareComponentsContainer.addView(
                 createTankComponentCard(
+                    parent = binding.tankHardwareComponentsContainer,
                     shortCode = category.shortCode(requireContext()),
                     title = category.title(requireContext()),
                     materials = selectedMaterials
@@ -208,114 +205,32 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     }
 
     private fun createTankComponentCard(
+        parent: ViewGroup,
         shortCode: String,
         title: String,
         materials: List<AquariumMaterialSelection>
     ): View {
-        val card = MaterialCardView(requireContext()).apply {
-            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
-            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            strokeColor = ContextCompat.getColor(
-                requireContext(),
-                R.color.aqua_card_outline
-            )
-            setCardBackgroundColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.aqua_card_surface
-                )
-            )
-            cardElevation = 0f
-            useCompatPadding = false
-            isClickable = true
-            isFocusable = true
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
+        val cardBinding = ItemTankComponentCardBinding.inflate(
+            layoutInflater,
+            parent,
+            false
+        )
+
+        cardBinding.tvIconCode.text = shortCode.uppercase(Locale.getDefault())
+        cardBinding.tvIconCode.setTextSizeResource(
+            if (shortCode.length > 2) {
+                R.dimen.aqua_text_size_status_micro
+            } else {
+                R.dimen.aqua_text_size_caption
             }
-            setOnClickListener {
-                openTankSettingsDetails()
-            }
+        )
+        cardBinding.tvTitle.text = title
+        cardBinding.tvSummary.text = getComponentSummary(materials)
+        cardBinding.cardRoot.setOnClickListener {
+            openTankSettingsDetails()
         }
 
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12), resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12))
-        }
-
-        val iconBox = TextView(requireContext()).apply {
-            text = shortCode.uppercase(Locale.getDefault())
-            gravity = Gravity.CENTER
-            setTextSizeResource(
-                if (shortCode.length > 2) {
-                    R.dimen.aqua_text_size_status_micro
-                } else {
-                    R.dimen.aqua_text_size_caption
-                }
-            )
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
-            setTypeface(null, Typeface.BOLD)
-            setBackgroundResource(R.drawable.bg_material_icon_box)
-            includeFontPadding = false
-            layoutParams = LinearLayout.LayoutParams(resources.getDimensionPixelOffset(R.dimen.aqua_size_42), resources.getDimensionPixelOffset(R.dimen.aqua_size_42))
-        }
-
-        val textBox = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            ).apply {
-                marginStart = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
-            }
-        }
-
-        val titleText = TextView(requireContext()).apply {
-            text = title
-            setTextSizeResource(R.dimen.aqua_text_size_body)
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.aqua_card_text_primary
-                )
-            )
-            setTypeface(null, Typeface.BOLD)
-            includeFontPadding = false
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-        }
-
-        val summaryText = TextView(requireContext()).apply {
-            text = getComponentSummary(materials)
-            setTextSizeResource(R.dimen.aqua_text_size_caption)
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.aqua_card_text_secondary
-                )
-            )
-            setLineSpacing(resources.getDimensionPixelOffset(R.dimen.aqua_size_2).toFloat(), 1.0f)
-            maxLines = 2
-            ellipsize = TextUtils.TruncateAt.END
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6)
-            }
-        }
-
-        textBox.addView(titleText)
-        textBox.addView(summaryText)
-        row.addView(iconBox)
-        row.addView(textBox)
-        card.addView(row)
-
-        return card
+        return cardBinding.root
     }
 
     private fun getComponentSummary(materials: List<AquariumMaterialSelection>): String {

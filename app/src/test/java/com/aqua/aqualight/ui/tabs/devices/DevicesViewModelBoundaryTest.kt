@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeleteOwnerDevicesResult
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
@@ -187,7 +188,15 @@ class DevicesViewModelBoundaryTest {
         viewModel.onDeviceClicked("device-1")
         val event = viewModel.events.first()
 
-        assertTrue(event is DevicesEvent.ShowDeviceUnavailable)
+        val unavailable = event as DevicesEvent.ShowDeviceUnavailable
+        assertEquals(
+            R.string.device_menu_status_unverified_title,
+            unavailable.titleRes
+        )
+        assertEquals(
+            R.string.device_menu_status_unverified_message,
+            unavailable.messageRes
+        )
         assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 

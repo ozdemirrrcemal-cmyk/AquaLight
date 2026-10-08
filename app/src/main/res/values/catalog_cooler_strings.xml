@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official aquarium cooler hardware brand and product names are not translated. -->
+    <string name="catalog_cooler_brand_aqua_medic" translatable="false">Aqua Medic</string>
+    <string name="catalog_cooler_brand_aquaeurousa" translatable="false">AquaEuroUSA</string>
+    <string name="catalog_cooler_brand_aquanature" translatable="false">AquaNature</string>
+    <string name="catalog_cooler_brand_aquania" translatable="false">AquaNia</string>
+    <string name="catalog_cooler_brand_aquaperfekt" translatable="false">AquaPerfekt</string>
+    <string name="catalog_cooler_brand_aquatic_nature" translatable="false">Aquatic Nature</string>
+    <string name="catalog_cooler_brand_armaturk" translatable="false">Armatürk</string>
+    <string name="catalog_cooler_brand_atakan_petshop" translatable="false">Atakan Petshop</string>
+    <string name="catalog_cooler_brand_belltech_japan" translatable="false">Belltech Japan</string>
+    <string name="catalog_cooler_brand_betta_marketim" translatable="false">Betta Marketim</string>
+    <string name="catalog_cooler_brand_blau_aquaristic" translatable="false">Blau Aquaristic</string>
+    <string name="catalog_cooler_brand_blue_marine" translatable="false">Blue Marine</string>
+    <string name="catalog_cooler_brand_boyu" translatable="false">BOYU</string>
+    <string name="catalog_cooler_brand_collar" translatable="false">Collar</string>
+    <string name="catalog_cooler_brand_d_d_the_aquarium_solution" translatable="false">D-D The Aquarium Solution</string>
+    <string name="catalog_cooler_brand_dymax" translatable="false">Dymax</string>
+    <string name="catalog_cooler_brand_ghl" translatable="false">GHL</string>
+    <string name="catalog_cooler_brand_grotech" translatable="false">GroTech</string>
+    <string name="catalog_cooler_brand_had" translatable="false">HAD</string>
+    <string name="catalog_cooler_brand_hailea" translatable="false">Hailea</string>
+    <string name="catalog_cooler_brand_haquoss" translatable="false">Haquoss</string>
+    <string name="catalog_cooler_brand_hobby" translatable="false">Hobby</string>
+    <string name="catalog_cooler_brand_hygger" translatable="false">Hygger</string>
+    <string name="catalog_cooler_brand_jbj" translatable="false">JBJ</string>
+    <string name="catalog_cooler_brand_nova_tec_coolworks" translatable="false">Nova Tec / CoolWorks</string>
+    <string name="catalog_cooler_brand_reef_octopus" translatable="false">Reef Octopus</string>
+    <string name="catalog_cooler_brand_resun" translatable="false">Resun</string>
+    <string name="catalog_cooler_brand_rs" translatable="false">RS</string>
+    <string name="catalog_cooler_brand_sea_side_aquatics" translatable="false">Sea Side Aquatics</string>
+    <string name="catalog_cooler_brand_teco" translatable="false">TECO</string>
+    <string name="catalog_cooler_brand_theiling" translatable="false">Theiling</string>
+    <string name="catalog_cooler_brand_tmc" translatable="false">TMC</string>
+    <string name="catalog_cooler_brand_tradewind" translatable="false">TradeWind</string>
+    <string name="catalog_cooler_brand_tunze" translatable="false">TUNZE</string>
+    <string name="catalog_cooler_brand_up_aqua" translatable="false">UP Aqua</string>
+    <string name="catalog_cooler_brand_vevor" translatable="false">VEVOR</string>
+    <string name="catalog_cooler_brand_zensui" translatable="false">ZENSUI</string>
+    <string name="catalog_cooler_brand_zoo_med" translatable="false">Zoo Med</string>
+
+    <string name="catalog_material_cooler_0001_name" translatable="false">Aqua Medic arctic breeze 2-pac</string>
+    <string name="catalog_material_cooler_0002_name" translatable="false">Aqua Medic arctic breeze 4-pac</string>
+    <string name="catalog_material_cooler_0003_name" translatable="false">Aqua Medic arctic breeze 6-pac</string>
+    <string name="catalog_material_cooler_0004_name" translatable="false">Aqua Medic Titan 200</string>
+    <string name="catalog_material_cooler_0005_name" translatable="false">Aqua Medic Titan 600</string>
+    <string name="catalog_material_cooler_0006_name" translatable="false">Aqua Medic Titan 1600</string>
+    <string name="catalog_material_cooler_0007_name" translatable="false">Aqua Medic Titan 2200</string>
+    <string name="catalog_material_cooler_0008_name" translatable="false">Aqua Medic Titan duo 300</string>
+    <string name="catalog_material_cooler_0009_name" translatable="false">Aqua Medic Titan duo 700</string>
+    <string name="catalog_material_cooler_0010_name" translatable="false">Aqua Medic Titan duo 1800</string>
+    <string name="catalog_material_cooler_0011_name" translatable="false">Aqua Medic Titan duo 2400</string>
+    <string name="catalog_material_cooler_0012_name" translatable="false">Aquael NANO COOL / Mini Cooler Nano Cool</string>
+    <string name="catalog_material_cooler_0013_name" translatable="false">AquaEuroUSA Max Chill 1/10 HP</string>
+    <string name="catalog_material_cooler_0014_name" translatable="false">AquaEuroUSA Max Chill 1/4 HP</string>
+    <string name="catalog_material_cooler_0015_name" translatable="false">AquaEuroUSA Max Chill 1/2 HP</string>
+    <string name="catalog_material_cooler_0016_name" translatable="false">AquaEuroUSA Max Chill 1 HP</string>
+    <string name="catalog_material_cooler_0017_name" translatable="false">AquaNature Arctic Chiller AAC-160</string>
+    <string name="catalog_material_cooler_0018_name" translatable="false">AquaNature Arctic Chiller AAC-300</string>
+    <string name="catalog_material_cooler_0019_name" translatable="false">AquaNature Arctic Chiller AAC-500</string>
+    <string name="catalog_material_cooler_0020_name" translatable="false">AquaNature Arctic Chiller AAC-1000</string>
+    <string name="catalog_material_cooler_0021_name" translatable="false">AquaNia Termostatlı Akvaryum Soğutucu Fan Sistemi 4\'lü Set</string>
+    <string name="catalog_material_cooler_0022_name" translatable="false">AquaPerfekt AP-Power Fan 1</string>
+    <string name="catalog_material_cooler_0023_name" translatable="false">AquaPerfekt AP-Power Fan 2</string>
+    <string name="catalog_material_cooler_0024_name" translatable="false">AquaPerfekt AP-Power Fan 4</string>
+    <string name="catalog_material_cooler_0025_name" translatable="false">AquaPerfekt AP-Power Fan 6</string>
+    <string name="catalog_material_cooler_0026_name" translatable="false">Aquatic Nature Aqua CHILL 100</string>
+    <string name="catalog_material_cooler_0027_name" translatable="false">Aquatic Nature Aqua CHILL 200</string>
+    <string name="catalog_material_cooler_0028_name" translatable="false">Aquatic Nature Aqua CHILL 400</string>
+    <string name="catalog_material_cooler_0029_name" translatable="false">Armatürk 1\'li Akvaryum Soğutucu Fan</string>
+    <string name="catalog_material_cooler_0030_name" translatable="false">Armatürk 2\'li Akvaryum Soğutucu Fan</string>
+    <string name="catalog_material_cooler_0031_name" translatable="false">Armatürk 3\'lü Akvaryum Soğutucu Fan</string>
+    <string name="catalog_material_cooler_0032_name" translatable="false">Armatürk 4\'lü Akvaryum Soğutucu Fan</string>
+    <string name="catalog_material_cooler_0033_name" translatable="false">Atakan Petshop Termostatlı Akvaryum Soğutucu Fan 1\'li Set</string>
+    <string name="catalog_material_cooler_0034_name" translatable="false">Atakan Petshop Termostatlı Akvaryum Soğutucu Fan 2\'li Set</string>
+    <string name="catalog_material_cooler_0035_name" translatable="false">Atakan Petshop Termostatlı Akvaryum Soğutucu Fan 5\'li Set</string>
+    <string name="catalog_material_cooler_0036_name" translatable="false">Atakan Petshop Termostatlı Akvaryum Soğutucu Fan 6\'lı Set</string>
+    <string name="catalog_material_cooler_0037_name" translatable="false">Belltech Japan WindForce WF-1200</string>
+    <string name="catalog_material_cooler_0038_name" translatable="false">Betta Marketim Soğutucu Fan Üçlü Termostatsız (100–150 L)</string>
+    <string name="catalog_material_cooler_0039_name" translatable="false">Betta Marketim Soğutucu Fan Dörtlü Termostatsız (150–200 L)</string>
+    <string name="catalog_material_cooler_0040_name" translatable="false">Betta Marketim Soğutucu Fan Beşli Termostatsız (200–250 L)</string>
+    <string name="catalog_material_cooler_0041_name" translatable="false">Betta Marketim Soğutucu Fan Altılı Termostatsız (250–300 L)</string>
+    <string name="catalog_material_cooler_0042_name" translatable="false">Blau Aquaristic Aquaventilator 2</string>
+    <string name="catalog_material_cooler_0043_name" translatable="false">Blau Aquaristic Aquaventilator 4</string>
+    <string name="catalog_material_cooler_0044_name" translatable="false">Blau Aquaristic Aquaventilator 6</string>
+    <string name="catalog_material_cooler_0045_name" translatable="false">Blau Aquaristic Nano Ventilator PLUS Black</string>
+    <string name="catalog_material_cooler_0046_name" translatable="false">Blau Aquaristic Nano Ventilator PLUS White</string>
+    <string name="catalog_material_cooler_0047_name" translatable="false">Blue Marine Chiller 100</string>
+    <string name="catalog_material_cooler_0048_name" translatable="false">Blue Marine Chiller 200</string>
+    <string name="catalog_material_cooler_0049_name" translatable="false">Blue Marine Chiller 400</string>
+    <string name="catalog_material_cooler_0050_name" translatable="false">Blue Marine Chiller 800</string>
+    <string name="catalog_material_cooler_0051_name" translatable="false">Blue Marine Chiller 1200</string>
+    <string name="catalog_material_cooler_0052_name" translatable="false">Blue Marine Chiller 2000</string>
+    <string name="catalog_material_cooler_0053_name" translatable="false">BOYU FS-55 Cooling Fan</string>
+    <string name="catalog_material_cooler_0054_name" translatable="false">BOYU FS-120 Cooling Fan</string>
+    <string name="catalog_material_cooler_0055_name" translatable="false">BOYU FS-120A Cooling Fan</string>
+    <string name="catalog_material_cooler_0056_name" translatable="false">BOYU FS-602 Cooling Fan</string>
+    <string name="catalog_material_cooler_0057_name" translatable="false">BOYU FS-603 Cooling Fan</string>
+    <string name="catalog_material_cooler_0058_name" translatable="false">BOYU FS-604 Cooling Fan</string>
+    <string name="catalog_material_cooler_0059_name" translatable="false">BOYU FS-606 Cooling Fan</string>
+    <string name="catalog_material_cooler_0060_name" translatable="false">Chihiros Cooling Fan Bluetooth Edition / Bluetooth Kontrollü Soğutma Fanı</string>
+    <string name="catalog_material_cooler_0061_name" translatable="false">Collar aFAN</string>
+    <string name="catalog_material_cooler_0062_name" translatable="false">Collar aFAN PRO</string>
+    <string name="catalog_material_cooler_0063_name" translatable="false">D-D The Aquarium Solution DC300 Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0064_name" translatable="false">D-D The Aquarium Solution DC750 Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0065_name" translatable="false">D-D The Aquarium Solution DC2200 Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0066_name" translatable="false">D-D The Aquarium Solution DC4000 Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0067_name" translatable="false">Dymax Windy W-4</string>
+    <string name="catalog_material_cooler_0068_name" translatable="false">Dymax Windy W-7</string>
+    <string name="catalog_material_cooler_0069_name" translatable="false">Dymax Vortex W-5</string>
+    <string name="catalog_material_cooler_0070_name" translatable="false">Dymax Vortex W-8</string>
+    <string name="catalog_material_cooler_0071_name" translatable="false">EHEIM climacontrol+ S</string>
+    <string name="catalog_material_cooler_0072_name" translatable="false">EHEIM climacontrol+ M</string>
+    <string name="catalog_material_cooler_0073_name" translatable="false">EHEIM climacontrol+ L</string>
+    <string name="catalog_material_cooler_0074_name" translatable="false">GHL PropellerBreeze 3-2 Black</string>
+    <string name="catalog_material_cooler_0075_name" translatable="false">GHL PropellerBreeze 3-2 White</string>
+    <string name="catalog_material_cooler_0076_name" translatable="false">GHL PropellerBreeze 3-3 Black</string>
+    <string name="catalog_material_cooler_0077_name" translatable="false">GHL PropellerBreeze 3-3 White</string>
+    <string name="catalog_material_cooler_0078_name" translatable="false">GHL PropellerBreeze 3-4 Black</string>
+    <string name="catalog_material_cooler_0079_name" translatable="false">GHL PropellerBreeze 3-4 White</string>
+    <string name="catalog_material_cooler_0080_name" translatable="false">GHL PropellerBreeze 3-5 Black</string>
+    <string name="catalog_material_cooler_0081_name" translatable="false">GHL PropellerBreeze 3-5 White</string>
+    <string name="catalog_material_cooler_0082_name" translatable="false">GHL PropellerBreeze 3-6 Black</string>
+    <string name="catalog_material_cooler_0083_name" translatable="false">GHL PropellerBreeze 3-6 White</string>
+    <string name="catalog_material_cooler_0084_name" translatable="false">GroTech Cool Breeze 2</string>
+    <string name="catalog_material_cooler_0085_name" translatable="false">GroTech Cool Breeze 4</string>
+    <string name="catalog_material_cooler_0086_name" translatable="false">GroTech Cool Breeze 6</string>
+    <string name="catalog_material_cooler_0087_name" translatable="false">GroTech Cool Breeze 8</string>
+    <string name="catalog_material_cooler_0088_name" translatable="false">HAD Tekli Soğutucu Fan (50 L) Otomatik Termostatlı Dijital</string>
+    <string name="catalog_material_cooler_0089_name" translatable="false">HAD İkili Soğutucu Fan (100 L) Otomatik Termostatlı Dijital</string>
+    <string name="catalog_material_cooler_0090_name" translatable="false">HAD Üçlü Soğutucu Fan (150 L) Otomatik Termostatlı Dijital</string>
+    <string name="catalog_material_cooler_0091_name" translatable="false">HAD Dörtlü Soğutucu Fan (200 L) Otomatik Termostatlı Dijital</string>
+    <string name="catalog_material_cooler_0092_name" translatable="false">HAD Beşli Soğutucu Fan (250 L) Otomatik Termostatlı Dijital</string>
+    <string name="catalog_material_cooler_0093_name" translatable="false">HAD Altılı Soğutucu Fan (300 L) Otomatik Termostatlı Dijital</string>
+    <string name="catalog_material_cooler_0094_name" translatable="false">Hailea HK-150A</string>
+    <string name="catalog_material_cooler_0095_name" translatable="false">Hailea HK-300A</string>
+    <string name="catalog_material_cooler_0096_name" translatable="false">Hailea HK-500A</string>
+    <string name="catalog_material_cooler_0097_name" translatable="false">Hailea HK-1000A</string>
+    <string name="catalog_material_cooler_0098_name" translatable="false">Hailea HC-100A</string>
+    <string name="catalog_material_cooler_0099_name" translatable="false">Hailea HC-150A</string>
+    <string name="catalog_material_cooler_0100_name" translatable="false">Hailea HC-300A</string>
+    <string name="catalog_material_cooler_0101_name" translatable="false">Hailea HC-500A</string>
+    <string name="catalog_material_cooler_0102_name" translatable="false">Hailea HC-1000A</string>
+    <string name="catalog_material_cooler_0103_name" translatable="false">Hailea HC-2200BH</string>
+    <string name="catalog_material_cooler_0104_name" translatable="false">Hailea HS-66A</string>
+    <string name="catalog_material_cooler_0105_name" translatable="false">Hailea HS-90A</string>
+    <string name="catalog_material_cooler_0106_name" translatable="false">Haquoss Wind 1 Fan</string>
+    <string name="catalog_material_cooler_0107_name" translatable="false">Haquoss Typhoon 2 Fans</string>
+    <string name="catalog_material_cooler_0108_name" translatable="false">Haquoss Tornado 4 Fans</string>
+    <string name="catalog_material_cooler_0109_name" translatable="false">Hobby Aqua Cooler V2</string>
+    <string name="catalog_material_cooler_0110_name" translatable="false">Hobby Aqua Cooler V4</string>
+    <string name="catalog_material_cooler_0111_name" translatable="false">Hobby Aqua Cooler V6</string>
+    <string name="catalog_material_cooler_0112_name" translatable="false">Hygger HG051-1FAN</string>
+    <string name="catalog_material_cooler_0113_name" translatable="false">Hygger HG051-2FAN</string>
+    <string name="catalog_material_cooler_0114_name" translatable="false">Hygger HG051-3FAN</string>
+    <string name="catalog_material_cooler_0115_name" translatable="false">Hygger HG140 Aquarium Cooling Fan</string>
+    <string name="catalog_material_cooler_0116_name" translatable="false">ISTA Energy Saving Arrayed Cooling Fan Single (I-C816)</string>
+    <string name="catalog_material_cooler_0117_name" translatable="false">ISTA Energy Saving Arrayed Cooling Fan Twin (I-C817)</string>
+    <string name="catalog_material_cooler_0118_name" translatable="false">ISTA Energy Saving Arrayed Cooling Fan Triple (I-C818)</string>
+    <string name="catalog_material_cooler_0119_name" translatable="false">ISTA Energy Saving Arrayed Cooling Fan Four (I-C819)</string>
+    <string name="catalog_material_cooler_0120_name" translatable="false">ISTA Energy Saving Arrayed Cooling Fan Five (I-C831)</string>
+    <string name="catalog_material_cooler_0121_name" translatable="false">ISTA Energy Saving Arrayed Cooling Fan Six (I-C832)</string>
+    <string name="catalog_material_cooler_0122_name" translatable="false">ISTA Hanging Type Cooling Fan (I-104)</string>
+    <string name="catalog_material_cooler_0123_name" translatable="false">ISTA Mini USB Cooling Fan</string>
+    <string name="catalog_material_cooler_0124_name" translatable="false">JBJ Nano Arctica 1/15 HP</string>
+    <string name="catalog_material_cooler_0125_name" translatable="false">JBJ Arctica 1/10 HP</string>
+    <string name="catalog_material_cooler_0126_name" translatable="false">JBJ Arctica 1/5 HP</string>
+    <string name="catalog_material_cooler_0127_name" translatable="false">JBJ Arctica 1/4 HP</string>
+    <string name="catalog_material_cooler_0128_name" translatable="false">JBJ Arctica 1/3 HP</string>
+    <string name="catalog_material_cooler_0129_name" translatable="false">JBJ Commercial Arctica 1/2 HP</string>
+    <string name="catalog_material_cooler_0130_name" translatable="false">JBL PROTEMP Cooler x200 Gen 2</string>
+    <string name="catalog_material_cooler_0131_name" translatable="false">JBL PROTEMP Cooler x300 Gen 2</string>
+    <string name="catalog_material_cooler_0132_name" translatable="false">Nova Tec / CoolWorks IceProbe Water Chiller</string>
+    <string name="catalog_material_cooler_0133_name" translatable="false">Reef Octopus OCTO 3-inch USB Smart Fan</string>
+    <string name="catalog_material_cooler_0134_name" translatable="false">Reef Octopus OCTO 4-inch USB Smart Fan</string>
+    <string name="catalog_material_cooler_0135_name" translatable="false">Resun MINI-200 Chiller</string>
+    <string name="catalog_material_cooler_0136_name" translatable="false">Resun CL-280 Chiller</string>
+    <string name="catalog_material_cooler_0137_name" translatable="false">Resun CL-450 Chiller</string>
+    <string name="catalog_material_cooler_0138_name" translatable="false">Resun CL-650 Chiller</string>
+    <string name="catalog_material_cooler_0139_name" translatable="false">RS SF331 Akvaryum Soğutucu Fan Tekli</string>
+    <string name="catalog_material_cooler_0140_name" translatable="false">RS SF332 Akvaryum Soğutucu Fan Tekli</string>
+    <string name="catalog_material_cooler_0141_name" translatable="false">Sea Side Aquatics Aquarium Cooling Fan 2-Fan</string>
+    <string name="catalog_material_cooler_0142_name" translatable="false">Sea Side Aquatics Aquarium Cooling Fan 4-Fan</string>
+    <string name="catalog_material_cooler_0143_name" translatable="false">Sea Side Aquatics Aquarium Cooling Fan 6-Fan</string>
+    <string name="catalog_material_cooler_0144_name" translatable="false">SunSun JF-001 Cooling Fan</string>
+    <string name="catalog_material_cooler_0145_name" translatable="false">SunSun JF-002 Cooling Fan</string>
+    <string name="catalog_material_cooler_0146_name" translatable="false">TECO TK150</string>
+    <string name="catalog_material_cooler_0147_name" translatable="false">TECO TK500</string>
+    <string name="catalog_material_cooler_0148_name" translatable="false">TECO TK500H</string>
+    <string name="catalog_material_cooler_0149_name" translatable="false">TECO TK1000</string>
+    <string name="catalog_material_cooler_0150_name" translatable="false">TECO TK1000H</string>
+    <string name="catalog_material_cooler_0151_name" translatable="false">TECO TK2000</string>
+    <string name="catalog_material_cooler_0152_name" translatable="false">TECO TK2000H</string>
+    <string name="catalog_material_cooler_0153_name" translatable="false">TECO TK2000L</string>
+    <string name="catalog_material_cooler_0154_name" translatable="false">TECO TK3000</string>
+    <string name="catalog_material_cooler_0155_name" translatable="false">TECO TK6000</string>
+    <string name="catalog_material_cooler_0156_name" translatable="false">TECO TK9000</string>
+    <string name="catalog_material_cooler_0157_name" translatable="false">TECO TK5K</string>
+    <string name="catalog_material_cooler_0158_name" translatable="false">TECO TK8K</string>
+    <string name="catalog_material_cooler_0159_name" translatable="false">TECO TK15K</string>
+    <string name="catalog_material_cooler_0160_name" translatable="false">TECO DI 500</string>
+    <string name="catalog_material_cooler_0161_name" translatable="false">TECO DI 1000</string>
+    <string name="catalog_material_cooler_0162_name" translatable="false">TECO DI 2000</string>
+    <string name="catalog_material_cooler_0163_name" translatable="false">Theiling Polar 250</string>
+    <string name="catalog_material_cooler_0164_name" translatable="false">Theiling Polar 500</string>
+    <string name="catalog_material_cooler_0165_name" translatable="false">TMC Aquarium Cooling Fan 1-Fan</string>
+    <string name="catalog_material_cooler_0166_name" translatable="false">TMC Aquarium Cooling Fan 2-Fan</string>
+    <string name="catalog_material_cooler_0167_name" translatable="false">TMC Aquarium Cooling Fan 3-Fan</string>
+    <string name="catalog_material_cooler_0168_name" translatable="false">TMC Aquarium Cooling Fan 5-Fan</string>
+    <string name="catalog_material_cooler_0169_name" translatable="false">TradeWind 1/4 HP Inline Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0170_name" translatable="false">TradeWind 1/4 HP Drop-In Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0171_name" translatable="false">TradeWind 1/3 HP Inline Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0172_name" translatable="false">TradeWind 1/3 HP Drop-In Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0173_name" translatable="false">TradeWind Compact 1/2 HP Inline Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0174_name" translatable="false">TradeWind Compact 1/2 HP Drop-In Aquarium Chiller</string>
+    <string name="catalog_material_cooler_0175_name" translatable="false">TUNZE Aquawind 7028.500</string>
+    <string name="catalog_material_cooler_0176_name" translatable="false">UP Aqua D-336 USB Mini Cooling Fan</string>
+    <string name="catalog_material_cooler_0177_name" translatable="false">UP Aqua G-050-B Cooling Fan</string>
+    <string name="catalog_material_cooler_0178_name" translatable="false">UP Aqua G-051 2-Fan Cooling Fan</string>
+    <string name="catalog_material_cooler_0179_name" translatable="false">UP Aqua G-051 4-Fan Cooling Fan</string>
+    <string name="catalog_material_cooler_0180_name" translatable="false">UP Aqua CA-CF-003 Mini Cooling Fan Black</string>
+    <string name="catalog_material_cooler_0181_name" translatable="false">UP Aqua CA-CF-003 Mini Cooling Fan White</string>
+    <string name="catalog_material_cooler_0182_name" translatable="false">VEVOR Aquarium Chiller 52 Gallon 1/10 HP</string>
+    <string name="catalog_material_cooler_0183_name" translatable="false">VEVOR Aquarium Chiller 110 Gallon 1/3 HP</string>
+    <string name="catalog_material_cooler_0184_name" translatable="false">ZENSUI ZR-mini</string>
+    <string name="catalog_material_cooler_0185_name" translatable="false">Zoo Med Aqua Cool Aquarium Cooling Fan</string>
+
+    <!-- Cooler search aliases. Localized aliases live in values-tr. -->
+    <string name="catalog_cooler_keyword_aquarium_cooler">aquarium cooler</string>
+    <string name="catalog_cooler_keyword_cooling_fan">cooling fan</string>
+    <string name="catalog_cooler_keyword_chiller">chiller</string>
+    <string name="catalog_cooler_keyword_water_chiller">water chiller</string>
+    <string name="catalog_cooler_keyword_thermostat">thermostat</string>
+    <string name="catalog_cooler_keyword_digital">digital</string>
+    <string name="catalog_cooler_keyword_smart">smart</string>
+    <string name="catalog_cooler_keyword_bluetooth" translatable="false">bluetooth</string>
+    <string name="catalog_cooler_keyword_thermoelectric">thermoelectric</string>
+    <string name="catalog_cooler_keyword_inline">inline</string>
+    <string name="catalog_cooler_keyword_drop_in">drop-in</string>
+    <string name="catalog_cooler_keyword_heating">heating</string>
+    <string name="catalog_cooler_keyword_usb" translatable="false">usb</string>
+    <string name="catalog_cooler_keyword_mini" translatable="false">mini</string>
+</resources>

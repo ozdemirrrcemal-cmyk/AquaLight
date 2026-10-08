@@ -128,59 +128,29 @@ private object DeviceOtaFirmwareFailureClassifier {
 private object DeviceOtaSnapshotFailureClassifier {
 
     fun map(snapshot: DeviceFirmwareOtaSnapshot): DeviceOtaFailure {
-        val diagnostics = snapshot.toDiagnostics()
-        return when (snapshot.lastErrorField) {
-            DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS ->
-                DeviceOtaHttpFailureClassifier.map(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.URL ->
-                DOWNLOAD_URL_OPEN_FAILED.toFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.STREAM ->
-                DOWNLOAD_STREAM_INTERRUPTED.toFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.SIZE -> sizeFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.WIFI ->
-                DEVICE_NETWORK_UNAVAILABLE.toFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.TLS ->
-                securityFailure(diagnostics)
-            else -> {
-                val disposition = SNAPSHOT_FIELD_DISPOSITIONS[snapshot.lastErrorField]
-                    ?: DEVICE_INTERNAL
-                disposition.toFailure(diagnostics)
-            }
+        require(snapshot.failureCode.isNotBlank()) {
+            "Firmware OTA failure snapshot is missing failureCode."
         }
+        return typedFailure(
+            failureCode = snapshot.failureCode,
+            diagnostics = snapshot.toDiagnostics()
+        )
     }
 
-    private fun sizeFailure(
+    private fun typedFailure(
+        failureCode: String,
         diagnostics: DeviceOtaFailureDiagnostics
     ): DeviceOtaFailure {
-        val message = diagnostics.message
-        val disposition = when {
-            message.contains("larger than", ignoreCase = true) -> INSUFFICIENT_SPACE
-            message.contains("downloaded byte count", ignoreCase = true) ->
-                DOWNLOAD_SIZE_MISMATCH_RETRYABLE
-            message.contains("does not match", ignoreCase = true) ->
-                DOWNLOAD_SIZE_MISMATCH_TERMINAL
-            else -> INSUFFICIENT_SPACE
+        if (failureCode == DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS) {
+            return DeviceOtaHttpFailureClassifier.map(diagnostics)
         }
+        val disposition = TYPED_FAILURE_DISPOSITIONS[failureCode]
+            ?: error("Unsupported firmware OTA failureCode: $failureCode")
         return disposition.toFailure(diagnostics)
     }
 
-    private fun securityFailure(
-        diagnostics: DeviceOtaFailureDiagnostics
-    ): DeviceOtaFailure {
-        val disposition = if (
-            diagnostics.message.contains(
-                "secure system time was not synchronized",
-                ignoreCase = true
-            )
-        ) {
-            SECURITY_VALIDATION_RETRYABLE
-        } else {
-            SECURITY_VALIDATION_FAILED
-        }
-        return disposition.toFailure(diagnostics)
-    }
+
 }
-
 private object DeviceManifestHttpFailureClassifier {
 
     fun map(
@@ -318,6 +288,7 @@ private fun DeviceRuntimeCommandOutcome.FirmwareError.toDiagnostics() =
     )
 
 private fun DeviceFirmwareOtaSnapshot.toDiagnostics() = DeviceOtaFailureDiagnostics(
+    code = failureCode,
     field = lastErrorField,
     httpStatus = httpStatus,
     message = lastError
@@ -373,6 +344,14 @@ private val DEVICE_NETWORK_UNAVAILABLE = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE,
     recoverable = true
 )
+private val SECURE_TIME_NOT_READY = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.SECURE_TIME_NOT_READY,
+    recoverable = true
+)
+private val RELEASE_PACKAGE_MISMATCH = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.RELEASE_PACKAGE_MISMATCH,
+    recoverable = false
+)
 private val INCOMPATIBLE_FIRMWARE = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE,
     recoverable = false
@@ -396,10 +375,6 @@ private val SAFE_MODE_RESTORE_FAILED = DeviceOtaFailureDisposition(
 private val SECURITY_VALIDATION_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
     recoverable = false
-)
-private val SECURITY_VALIDATION_RETRYABLE = DeviceOtaFailureDisposition(
-    DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
-    recoverable = true
 )
 private val DOWNLOAD_CONNECTION_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.DOWNLOAD_CONNECTION_FAILED,
@@ -449,10 +424,6 @@ private val DOWNLOAD_SIZE_MISMATCH_RETRYABLE = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH,
     recoverable = true
 )
-private val DOWNLOAD_SIZE_MISMATCH_TERMINAL = DeviceOtaFailureDisposition(
-    DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH,
-    recoverable = false
-)
 private val DOWNLOAD_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.DOWNLOAD_FAILED,
     recoverable = true
@@ -484,6 +455,31 @@ private val RELEASE_SERVER_UNAVAILABLE = DeviceOtaFailureDisposition(
 private val FLASH_WRITE_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.FLASH_WRITE_FAILED,
     recoverable = false
+)
+
+private val TYPED_FAILURE_DISPOSITIONS = mapOf(
+    DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY to SECURE_TIME_NOT_READY,
+    DeviceFirmwareRuntimeContract.FailureCode.DEVICE_NETWORK_UNAVAILABLE to
+        DEVICE_NETWORK_UNAVAILABLE,
+    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_ENTER_FAILED to SAFE_MODE_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED to
+        SAFE_MODE_RESTORE_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.TLS_TRUST_UNAVAILABLE to
+        SECURITY_VALIDATION_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.INSECURE_TRANSPORT to SECURITY_VALIDATION_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_URL_OPEN_FAILED to
+        DOWNLOAD_URL_OPEN_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH to
+        RELEASE_PACKAGE_MISMATCH,
+    DeviceFirmwareRuntimeContract.FailureCode.INSUFFICIENT_SPACE to INSUFFICIENT_SPACE,
+    DeviceFirmwareRuntimeContract.FailureCode.FLASH_BEGIN_FAILED to FLASH_WRITE_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.FLASH_WRITE_FAILED to FLASH_WRITE_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED to
+        DOWNLOAD_STREAM_INTERRUPTED,
+    DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_SIZE_MISMATCH to
+        DOWNLOAD_SIZE_MISMATCH_RETRYABLE,
+    DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED to INTEGRITY_CHECK_FAILED,
+    DeviceFirmwareRuntimeContract.FailureCode.FLASH_FINALIZE_FAILED to FLASH_WRITE_FAILED
 )
 
 private val FIRMWARE_CODE_DISPOSITIONS = mapOf(
@@ -519,11 +515,3 @@ private val INVALID_VALUE_FIELD_DISPOSITIONS = mapOf(
     DeviceFirmwareRuntimeContract.ErrorField.OTA to DEVICE_INTERNAL_RETRYABLE
 )
 
-private val SNAPSHOT_FIELD_DISPOSITIONS = mapOf(
-    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE to SAFE_MODE_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE to SAFE_MODE_RESTORE_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE to PROTOCOL_MISMATCH,
-    DeviceFirmwareRuntimeContract.ErrorField.SHA256 to INTEGRITY_CHECK_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.FLASH to FLASH_WRITE_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.TASK to DEVICE_INTERNAL_RETRYABLE
-)

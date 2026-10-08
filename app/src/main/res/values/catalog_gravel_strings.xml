@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Gravel catalog brand names. -->
+    <string name="catalog_gravel_brand_wio" translatable="false">WIO</string>
+    <string name="catalog_gravel_brand_sera" translatable="false">sera</string>
+    <string name="catalog_gravel_brand_seachem" translatable="false">Seachem</string>
+    <string name="catalog_gravel_brand_caribsea" translatable="false">CaribSea</string>
+    <string name="catalog_gravel_brand_reeflowers" translatable="false">ReeFlowers</string>
+    <string name="catalog_gravel_brand_crystalpro" translatable="false">CrystalPro</string>
+    <string name="catalog_gravel_brand_amtra" translatable="false">AMTRA</string>
+    <string name="catalog_gravel_brand_prodac" translatable="false">Prodac</string>
+
+    <!-- Official product names and package variants are not translated. -->
+    <string name="catalog_material_gravel_0001_name" translatable="false">ADA Aqua Gravel S — 2 kg</string>
+    <string name="catalog_material_gravel_0002_name" translatable="false">ADA Aqua Gravel S — 8 kg</string>
+    <string name="catalog_material_gravel_0003_name" translatable="false">Dennerle Natural Gravel Bairaman — 0.1–0.6 mm — 500 g</string>
+    <string name="catalog_material_gravel_0004_name" translatable="false">Dennerle Natural Gravel Bairaman — 0.1–0.6 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0005_name" translatable="false">Dennerle Natural Gravel Bairaman — 0.1–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0006_name" translatable="false">Dennerle Natural Gravel Kongo — 3–8 mm — 500 g</string>
+    <string name="catalog_material_gravel_0007_name" translatable="false">Dennerle Natural Gravel Kongo — 3–8 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0008_name" translatable="false">Dennerle Natural Gravel Kongo — 3–8 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0009_name" translatable="false">Dennerle Natural Gravel Kongo — 10–30 mm — 500 g</string>
+    <string name="catalog_material_gravel_0010_name" translatable="false">Dennerle Natural Gravel Kongo — 10–30 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0011_name" translatable="false">Dennerle Natural Gravel Kongo — 10–30 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0012_name" translatable="false">Dennerle Natural Gravel Mekong — 0.1–1.4 mm — 500 g</string>
+    <string name="catalog_material_gravel_0013_name" translatable="false">Dennerle Natural Gravel Mekong — 0.1–1.4 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0014_name" translatable="false">Dennerle Natural Gravel Okavango — 4–8 mm — 500 g</string>
+    <string name="catalog_material_gravel_0015_name" translatable="false">Dennerle Natural Gravel Okavango — 4–8 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0016_name" translatable="false">Dennerle Natural Gravel Okavango — 4–8 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0017_name" translatable="false">Dennerle Natural Gravel Okavango — 8–12 mm — 500 g</string>
+    <string name="catalog_material_gravel_0018_name" translatable="false">Dennerle Natural Gravel Okavango — 8–12 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0019_name" translatable="false">Dennerle Natural Gravel Okavango — 8–12 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0020_name" translatable="false">Dennerle Natural Gravel Rio Branco — 0.1–2 mm — 500 g</string>
+    <string name="catalog_material_gravel_0021_name" translatable="false">Dennerle Natural Gravel Rio Branco — 0.1–2 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0022_name" translatable="false">Dennerle Natural Gravel Rio Xingu — 2–22 mm — 500 g</string>
+    <string name="catalog_material_gravel_0023_name" translatable="false">Dennerle Natural Gravel Rio Xingu — 2–22 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0024_name" translatable="false">Dennerle Natural Gravel Rio Xingu — 2–22 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0025_name" translatable="false">Dennerle Aquarium Gravel Diamond Black — 1–2 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0026_name" translatable="false">Dennerle Aquarium Gravel Diamond Black — 1–2 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0027_name" translatable="false">Dennerle Aquarium Gravel Dark Brown — 1–2 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0028_name" translatable="false">Dennerle Aquarium Gravel Natural White — 1–2 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0029_name" translatable="false">Dennerle Aquarium Gravel Light Brown — 1–2 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0030_name" translatable="false">Dennerle Aquarium Gravel Slate Gray — 1–2 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0031_name" translatable="false">Dennerle Nano Shrimp Gravel — Sulawesi Black — 0.7–1.2 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0032_name" translatable="false">Dennerle Nano Shrimp Gravel — Arkansas Grey — 0.7–1.2 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0033_name" translatable="false">Dennerle Nano Shrimp Gravel — Borneo Brown — 0.7–1.2 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0034_name" translatable="false">Dennerle Nano Shrimp Gravel — Sunda White — 0.7–1.2 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0035_name" translatable="false">WIO Adder Gravel — S (5–10 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0036_name" translatable="false">WIO Adder Gravel — Mix (5–30 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0037_name" translatable="false">WIO Adder Gravel — Mix (5–30 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0038_name" translatable="false">WIO Belladonna Gravel — S (5–15 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0039_name" translatable="false">WIO Belladonna Gravel — Mix (5–30 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0040_name" translatable="false">WIO Belladonna Gravel — Mix (5–30 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0041_name" translatable="false">WIO Bumblebee Gravel — S (3–10 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0042_name" translatable="false">WIO Bumblebee Gravel — Mix (3–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0043_name" translatable="false">WIO Bumblebee Gravel — Mix (3–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0044_name" translatable="false">WIO Elderly Gravel — S (3–10 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0045_name" translatable="false">WIO Elderly Gravel — Mix (3–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0046_name" translatable="false">WIO Elderly Gravel — Mix (3–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0047_name" translatable="false">WIO Inferno Gravel — S (15–25 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0048_name" translatable="false">WIO Inferno Gravel — Mix (15–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0049_name" translatable="false">WIO Inferno Gravel — Mix (15–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0050_name" translatable="false">WIO Midnight Gravel — S (10–20 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0051_name" translatable="false">WIO Midnight Gravel — Mix (10–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0052_name" translatable="false">WIO Midnight Gravel — Mix (10–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0053_name" translatable="false">WIO Mist Gravel — S (10–20 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0054_name" translatable="false">WIO Mist Gravel — Mix (10–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0055_name" translatable="false">WIO Mist Gravel — Mix (10–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0056_name" translatable="false">WIO Ryuoh Gravel — S (10–20 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0057_name" translatable="false">WIO Ryuoh Gravel — Mix (10–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0058_name" translatable="false">WIO Ryuoh Gravel — Mix (10–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0059_name" translatable="false">WIO Shadow Gravel — S (1–20 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0060_name" translatable="false">WIO Shadow Gravel — Mix (1–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0061_name" translatable="false">WIO Shadow Gravel — Mix (1–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0062_name" translatable="false">WIO Stream Gravel — S (8–20 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0063_name" translatable="false">WIO Stream Gravel — Mix (8–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0064_name" translatable="false">WIO Stream Gravel — Mix (8–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0065_name" translatable="false">WIO Venom Gravel — S (8–20 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0066_name" translatable="false">WIO Venom Gravel — Mix (8–40 mm) — 2 kg</string>
+    <string name="catalog_material_gravel_0067_name" translatable="false">WIO Venom Gravel — Mix (8–40 mm) — 5 kg</string>
+    <string name="catalog_material_gravel_0068_name" translatable="false">JBL Sansibar SNOW — 0.1–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0069_name" translatable="false">JBL Sansibar SNOW — 0.1–0.6 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0070_name" translatable="false">JBL Sansibar WHITE — 0.2–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0071_name" translatable="false">JBL Sansibar WHITE — 0.2–0.6 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0072_name" translatable="false">JBL Sansibar RED — 0.2–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0073_name" translatable="false">JBL Sansibar RED — 0.2–0.6 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0074_name" translatable="false">JBL Sansibar ORANGE — 0.2–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0075_name" translatable="false">JBL Sansibar ORANGE — 0.2–0.6 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0076_name" translatable="false">JBL Sansibar DARK — 0.2–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0077_name" translatable="false">JBL Sansibar DARK — 0.2–0.6 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0078_name" translatable="false">JBL Sansibar GREY — 0.2–0.6 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0079_name" translatable="false">JBL Sansibar GREY — 0.2–0.6 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0080_name" translatable="false">JBL Sansibar RIVER — approx. 0.8 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0081_name" translatable="false">JBL Sansibar RIVER — approx. 0.8 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0082_name" translatable="false">sera Aquarium Gravel Anthracite Fine — 1–2 mm — 3 L (4 kg)</string>
+    <string name="catalog_material_gravel_0083_name" translatable="false">sera Aquarium Gravel Anthracite Fine — 1–2 mm — 6 L (8 kg)</string>
+    <string name="catalog_material_gravel_0084_name" translatable="false">sera Aquarium Gravel Brown Fine — 0–2 mm — 3 L (4 kg)</string>
+    <string name="catalog_material_gravel_0085_name" translatable="false">sera Aquarium Gravel Brown Fine — 0–2 mm — 6 L (8 kg)</string>
+    <string name="catalog_material_gravel_0086_name" translatable="false">sera Aquarium Gravel Ocher Fine — 0–2 mm — 3 L (4 kg)</string>
+    <string name="catalog_material_gravel_0087_name" translatable="false">sera Aquarium Gravel Ocher Fine — 0–2 mm — 6 L (8 kg)</string>
+    <string name="catalog_material_gravel_0088_name" translatable="false">sera Aquarium Gravel White Fine — 0–2 mm — 3 L (4 kg)</string>
+    <string name="catalog_material_gravel_0089_name" translatable="false">sera Aquarium Gravel White Fine — 0–2 mm — 6 L (8 kg)</string>
+    <string name="catalog_material_gravel_0090_name" translatable="false">sera Aquarium Gravel Anthracite Coarse — 1–3 mm — 3 L (5 kg)</string>
+    <string name="catalog_material_gravel_0091_name" translatable="false">sera Aquarium Gravel Anthracite Coarse — 1–3 mm — 6 L (10 kg)</string>
+    <string name="catalog_material_gravel_0092_name" translatable="false">sera Aquarium Gravel Beige Coarse — 2–6 mm — 3 L (5 kg)</string>
+    <string name="catalog_material_gravel_0093_name" translatable="false">sera Aquarium Gravel Beige Coarse — 2–6 mm — 6 L (10 kg)</string>
+    <string name="catalog_material_gravel_0094_name" translatable="false">sera Aquarium Gravel Black Coarse — 2–3 mm — 3 L (5 kg)</string>
+    <string name="catalog_material_gravel_0095_name" translatable="false">sera Aquarium Gravel Black Coarse — 2–3 mm — 6 L (10 kg)</string>
+    <string name="catalog_material_gravel_0096_name" translatable="false">sera Aquarium Gravel Mix Coarse — 2–8 mm — 3 L (4 kg)</string>
+    <string name="catalog_material_gravel_0097_name" translatable="false">sera Aquarium Gravel Mix Coarse — 2–8 mm — 6 L (8 kg)</string>
+    <string name="catalog_material_gravel_0098_name" translatable="false">sera Aquarium Gravel White Coarse — 1–3 mm — 3 L (5 kg)</string>
+    <string name="catalog_material_gravel_0099_name" translatable="false">sera Aquarium Gravel White Coarse — 1–3 mm — 6 L (10 kg)</string>
+    <string name="catalog_material_gravel_0100_name" translatable="false">sera Aquarium Gravel Lava Substrate — 2–8 mm — 3 L (4 kg)</string>
+    <string name="catalog_material_gravel_0101_name" translatable="false">sera Aquarium Gravel Lava Substrate — 2–8 mm — 6 L (8 kg)</string>
+    <string name="catalog_material_gravel_0102_name" translatable="false">Seachem Flourite — 3.5 kg</string>
+    <string name="catalog_material_gravel_0103_name" translatable="false">Seachem Flourite — 7 kg</string>
+    <string name="catalog_material_gravel_0104_name" translatable="false">Seachem Flourite Black — 3.5 kg</string>
+    <string name="catalog_material_gravel_0105_name" translatable="false">Seachem Flourite Black — 7 kg</string>
+    <string name="catalog_material_gravel_0106_name" translatable="false">Seachem Flourite Dark — 3.5 kg</string>
+    <string name="catalog_material_gravel_0107_name" translatable="false">Seachem Flourite Dark — 7 kg</string>
+    <string name="catalog_material_gravel_0108_name" translatable="false">Seachem Flourite Red — 3.5 kg</string>
+    <string name="catalog_material_gravel_0109_name" translatable="false">Seachem Flourite Red — 7 kg</string>
+    <string name="catalog_material_gravel_0110_name" translatable="false">Seachem Flourite Sand — 3.5 kg</string>
+    <string name="catalog_material_gravel_0111_name" translatable="false">Seachem Flourite Sand — 7 kg</string>
+    <string name="catalog_material_gravel_0112_name" translatable="false">Seachem Flourite Black Sand — 3.5 kg</string>
+    <string name="catalog_material_gravel_0113_name" translatable="false">Seachem Flourite Black Sand — 7 kg</string>
+    <string name="catalog_material_gravel_0114_name" translatable="false">Seachem Onyx Sand — 3.5 kg</string>
+    <string name="catalog_material_gravel_0115_name" translatable="false">Seachem Onyx Sand — 7 kg</string>
+    <string name="catalog_material_gravel_0116_name" translatable="false">Seachem Onyx — 7 kg</string>
+    <string name="catalog_material_gravel_0117_name" translatable="false">CaribSea Super Naturals Gemstone Creek — 3–5 mm — 5 lb</string>
+    <string name="catalog_material_gravel_0118_name" translatable="false">CaribSea Super Naturals Gemstone Creek — 3–5 mm — 20 lb</string>
+    <string name="catalog_material_gravel_0119_name" translatable="false">CaribSea Super Naturals Gemstone Creek — 3–5 mm — 40 lb</string>
+    <string name="catalog_material_gravel_0120_name" translatable="false">CaribSea Super Naturals Peace River — 1–2 mm — 5 lb</string>
+    <string name="catalog_material_gravel_0121_name" translatable="false">CaribSea Super Naturals Peace River — 1–2 mm — 10 lb</string>
+    <string name="catalog_material_gravel_0122_name" translatable="false">CaribSea Super Naturals Peace River — 1–2 mm — 20 lb</string>
+    <string name="catalog_material_gravel_0123_name" translatable="false">CaribSea Super Naturals Peace River — 1–2 mm — 40 lb</string>
+    <string name="catalog_material_gravel_0124_name" translatable="false">CaribSea Super Naturals Midnight River — 1–4 mm — 5 lb</string>
+    <string name="catalog_material_gravel_0125_name" translatable="false">CaribSea Super Naturals Midnight River — 1–4 mm — 10 lb</string>
+    <string name="catalog_material_gravel_0126_name" translatable="false">CaribSea Super Naturals Midnight River — 1–4 mm — 20 lb</string>
+    <string name="catalog_material_gravel_0127_name" translatable="false">CaribSea Super Naturals Midnight River — 1–4 mm — 40 lb</string>
+    <string name="catalog_material_gravel_0128_name" translatable="false">CaribSea Super Naturals Raven River Pebble — 6–14 mm — 5 lb</string>
+    <string name="catalog_material_gravel_0129_name" translatable="false">CaribSea Super Naturals Raven River Pebble — 6–14 mm — 10 lb</string>
+    <string name="catalog_material_gravel_0130_name" translatable="false">CaribSea Super Naturals Raven River Pebble — 6–14 mm — 20 lb</string>
+    <string name="catalog_material_gravel_0131_name" translatable="false">CaribSea Super Naturals Raven River Pebble — 6–14 mm — 40 lb</string>
+    <string name="catalog_material_gravel_0132_name" translatable="false">CaribSea Super Naturals Shadow Creek Sand — 1–3 mm — 5 lb</string>
+    <string name="catalog_material_gravel_0133_name" translatable="false">CaribSea Super Naturals Shadow Creek Sand — 1–3 mm — 10 lb</string>
+    <string name="catalog_material_gravel_0134_name" translatable="false">CaribSea Super Naturals Shadow Creek Sand — 1–3 mm — 20 lb</string>
+    <string name="catalog_material_gravel_0135_name" translatable="false">CaribSea Super Naturals Shadow Creek Sand — 1–3 mm — 40 lb</string>
+    <string name="catalog_material_gravel_0136_name" translatable="false">Aquael Natural Multi-Colour Gravel — 1.4–2 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0137_name" translatable="false">Aquael Natural Multi-Colour Gravel — 1.4–2 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0138_name" translatable="false">Aquael Natural Multi-Colour Gravel — 3–5 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0139_name" translatable="false">Aquael Natural Multi-Colour Gravel — 3–5 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0140_name" translatable="false">Aquael Natural Multi-Colour Gravel — 5–10 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0141_name" translatable="false">Aquael Natural Multi-Colour Gravel — 5–10 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0142_name" translatable="false">Aquael Basalt Gravel — 2–4 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0143_name" translatable="false">Aquael Basalt Gravel — 2–4 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0144_name" translatable="false">Aquael Dolomite Gravel — 2–4 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0145_name" translatable="false">Aquael Dolomite Gravel — 2–4 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0146_name" translatable="false">ReeFlowers Natural AquaSand — 0.5–1 mm — 7 kg</string>
+    <string name="catalog_material_gravel_0147_name" translatable="false">ReeFlowers Natural AquaSand — 0.5–1 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0148_name" translatable="false">ReeFlowers Iceland Black Sand — 1–2 mm — 7 kg</string>
+    <string name="catalog_material_gravel_0149_name" translatable="false">ReeFlowers Iceland Black Sand — 1–2 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0150_name" translatable="false">ReeFlowers Iceland Black Sand — 3–5 mm — 7 kg</string>
+    <string name="catalog_material_gravel_0151_name" translatable="false">ReeFlowers Iceland Black Sand — 3–5 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0152_name" translatable="false">ReeFlowers Pearl White Sand — 0.5–1 mm — 7 kg</string>
+    <string name="catalog_material_gravel_0153_name" translatable="false">ReeFlowers Pearl White Sand — 0.5–1 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0154_name" translatable="false">ReeFlowers Pearl White Sand — 1–1.5 mm — 7 kg</string>
+    <string name="catalog_material_gravel_0155_name" translatable="false">ReeFlowers Pearl White Sand — 1–1.5 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0156_name" translatable="false">ReeFlowers Natural Tara Gravel — 1–2 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0157_name" translatable="false">ReeFlowers Natural Tara Gravel — 2–4 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0158_name" translatable="false">ReeFlowers Natural Sahara Sand — 0.5–1 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0159_name" translatable="false">CrystalPro Black Sand — 1–3 mm — 6 kg</string>
+    <string name="catalog_material_gravel_0160_name" translatable="false">CrystalPro Black Sand — 1–3 mm — 12 kg</string>
+    <string name="catalog_material_gravel_0161_name" translatable="false">CrystalPro Black Sand — 1–3 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0162_name" translatable="false">CrystalPro White Sand — 1–1.5 mm — 6 kg</string>
+    <string name="catalog_material_gravel_0163_name" translatable="false">CrystalPro White Sand — 1–1.5 mm — 12 kg</string>
+    <string name="catalog_material_gravel_0164_name" translatable="false">CrystalPro White Sand — 1–1.5 mm — 25 kg</string>
+    <string name="catalog_material_gravel_0165_name" translatable="false">CrystalPro Silica Sand — 0.5–2 mm — 6 kg</string>
+    <string name="catalog_material_gravel_0166_name" translatable="false">CrystalPro Silica Sand — 0.5–2 mm — 12 kg</string>
+    <string name="catalog_material_gravel_0167_name" translatable="false">CrystalPro River Sand — 3–5 mm — 6 kg</string>
+    <string name="catalog_material_gravel_0168_name" translatable="false">CrystalPro River Sand — 3–5 mm — 12 kg</string>
+    <string name="catalog_material_gravel_0169_name" translatable="false">AMTRA Polychrome Gravel — 3–4 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0170_name" translatable="false">AMTRA Polychrome Gravel — 3–4 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0171_name" translatable="false">AMTRA Polychrome Gravel — 3–4 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0172_name" translatable="false">AMTRA Gravel Noa — 4–8 mm — 1 kg</string>
+    <string name="catalog_material_gravel_0173_name" translatable="false">AMTRA Gravel Noa — 4–8 mm — 2 kg</string>
+    <string name="catalog_material_gravel_0174_name" translatable="false">AMTRA Gravel Noa — 4–8 mm — 5 kg</string>
+    <string name="catalog_material_gravel_0175_name" translatable="false">AMTRA Gravel Noa — 4–8 mm — 10 kg</string>
+    <string name="catalog_material_gravel_0176_name" translatable="false">Prodac Mixed Color Quartz — 2–3 mm — 1 kg</string>
+    <string name="catalog_material_gravel_0177_name" translatable="false">Prodac Mixed Color Quartz — 2–3 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0178_name" translatable="false">Prodac Quartz Black — 2–3 mm — 1 kg</string>
+    <string name="catalog_material_gravel_0179_name" translatable="false">Prodac Quartz Black — 2–3 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0180_name" translatable="false">Prodac Polycrome — 2–3 mm — 2.5 kg</string>
+    <string name="catalog_material_gravel_0181_name" translatable="false">Prodac Polycrome — 2–3 mm — 25 kg</string>
+    <!-- Gravel search aliases. Localized aliases live in values-tr. -->
+    <string name="catalog_keyword_gravel">gravel</string>
+    <string name="catalog_keyword_sand">sand</string>
+    <string name="catalog_keyword_aqua_gravel">aqua gravel</string>
+    <string name="catalog_keyword_black">black</string>
+    <string name="catalog_keyword_natural">natural</string>
+    <string name="catalog_keyword_dark">dark</string>
+    <string name="catalog_keyword_white">white</string>
+    <string name="catalog_keyword_basalt">basalt</string>
+    <string name="catalog_keyword_river">river</string>
+</resources>

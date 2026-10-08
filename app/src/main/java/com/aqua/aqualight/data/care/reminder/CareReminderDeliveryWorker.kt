@@ -13,6 +13,7 @@ import androidx.work.workDataOf
 import com.aqua.aqualight.application.notifications.CareReminderKind
 import com.aqua.aqualight.application.notifications.CareReminderNotification
 import com.aqua.aqualight.application.notifications.NotificationCategory
+import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -98,7 +99,7 @@ class CareReminderDeliveryWorker(
             task = ownerTask,
             tank = tank
         )
-        platform.dispatchUseCase.dispatchCareReminder(
+        val dispatchResult = platform.dispatchUseCase.dispatchCareReminder(
             CareReminderNotification(
                 ownerUid = ownerUid,
                 taskId = ownerTask.id,
@@ -107,7 +108,11 @@ class CareReminderDeliveryWorker(
                 message = notificationText.message
             )
         )
-        platform.scheduler.scheduleCareTask(ownerUid, ownerTask.id)
+        if (dispatchResult == NotificationDispatchResult.POSTED) {
+            platform.preferenceUseCase.finalizeCareTaskDelivery(ownerUid, ownerTask.id)
+        } else {
+            platform.scheduler.scheduleCareTask(ownerUid, ownerTask.id)
+        }
     }
 
     private fun matchesScheduledOccurrence(

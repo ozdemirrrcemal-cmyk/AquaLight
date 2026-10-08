@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_filter_keyword_aquarium_filter">akvaryum filtresi</string>
+    <string name="catalog_filter_keyword_external_filter">dış filtre</string>
+    <string name="catalog_filter_keyword_canister_filter">kova filtre</string>
+    <string name="catalog_filter_keyword_hang_on_filter">askı filtre</string>
+    <string name="catalog_filter_keyword_hob_filter">hob filtre</string>
+    <string name="catalog_filter_keyword_waterfall_filter">şelale filtre</string>
+    <string name="catalog_filter_keyword_power_filter">power filtre</string>
+    <string name="catalog_filter_keyword_internal_filter">iç filtre</string>
+    <string name="catalog_filter_keyword_air_driven_filter">hava tahrikli filtre</string>
+    <string name="catalog_filter_keyword_sponge_filter">sünger filtre</string>
+    <string name="catalog_filter_keyword_corner_filter">köşe filtre</string>
+    <string name="catalog_filter_keyword_prefilter">ön filtre</string>
+    <string name="catalog_filter_keyword_filter_system">filtre sistemi</string>
+    <string name="catalog_filter_keyword_breeder_filter">üretim filtresi</string>
+    <string name="catalog_filter_keyword_top_filter">üst filtre</string>
+    <string name="catalog_filter_keyword_overhead_filter">tepe filtre</string>
+    <string name="catalog_filter_keyword_pipe_filter">pipo filtre</string>
+    <string name="catalog_filter_keyword_mini_external_filter">mini dış filtre</string>
+    <string name="catalog_filter_keyword_biological_filter">biyolojik filtre</string>
+    <string name="catalog_filter_keyword_heated_filter">ısıtıcılı filtre</string>
+    <string name="catalog_filter_keyword_uv_filter">uv filtre</string>
+</resources>

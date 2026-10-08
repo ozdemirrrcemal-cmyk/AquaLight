@@ -28,6 +28,41 @@ class ImageMediaProcessorInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
+    fun restoredRecordPhotoIsNormalizedBeforeAppOwnedPromotion() = runBlocking {
+        val source = providerFile("archive-record-${UUID.randomUUID()}.png")
+        val bitmap = Bitmap.createBitmap(1_900, 1_200, Bitmap.Config.RGB_565).apply {
+            eraseColor(Color.rgb(32, 112, 176))
+        }
+        try {
+            source.outputStream().use { output ->
+                assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, output))
+            }
+            val gateway = UserDataArchiveMediaGateway(context)
+            val uri = gateway.prepareRestoredPhoto(
+                ownerUid = "archive-owner",
+                ownerToken = "restored-record",
+                source = source,
+                scope = AppMediaScope.LIVESTOCK
+            )
+            try {
+                val owned = requireNotNull(
+                    AppMediaStorage.resolveInternalMediaFile(context, uri, AppMediaScope.LIVESTOCK)
+                )
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(owned.path, bounds)
+                assertEquals("image/jpeg", bounds.outMimeType)
+                assertTrue(maxOf(bounds.outWidth, bounds.outHeight) <= ImageMediaPolicy.MAX_RECORD_OUTPUT_EDGE_PX)
+                assertTrue(owned.length() in 1..ImageMediaPolicy.MAX_OUTPUT_BYTES)
+            } finally {
+                gateway.rollback(uri)
+            }
+        } finally {
+            bitmap.recycle()
+            source.delete()
+        }
+    }
+
+    @Test
     fun oversizedProviderImageUsesSampledDecodeAndCompressesWithinCommercialLimits() = runBlocking {
         val sourceWidth = 3_600
         val sourceHeight = 3_400

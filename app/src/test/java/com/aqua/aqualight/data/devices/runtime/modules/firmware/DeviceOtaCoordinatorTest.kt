@@ -225,6 +225,10 @@ class DeviceOtaCoordinatorTest {
                     progressPermille = 1_000,
                     restartRequired = true
                 )
+                    .put(
+                        "failureCode",
+                        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                    )
                     .put("lastError", "exact pre-OTA runtime restore failed")
                     .put(
                         "lastErrorField",
@@ -424,7 +428,7 @@ class DeviceOtaCoordinatorTest {
     }
 
     @Test
-    fun `restored uncertain start with idle firmware terminates instead of recovering forever`() =
+    fun `restored uncertain start ignores volatile idle status until version proof`() =
         runTest {
             val store = InMemoryDeviceOtaTransactionStore()
             val first = DeviceOtaCoordinator(
@@ -442,14 +446,16 @@ class DeviceOtaCoordinatorTest {
             first.close()
 
             val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(extraBufferCapacity = 8)
+            val restoredSnapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
             val gateway = RecordingGateway().apply {
                 statusData = otaStatusData(otaSnapshot("idle", active = false, progressPermille = 0))
             }
             val restored = DeviceOtaCoordinator(
-                snapshotProvider = { snapshot() },
+                snapshotProvider = { deviceUid -> restoredSnapshots.value[deviceUid] },
                 connectRuntime = { Result.success(Unit) },
                 updaterProvider = { updater(gateway) },
                 runtimeLifecycleEvents = lifecycle,
+                snapshotUpdates = restoredSnapshots,
                 transactionStore = store,
                 dispatcher = StandardTestDispatcher(testScheduler),
                 restartWaitMillis = 1_000L
@@ -459,10 +465,172 @@ class DeviceOtaCoordinatorTest {
             lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
             runCurrent()
 
-            assertTrue(restored.observe(DEVICE_UID).value is DeviceOtaState.Failed)
+            assertTrue(restored.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+            assertEquals(1, store.activeTransactions().size)
+
+            restoredSnapshots.value = mapOf(
+                DEVICE_UID to snapshot().copy(
+                    firmwareVersion = "2.0.0",
+                    runtimeMetadataGeneration = 8L
+                )
+            )
+            runCurrent()
+
+            assertTrue(restored.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
             assertTrue(store.activeTransactions().isEmpty())
             restored.close()
         }
+
+    @Test
+    fun `correlated start protocol uncertainty remains journaled until target version proof`() =
+        runTest {
+            val store = InMemoryDeviceOtaTransactionStore()
+            val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+            val gateway = RecordingGateway().apply {
+                startData = JSONObject()
+                statusData = otaStatusData(
+                    otaSnapshot("idle", active = false, progressPermille = 0)
+                )
+            }
+            val coordinator = DeviceOtaCoordinator(
+                snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
+                connectRuntime = { Result.success(Unit) },
+                updaterProvider = { updater(gateway) },
+                runtimeLifecycleEvents = null,
+                snapshotUpdates = snapshots,
+                transactionStore = store,
+                dispatcher = StandardTestDispatcher(testScheduler),
+                restartWaitMillis = 1_000L
+            )
+            runCurrent()
+            val plan = (
+                coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                    as DeviceOtaState.UpdateAvailable
+                ).plan
+
+            val start = coordinator.startUpdate(plan)
+
+            assertFalse(start.isSuccess)
+            assertEquals(DeviceOtaFailureReason.PROTOCOL_MISMATCH, start.failure?.reason)
+            assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+            assertEquals(1, store.activeTransactions().size)
+
+            val idleStatus = coordinator.requestStatus(DEVICE_UID)
+            assertTrue(idleStatus.isSuccess)
+            assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+            assertEquals(1, store.activeTransactions().size)
+
+            snapshots.value = mapOf(
+                DEVICE_UID to snapshot().copy(
+                    firmwareVersion = "2.0.0",
+                    runtimeMetadataGeneration = 8L
+                )
+            )
+            runCurrent()
+
+            assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
+            assertTrue(store.activeTransactions().isEmpty())
+            coordinator.close()
+        }
+
+    @Test
+    fun `torn terminal event cannot discard durable transaction before version proof`() =
+        runTest {
+            val store = InMemoryDeviceOtaTransactionStore()
+            val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
+            val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+            val coordinator = DeviceOtaCoordinator(
+                snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
+                connectRuntime = { Result.success(Unit) },
+                updaterProvider = { updater(RecordingGateway()) },
+                runtimeLifecycleEvents = null,
+                runtimeTypedEvents = typedEvents,
+                snapshotUpdates = snapshots,
+                transactionStore = store,
+                dispatcher = StandardTestDispatcher(testScheduler),
+                restartWaitMillis = 1_000L
+            )
+            runCurrent()
+            val plan = (
+                coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                    as DeviceOtaState.UpdateAvailable
+                ).plan
+            assertTrue(coordinator.startUpdate(plan).isSuccess)
+
+            typedEvents.tryEmit(
+                otaEvent(
+                    type = DeviceRuntimeTypedEvent.Type.FIRMWARE_OTA_COMPLETED,
+                    id = "torn-terminal",
+                    snapshot = otaEventData(
+                        phase = "succeeded",
+                        active = false,
+                        progressPermille = 500,
+                        restartRequired = false,
+                        restartScheduled = false
+                    )
+                )
+            )
+            runCurrent()
+
+            assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+            assertEquals(1, store.activeTransactions().size)
+
+            snapshots.value = mapOf(
+                DEVICE_UID to snapshot().copy(
+                    firmwareVersion = "2.0.0",
+                    runtimeMetadataGeneration = 8L
+                )
+            )
+            runCurrent()
+
+            assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
+            assertTrue(store.activeTransactions().isEmpty())
+            coordinator.close()
+        }
+
+    @Test
+    fun `active status protocol uncertainty preserves durable transaction`() = runTest {
+        val store = InMemoryDeviceOtaTransactionStore()
+        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val gateway = RecordingGateway()
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null,
+            snapshotUpdates = snapshots,
+            transactionStore = store,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            restartWaitMillis = 1_000L
+        )
+        runCurrent()
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        assertTrue(coordinator.startUpdate(plan).isSuccess)
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.InProgress)
+        gateway.statusData = JSONObject()
+
+        val status = coordinator.requestStatus(DEVICE_UID)
+
+        assertFalse(status.isSuccess)
+        assertEquals(DeviceOtaFailureReason.PROTOCOL_MISMATCH, status.failure?.reason)
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+        assertEquals(1, store.activeTransactions().size)
+
+        snapshots.value = mapOf(
+            DEVICE_UID to snapshot().copy(
+                firmwareVersion = "2.0.0",
+                runtimeMetadataGeneration = 8L
+            )
+        )
+        runCurrent()
+
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
+        assertTrue(store.activeTransactions().isEmpty())
+        coordinator.close()
+    }
 
     @Test
     fun `metadata generation change expires a prepared plan before start`() = runTest {
@@ -665,8 +833,19 @@ class DeviceOtaCoordinatorTest {
         .put("targetVersion", "2.0.0")
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", if (phase == "succeeded") "a".repeat(64) else "")
+        .put(
+            "failureCode",
+            if (phase == "failed") {
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED
+            } else {
+                ""
+            }
+        )
         .put("lastError", if (phase == "failed") "download failed" else "")
-        .put("lastErrorField", if (phase == "failed") "stream" else "")
+        .put(
+            "lastErrorField",
+            if (phase == "failed") DeviceFirmwareRuntimeContract.ErrorField.STREAM else ""
+        )
         .put("urlScheme", "https")
         .put("httpStatus", 200)
 

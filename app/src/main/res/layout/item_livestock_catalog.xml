@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardRoot"
+    style="@style/Widget.Aqua.Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/aqua_size_9"
+    android:clickable="true"
+    android:focusable="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/aqua_size_82"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_10"
+        android:paddingEnd="@dimen/aqua_size_12"
+        android:paddingBottom="@dimen/aqua_size_10">
+
+        <ImageView
+            android:id="@+id/ivCategoryIcon"
+            android:layout_width="@dimen/aqua_size_46"
+            android:layout_height="@dimen/aqua_size_46"
+            android:contentDescription="@null"
+            android:padding="@dimen/aqua_size_10"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_life_fish_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/aqua_content_on_dark" />
+
+        <LinearLayout
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_14"
+            android:layout_marginEnd="@dimen/aqua_size_12"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvSelection"
+            app:layout_constraintStart_toEndOf="@id/ivCategoryIcon"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_micro_plus"
+                tools:text="Balık" />
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_5"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body_compact"
+                tools:text="Neon Tetra" />
+
+            <TextView
+                android:id="@+id/tvScientificName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_4"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_caption"
+                tools:text="Paracheirodon innesi" />
+
+            <TextView
+                android:id="@+id/tvParameters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_4"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_accent_positive"
+                android:textSize="@dimen/aqua_text_size_caption"
+                tools:text="20–26 °C • pH 5.0–7.5" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvSelection"
+            android:layout_width="@dimen/aqua_size_28"
+            android:layout_height="@dimen/aqua_size_28"
+            android:background="@drawable/bg_material_check_unselected"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_on_dark"
+            android:textSize="@dimen/aqua_text_size_caption"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="✓" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

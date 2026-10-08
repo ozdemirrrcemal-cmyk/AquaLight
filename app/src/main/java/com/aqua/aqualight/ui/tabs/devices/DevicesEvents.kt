@@ -10,6 +10,7 @@ sealed class DevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
+        @StringRes val titleRes: Int,
         @StringRes val messageRes: Int
     ) : DevicesEvent()
 

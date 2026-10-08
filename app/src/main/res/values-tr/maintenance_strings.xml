@@ -205,7 +205,7 @@
     <string name="maintenance_smart_rule_plant_adaptation_check_message">Eriyen yaprakları, zayıf gövdeleri veya ayar gerektirebilecek yeni dikilmiş bölümleri kontrol edin.</string>
     <string name="maintenance_smart_rule_algae_check_message">Camı, dekoru ve bitki yapraklarını erken yosun belirtileri açısından kontrol edin.</string>
     <string name="maintenance_smart_rule_review_fertilizer_plan_message">Otomatik dozaj önerilerini iyileştirmek için gübre ürününüzü ekleyin.</string>
-    <string name="maintenance_smart_rule_fertilizer_check_message">Düşük dozla dikkatlice başlayın ve bitki tepkisine ve yosun belirtilerine göre ayarlayın.</string>
+    <string name="maintenance_smart_rule_fertilizer_check_message">Ürün rehberini gözden geçirin; yalnızca bitki tepkisi, yosun belirtileri ve su ölçümlerine göre ayarlayın.</string>
     <string name="maintenance_smart_rule_water_test_before_livestock_message">Canlı eklemeden önce akvaryumun dengeli olduğunu ve amonyak ya da nitrit tespit edilmediğini kontrol edin.</string>
     <string name="maintenance_smart_rule_livestock_readiness_check_message">Su parametreleri kararlıysa uygun temizlik ekibini veya canlıları kademeli olarak planlamaya başlayabilirsiniz.</string>
     <string name="maintenance_smart_rule_fish_addition_check_message">Yalnızca tank dengeliyse balık ekleyin. Az sayıyla başlayın ve aşırı stoklamadan kaçının.</string>
@@ -224,20 +224,34 @@
 
     <string name="maintenance_smart_msg_water_change_day">%1$d. gün. Akvaryumun dengeli kalmasına yardımcı olmak için suyun yaklaşık %2$d%% kadarını değiştirin.</string>
     <string name="maintenance_smart_msg_water_change">Akvaryumun dengeli kalmasına yardımcı olmak için suyun yaklaşık %1$d%% kadarını değiştirin.</string>
-    <string name="maintenance_smart_msg_fertilizer_missing_day">%1$d. gün. Otomatik dozaj önerilerini iyileştirmek için gübre ürününüzü ekleyin.</string>
-    <string name="maintenance_smart_msg_fertilizer_missing">Otomatik dozaj önerilerini iyileştirmek için gübre ürününüzü ekleyin.</string>
-    <string name="maintenance_smart_msg_delay_fertilizer_day">%1$d. gün. Şimdilik %2$s dozajını erteleyin ve bitki tepkisini izleyin.</string>
-    <string name="maintenance_smart_msg_reduced_fertilizer_day">%1$d. gün. Azaltılmış başlangıç dozu olarak yaklaşık %2$s mL %3$s kullanın.</string>
-    <string name="maintenance_smart_msg_normal_fertilizer">Yaklaşık %1$s mL %2$s %3$s dozajlayın.</string>
+    <string name="maintenance_smart_msg_fertilizer_missing_day">%1$d. gün. Gübre tanımlanamadı; tam ürünü doğrulayın ve etiketini izleyin.</string>
+    <string name="maintenance_smart_msg_fertilizer_missing">Gübre tanımlanamadı; tam ürünü doğrulayın ve etiketini izleyin.</string>
+    <string name="maintenance_smart_msg_limit_fertilizer_day">%1$d. gün. İlk 3–4 hafta %2$s kullanımını erteleyin veya sınırlayın; ürün etiketini ve bitki tepkisini izleyin.</string>
+    <string name="maintenance_smart_msg_defer_fertilizer_stage">%1$s kullanımını ürünün önerdiği akvaryum evresine kadar erteleyin.</string>
+    <string name="maintenance_smart_msg_observe_before_fertilizer">%1$s ürününü otomatik dozlamayın; ihtiyacı bitki tepkisi ve su ölçümleriyle doğrulayıp etiketi izleyin.</string>
+    <string name="maintenance_smart_msg_label_fertilizer">Etiket tabanlı tahmin: %1$s mL %2$s, %3$s; yaklaşık %4$s L net su için. Dozlamadan önce etiketi doğrulayın.</string>
     <string name="maintenance_smart_msg_co2_check">CO₂ zamanlamasını, drop checker rengini ve canlı davranışlarını kontrol edin.</string>
-    <string name="maintenance_smart_msg_feeding">Az miktarda besleyin ve gerekirse fazla yemi çıkarın.</string>
+    <string name="maintenance_smart_msg_feeding">Yalnızca 10–30 saniyede tüketilecek kadar yem verin ve fazlasını çıkarın.</string>
     <string name="maintenance_smart_msg_lighting">Aydınlatma süresini kontrol edin ve kararlı tutun.</string>
+    <plurals name="maintenance_smart_msg_lighting_startup">
+        <item quantity="one">Bitkili akvaryumda 3. haftanın sonuna kadar ışığı günde %1$d saat tutun; armatür veya PAR verisi olmadan kanal şiddeti çıkarımı yapmayın.</item>
+        <item quantity="other">Bitkili akvaryumda 3. haftanın sonuna kadar ışığı günde %1$d saat tutun; armatür veya PAR verisi olmadan kanal şiddeti çıkarımı yapmayın.</item>
+    </plurals>
+    <plurals name="maintenance_smart_msg_lighting_establishing">
+        <item quantity="one">Gelişim kararlı ve yosun kontrol altındaysa süreyi kademeli olarak günde en fazla %1$d saate çıkarın; şiddeti ayrıca doğrulayın.</item>
+        <item quantity="other">Gelişim kararlı ve yosun kontrol altındaysa süreyi kademeli olarak günde en fazla %1$d saate çıkarın; şiddeti ayrıca doğrulayın.</item>
+    </plurals>
+    <plurals name="maintenance_smart_msg_lighting_mature">
+        <item quantity="one">Günlük %1$d saatlik temeli bitki gelişimi ve yosuna göre gözden geçirin; kanal şiddeti için armatür veya PAR kalibrasyonu gerekir.</item>
+        <item quantity="other">Günlük %1$d saatlik temeli bitki gelişimi ve yosuna göre gözden geçirin; kanal şiddeti için armatür veya PAR kalibrasyonu gerekir.</item>
+    </plurals>
     <string name="maintenance_smart_msg_water_test">Canlı veya dozajlama kararlarından önce suyu test edin.</string>
     <string name="maintenance_smart_msg_plant_check">Bitki sağlığını, eriyen yaprakları ve zayıf gelişimi kontrol edin.</string>
     <string name="maintenance_smart_msg_plant_trim">Gerekirse aşırı büyümüş veya sağlıksız bitki bölümlerini budayın.</string>
     <string name="maintenance_smart_msg_filter_check">Filtre akışını kontrol edin ve yalnızca akış azaldıysa temizleyin.</string>
     <string name="maintenance_smart_msg_glass_cleaning">Camı ve dekoru erken yosun belirtileri açısından kontrol edin.</string>
-    <string name="maintenance_smart_msg_livestock_check">Canlı davranışlarını, iştahı ve görünür stres belirtilerini kontrol edin.</string>
+    <string name="maintenance_smart_msg_livestock_check">Davranış, iştah, solunum ve görünür belirtileri kaydedin; önce suyu test edin ve yalnızca belirtilere bakarak ilaç kullanmayın.</string>
+    <string name="maintenance_smart_msg_general_check">Akvaryum ekipmanını, su kararlılığını ve son gözlemleri gözden geçirin.</string>
     <string name="maintenance_smart_frequency_daily">günlük</string>
     <string name="maintenance_smart_frequency_weekly">haftalık</string>
     <string name="maintenance_smart_frequency_once_or_twice_weekly">haftada bir veya iki kez</string>

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Decoration catalog brand names. -->
+    <string name="catalog_decoration_brand_wio" translatable="false">WIO</string>
+    <string name="catalog_decoration_brand_creaqua" translatable="false">Creaqua</string>
+    <string name="catalog_decoration_brand_uns" translatable="false">Ultum Nature Systems (UNS)</string>
+    <string name="catalog_decoration_brand_greenworks" translatable="false">GreenWorks</string>
+    <string name="catalog_decoration_brand_riverest" translatable="false">Riverest</string>
+    <string name="catalog_decoration_brand_aquadeco" translatable="false">AquaDeco</string>
+
+    <!-- Decoration catalog search aliases. -->
+    <string name="catalog_decoration_alias_ohko" translatable="false">ohko</string>
+    <string name="catalog_decoration_alias_ohko_stone" translatable="false">ohko stone</string>
+    <string name="catalog_decoration_alias_dragon_stone" translatable="false">dragon stone</string>
+    <string name="catalog_decoration_alias_seiryu" translatable="false">seiryu</string>
+    <string name="catalog_decoration_alias_seiryu_stone" translatable="false">seiryu stone</string>
+    <string name="catalog_decoration_alias_ryuoh" translatable="false">ryuoh</string>
+    <string name="catalog_decoration_alias_ryuoh_stone" translatable="false">ryuoh stone</string>
+    <string name="catalog_decoration_alias_redmoor" translatable="false">redmoor</string>
+    <string name="catalog_decoration_alias_red_moorwood" translatable="false">red moorwood</string>
+    <string name="catalog_decoration_alias_moorwood" translatable="false">moorwood</string>
+    <string name="catalog_decoration_alias_spiderwood" translatable="false">spiderwood</string>
+    <string name="catalog_decoration_alias_spider_wood" translatable="false">spider wood</string>
+    <string name="catalog_decoration_alias_fingerwood" translatable="false">fingerwood</string>
+    <string name="catalog_decoration_alias_mangrow" translatable="false">mangrow</string>
+    <string name="catalog_decoration_alias_mangrove" translatable="false">mangrove</string>
+    <string name="catalog_decoration_alias_mangrove_root" translatable="false">mangrove root</string>
+    <string name="catalog_decoration_alias_flamewood" translatable="false">flamewood</string>
+    <string name="catalog_decoration_alias_flame_wood" translatable="false">flame wood</string>
+    <string name="catalog_decoration_alias_black_flamewood" translatable="false">black flamewood</string>
+    <string name="catalog_decoration_alias_mopani_wood" translatable="false">mopani wood</string>
+    <string name="catalog_decoration_alias_manzanita_wood" translatable="false">manzanita wood</string>
+    <string name="catalog_decoration_alias_ghost_wood" translatable="false">ghost wood</string>
+    <string name="catalog_decoration_alias_malaysian_driftwood" translatable="false">malaysian driftwood</string>
+    <string name="catalog_decoration_alias_artificial" translatable="false">artificial</string>
+    <string name="catalog_decoration_alias_resin" translatable="false">resin</string>
+
+    <!-- Current decoration product-family names. Size and package variants are intentionally collapsed. -->
+    <string name="catalog_material_decoration_0001_name" translatable="false">WIO Adder Boulder</string>
+    <string name="catalog_material_decoration_0002_name" translatable="false">WIO Bumblebee Boulder</string>
+    <string name="catalog_material_decoration_0003_name" translatable="false">WIO Dark Ryuoh Stone</string>
+    <string name="catalog_material_decoration_0004_name" translatable="false">WIO Dragon Stone</string>
+    <string name="catalog_material_decoration_0005_name" translatable="false">WIO Elderly Boulder</string>
+    <string name="catalog_material_decoration_0006_name" translatable="false">WIO Elderly Stone</string>
+    <string name="catalog_material_decoration_0007_name" translatable="false">WIO Fossil Stone</string>
+    <string name="catalog_material_decoration_0008_name" translatable="false">WIO Hellboy Dragon Stone</string>
+    <string name="catalog_material_decoration_0009_name" translatable="false">WIO Hulk Dragon Stone</string>
+    <string name="catalog_material_decoration_0010_name" translatable="false">WIO Inferno Boulder</string>
+    <string name="catalog_material_decoration_0011_name" translatable="false">WIO Inferno Stone</string>
+    <string name="catalog_material_decoration_0012_name" translatable="false">WIO Knight Dragon Stone</string>
+    <string name="catalog_material_decoration_0013_name" translatable="false">WIO McDonald Boulder</string>
+    <string name="catalog_material_decoration_0014_name" translatable="false">WIO Midnight Boulder</string>
+    <string name="catalog_material_decoration_0015_name" translatable="false">WIO Midnight Stone</string>
+    <string name="catalog_material_decoration_0016_name" translatable="false">WIO Millennium Stone</string>
+    <string name="catalog_material_decoration_0017_name" translatable="false">WIO Mist Boulder</string>
+    <string name="catalog_material_decoration_0018_name" translatable="false">WIO Paleo Stone</string>
+    <string name="catalog_material_decoration_0019_name" translatable="false">WIO Ryuoh Boulder</string>
+    <string name="catalog_material_decoration_0020_name" translatable="false">WIO Ryuoh Stone</string>
+    <string name="catalog_material_decoration_0021_name" translatable="false">WIO Savage Stone</string>
+    <string name="catalog_material_decoration_0022_name" translatable="false">WIO Storm Stone</string>
+    <string name="catalog_material_decoration_0023_name" translatable="false">WIO Titan Boulder</string>
+    <string name="catalog_material_decoration_0024_name" translatable="false">WIO Titan Stone</string>
+    <string name="catalog_material_decoration_0025_name" translatable="false">WIO Venom Boulder</string>
+    <string name="catalog_material_decoration_0026_name" translatable="false">WIO Venom Stone</string>
+    <string name="catalog_material_decoration_0027_name" translatable="false">WIO Web Stone</string>
+    <string name="catalog_material_decoration_0028_name" translatable="false">WIO Wild Stone</string>
+    <string name="catalog_material_decoration_0029_name" translatable="false">WIO Zombie Boulder</string>
+    <string name="catalog_material_decoration_0030_name" translatable="false">WIO Black Tree Trunk Wood</string>
+    <string name="catalog_material_decoration_0031_name" translatable="false">WIO Blondspider Wood</string>
+    <string name="catalog_material_decoration_0032_name" translatable="false">WIO Canopy Wood</string>
+    <string name="catalog_material_decoration_0033_name" translatable="false">WIO Centurion Wood</string>
+    <string name="catalog_material_decoration_0034_name" translatable="false">WIO Dragonscale Wood</string>
+    <string name="catalog_material_decoration_0035_name" translatable="false">WIO Isengard Wood</string>
+    <string name="catalog_material_decoration_0036_name" translatable="false">WIO Longhorn Wood</string>
+    <string name="catalog_material_decoration_0037_name" translatable="false">WIO Neptune Wood</string>
+    <string name="catalog_material_decoration_0038_name" translatable="false">WIO Petite Wood</string>
+    <string name="catalog_material_decoration_0039_name" translatable="false">WIO Rebel Wood</string>
+    <string name="catalog_material_decoration_0040_name" translatable="false">WIO Sinking Wood</string>
+    <string name="catalog_material_decoration_0041_name" translatable="false">WIO Stone Wood</string>
+    <string name="catalog_material_decoration_0042_name" translatable="false">WIO Striped Wood</string>
+    <string name="catalog_material_decoration_0043_name" translatable="false">WIO Tree Trunk Wood</string>
+    <string name="catalog_material_decoration_0044_name" translatable="false">WIO Worn Wood</string>
+    <string name="catalog_material_decoration_0045_name" translatable="false">WIO Amber Root</string>
+    <string name="catalog_material_decoration_0046_name" translatable="false">WIO Elder Root</string>
+    <string name="catalog_material_decoration_0047_name" translatable="false">WIO Mini Root</string>
+    <string name="catalog_material_decoration_0048_name" translatable="false">WIO Mix Root</string>
+    <string name="catalog_material_decoration_0049_name" translatable="false">WIO Spider Twigs Root</string>
+    <string name="catalog_material_decoration_0050_name" translatable="false">WIO Twisted Root</string>
+    <string name="catalog_material_decoration_0051_name" translatable="false">ADA Ryuoh Stone</string>
+    <string name="catalog_material_decoration_0052_name" translatable="false">ADA Unzan Stone</string>
+    <string name="catalog_material_decoration_0053_name" translatable="false">ADA Sansui Stone</string>
+    <string name="catalog_material_decoration_0054_name" translatable="false">ADA Yamaya Stone</string>
+    <string name="catalog_material_decoration_0055_name" translatable="false">ADA Lichen Stone</string>
+    <string name="catalog_material_decoration_0056_name" translatable="false">ADA Jagure Stone</string>
+    <string name="catalog_material_decoration_0057_name" translatable="false">ADA Gatto Stone</string>
+    <string name="catalog_material_decoration_0058_name" translatable="false">ADA Tangerine Layer Stone</string>
+    <string name="catalog_material_decoration_0059_name" translatable="false">ADA Bling Stone</string>
+    <string name="catalog_material_decoration_0060_name" translatable="false">ADA Ohko Stone</string>
+    <string name="catalog_material_decoration_0061_name" translatable="false">ADA Red Slate Stone</string>
+    <string name="catalog_material_decoration_0062_name" translatable="false">ADA Buff Layer Stone</string>
+    <string name="catalog_material_decoration_0063_name" translatable="false">ADA Red Lava Stone</string>
+    <string name="catalog_material_decoration_0064_name" translatable="false">ADA Black Lava Stone</string>
+    <string name="catalog_material_decoration_0065_name" translatable="false">ADA Branch Wood</string>
+    <string name="catalog_material_decoration_0066_name" translatable="false">ADA Horn Wood</string>
+    <string name="catalog_material_decoration_0067_name" translatable="false">ADA Slim Wood</string>
+    <string name="catalog_material_decoration_0068_name" translatable="false">ADA Root Branch</string>
+    <string name="catalog_material_decoration_0069_name" translatable="false">ADA Horn Wood Chip</string>
+    <string name="catalog_material_decoration_0070_name" translatable="false">ADA Horn Wood Pieces</string>
+    <string name="catalog_material_decoration_0071_name" translatable="false">Creaqua Frodo Stone</string>
+    <string name="catalog_material_decoration_0072_name" translatable="false">Creaqua MossRock</string>
+    <string name="catalog_material_decoration_0073_name" translatable="false">Creaqua Gray Moon Stone</string>
+    <string name="catalog_material_decoration_0074_name" translatable="false">Creaqua Orange Moon Stone</string>
+    <string name="catalog_material_decoration_0075_name" translatable="false">Creaqua Galapagos Rock</string>
+    <string name="catalog_material_decoration_0076_name" translatable="false">Creaqua Keitir Stone</string>
+    <string name="catalog_material_decoration_0077_name" translatable="false">Creaqua Ribbed Wood</string>
+    <string name="catalog_material_decoration_0078_name" translatable="false">Creaqua Spotted Wood</string>
+    <string name="catalog_material_decoration_0079_name" translatable="false">Creaqua Black Flame</string>
+    <string name="catalog_material_decoration_0080_name" translatable="false">Creaqua Red Velt</string>
+    <string name="catalog_material_decoration_0081_name" translatable="false">Creaqua Arbour Wood</string>
+    <string name="catalog_material_decoration_0082_name" translatable="false">Creaqua Twiggy</string>
+    <string name="catalog_material_decoration_0083_name" translatable="false">Creaqua Bucelog</string>
+    <string name="catalog_material_decoration_0084_name" translatable="false">UNS Ancient</string>
+    <string name="catalog_material_decoration_0085_name" translatable="false">UNS Ancient Pagoda</string>
+    <string name="catalog_material_decoration_0086_name" translatable="false">UNS Ancient Petrified Wood</string>
+    <string name="catalog_material_decoration_0087_name" translatable="false">UNS Arbor</string>
+    <string name="catalog_material_decoration_0088_name" translatable="false">UNS Ash</string>
+    <string name="catalog_material_decoration_0089_name" translatable="false">UNS Black Lava</string>
+    <string name="catalog_material_decoration_0090_name" translatable="false">UNS Black Lava Cave</string>
+    <string name="catalog_material_decoration_0091_name" translatable="false">UNS Black Lava Mound</string>
+    <string name="catalog_material_decoration_0092_name" translatable="false">UNS Black Mountain Seiryu</string>
+    <string name="catalog_material_decoration_0093_name" translatable="false">UNS Black River Slate</string>
+    <string name="catalog_material_decoration_0094_name" translatable="false">UNS Black Slate</string>
+    <string name="catalog_material_decoration_0095_name" translatable="false">UNS Black Star</string>
+    <string name="catalog_material_decoration_0096_name" translatable="false">UNS Blood</string>
+    <string name="catalog_material_decoration_0097_name" translatable="false">UNS Blue Seiryu</string>
+    <string name="catalog_material_decoration_0098_name" translatable="false">UNS Boutique Seiryu</string>
+    <string name="catalog_material_decoration_0099_name" translatable="false">UNS Boutique Seiryu Accent</string>
+    <string name="catalog_material_decoration_0100_name" translatable="false">UNS Brook</string>
+    <string name="catalog_material_decoration_0101_name" translatable="false">UNS Burmese Petrified Wood</string>
+    <string name="catalog_material_decoration_0102_name" translatable="false">UNS Canyon Rock</string>
+    <string name="catalog_material_decoration_0103_name" translatable="false">UNS Dark Blue Slate</string>
+    <string name="catalog_material_decoration_0104_name" translatable="false">UNS Dark Pagoda</string>
+    <string name="catalog_material_decoration_0105_name" translatable="false">UNS Dragon (Ohko)</string>
+    <string name="catalog_material_decoration_0106_name" translatable="false">UNS Dragon Accent</string>
+    <string name="catalog_material_decoration_0107_name" translatable="false">UNS Elephant Skin</string>
+    <string name="catalog_material_decoration_0108_name" translatable="false">UNS Fire</string>
+    <string name="catalog_material_decoration_0109_name" translatable="false">UNS Gobi Desert</string>
+    <string name="catalog_material_decoration_0110_name" translatable="false">UNS Goliath</string>
+    <string name="catalog_material_decoration_0111_name" translatable="false">UNS Grey River Slate</string>
+    <string name="catalog_material_decoration_0112_name" translatable="false">UNS Hakkai</string>
+    <string name="catalog_material_decoration_0113_name" translatable="false">UNS Icelandic Lava</string>
+    <string name="catalog_material_decoration_0114_name" translatable="false">UNS Jade</string>
+    <string name="catalog_material_decoration_0115_name" translatable="false">UNS Lagoon</string>
+    <string name="catalog_material_decoration_0116_name" translatable="false">UNS Manten</string>
+    <string name="catalog_material_decoration_0117_name" translatable="false">UNS Maple Leaf</string>
+    <string name="catalog_material_decoration_0118_name" translatable="false">UNS Marsh</string>
+    <string name="catalog_material_decoration_0119_name" translatable="false">UNS Mountain</string>
+    <string name="catalog_material_decoration_0120_name" translatable="false">UNS Petrified Wood</string>
+    <string name="catalog_material_decoration_0121_name" translatable="false">UNS Prism</string>
+    <string name="catalog_material_decoration_0122_name" translatable="false">UNS Red Lava</string>
+    <string name="catalog_material_decoration_0123_name" translatable="false">UNS Red Petrified Wood</string>
+    <string name="catalog_material_decoration_0124_name" translatable="false">UNS Red Slate</string>
+    <string name="catalog_material_decoration_0125_name" translatable="false">UNS Rhino</string>
+    <string name="catalog_material_decoration_0126_name" translatable="false">UNS Sand</string>
+    <string name="catalog_material_decoration_0127_name" translatable="false">UNS Striped River</string>
+    <string name="catalog_material_decoration_0128_name" translatable="false">UNS White Elephant Skin</string>
+    <string name="catalog_material_decoration_0129_name" translatable="false">UNS Wolf</string>
+    <string name="catalog_material_decoration_0130_name" translatable="false">UNS Amazon</string>
+    <string name="catalog_material_decoration_0131_name" translatable="false">UNS Amazon Basin</string>
+    <string name="catalog_material_decoration_0132_name" translatable="false">UNS Black Forest Spider</string>
+    <string name="catalog_material_decoration_0133_name" translatable="false">UNS Blistered Sticks</string>
+    <string name="catalog_material_decoration_0134_name" translatable="false">UNS Cholla Sticks</string>
+    <string name="catalog_material_decoration_0135_name" translatable="false">UNS Cholla Tunnel</string>
+    <string name="catalog_material_decoration_0136_name" translatable="false">UNS Cork Bark</string>
+    <string name="catalog_material_decoration_0137_name" translatable="false">UNS Dragon</string>
+    <string name="catalog_material_decoration_0138_name" translatable="false">UNS Driftwood Stumps</string>
+    <string name="catalog_material_decoration_0139_name" translatable="false">UNS Forest</string>
+    <string name="catalog_material_decoration_0140_name" translatable="false">UNS Ghost</string>
+    <string name="catalog_material_decoration_0141_name" translatable="false">UNS Grape</string>
+    <string name="catalog_material_decoration_0142_name" translatable="false">UNS Grape Wood Hollow Log</string>
+    <string name="catalog_material_decoration_0143_name" translatable="false">UNS Knitted Logs</string>
+    <string name="catalog_material_decoration_0144_name" translatable="false">UNS Log</string>
+    <string name="catalog_material_decoration_0145_name" translatable="false">UNS Malaysian</string>
+    <string name="catalog_material_decoration_0146_name" translatable="false">UNS Manzanita</string>
+    <string name="catalog_material_decoration_0147_name" translatable="false">UNS Mopani</string>
+    <string name="catalog_material_decoration_0148_name" translatable="false">UNS Pacific</string>
+    <string name="catalog_material_decoration_0149_name" translatable="false">UNS Spider</string>
+    <string name="catalog_material_decoration_0150_name" translatable="false">UNS Spider Slate</string>
+    <string name="catalog_material_decoration_0151_name" translatable="false">UNS Tangled Tree Root</string>
+    <string name="catalog_material_decoration_0152_name" translatable="false">UNS Thorn</string>
+    <string name="catalog_material_decoration_0153_name" translatable="false">UNS Tiger</string>
+    <string name="catalog_material_decoration_0154_name" translatable="false">UNS Tree Root</string>
+    <string name="catalog_material_decoration_0155_name" translatable="false">UNS Bonsai 1</string>
+    <string name="catalog_material_decoration_0156_name" translatable="false">UNS Bonsai 2</string>
+    <string name="catalog_material_decoration_0157_name" translatable="false">UNS Bonsai 3</string>
+    <string name="catalog_material_decoration_0158_name" translatable="false">UNS Bonsai 4</string>
+    <string name="catalog_material_decoration_0159_name" translatable="false">UNS Bonsai 5</string>
+    <string name="catalog_material_decoration_0160_name" translatable="false">UNS Bonsai 6</string>
+    <string name="catalog_material_decoration_0161_name" translatable="false">UNS Bonsai 7</string>
+    <string name="catalog_material_decoration_0162_name" translatable="false">UNS Bonsai 8</string>
+    <string name="catalog_material_decoration_0163_name" translatable="false">UNS Bonsai 9</string>
+    <string name="catalog_material_decoration_0164_name" translatable="false">UNS Bonsai 10</string>
+    <string name="catalog_material_decoration_0165_name" translatable="false">UNS Bonsai 11</string>
+    <string name="catalog_material_decoration_0166_name" translatable="false">UNS Bonsai 12</string>
+    <string name="catalog_material_decoration_0167_name" translatable="false">UNS Bonsai 13</string>
+    <string name="catalog_material_decoration_0168_name" translatable="false">UNS Bonsai 14</string>
+    <string name="catalog_material_decoration_0169_name" translatable="false">UNS Bonsai 15</string>
+    <string name="catalog_material_decoration_0170_name" translatable="false">UNS Bonsai 16</string>
+    <string name="catalog_material_decoration_0171_name" translatable="false">UNS Bonsai 17</string>
+    <string name="catalog_material_decoration_0172_name" translatable="false">UNS Strata</string>
+    <string name="catalog_material_decoration_0173_name" translatable="false">UNS Strata Pro</string>
+    <string name="catalog_material_decoration_0174_name" translatable="false">GreenWorks Premium Dark Seiryu Stone</string>
+    <string name="catalog_material_decoration_0175_name" translatable="false">GreenWorks Frodo Stone</string>
+    <string name="catalog_material_decoration_0176_name" translatable="false">GreenWorks Seiryu Stone</string>
+    <string name="catalog_material_decoration_0177_name" translatable="false">GreenWorks Dragon Stone</string>
+    <string name="catalog_material_decoration_0178_name" translatable="false">GreenWorks Wild Rhino Stone</string>
+    <string name="catalog_material_decoration_0179_name" translatable="false">GreenWorks Petrified Wood Stone</string>
+    <string name="catalog_material_decoration_0180_name" translatable="false">GreenWorks Manten Stone</string>
+    <string name="catalog_material_decoration_0181_name" translatable="false">GreenWorks Light Pagoda Stone</string>
+    <string name="catalog_material_decoration_0182_name" translatable="false">GreenWorks Ice Age Stone</string>
+    <string name="catalog_material_decoration_0183_name" translatable="false">GreenWorks Dracula Stone</string>
+    <string name="catalog_material_decoration_0184_name" translatable="false">GreenWorks Black Pebble</string>
+    <string name="catalog_material_decoration_0185_name" translatable="false">GreenWorks Sensei Stone</string>
+    <string name="catalog_material_decoration_0186_name" translatable="false">GreenWorks Lava Stone</string>
+    <string name="catalog_material_decoration_0187_name" translatable="false">GreenWorks Dark Iron Wood</string>
+    <string name="catalog_material_decoration_0188_name" translatable="false">GreenWorks Red Moor Wood</string>
+    <string name="catalog_material_decoration_0189_name" translatable="false">GreenWorks Red Moor Wood Mix</string>
+    <string name="catalog_material_decoration_0190_name" translatable="false">GreenWorks RiverScape Detailing Branches</string>
+    <string name="catalog_material_decoration_0191_name" translatable="false">GreenWorks RiverScape Root</string>
+    <string name="catalog_material_decoration_0192_name" translatable="false">GreenWorks GreenWorks Wood Mix</string>
+    <string name="catalog_material_decoration_0193_name" translatable="false">GreenWorks Bonsai Tree</string>
+    <string name="catalog_material_decoration_0194_name" translatable="false">GreenWorks Bonsai Tree Banyan</string>
+    <string name="catalog_material_decoration_0195_name" translatable="false">GreenWorks Bonsai Tree Layout Family</string>
+    <string name="catalog_material_decoration_0196_name" translatable="false">GreenWorks Bonsai Tree Pagoda</string>
+    <string name="catalog_material_decoration_0197_name" translatable="false">GreenWorks Bonsai Tree Small Family</string>
+    <string name="catalog_material_decoration_0198_name" translatable="false">GreenWorks Rasamala Bonsai Wood</string>
+    <string name="catalog_material_decoration_0199_name" translatable="false">Riverest Seiryu Stones</string>
+    <string name="catalog_material_decoration_0200_name" translatable="false">Riverest Dark Seiryu Stones</string>
+    <string name="catalog_material_decoration_0201_name" translatable="false">Riverest Hakkai Stone</string>
+    <string name="catalog_material_decoration_0202_name" translatable="false">Riverest Turly Stone</string>
+    <string name="catalog_material_decoration_0203_name" translatable="false">AquaDeco Ohko Dragon Stone</string>
+    <string name="catalog_material_decoration_0204_name" translatable="false">AquaDeco Hole Stones</string>
+    <string name="catalog_material_decoration_0205_name" translatable="false">AquaDeco Glimmer Rocks</string>
+    <string name="catalog_material_decoration_0206_name" translatable="false">AquaDeco Canyon Rocks</string>
+    <string name="catalog_material_decoration_0207_name" translatable="false">AquaDeco Galapagos Rocks</string>
+    <string name="catalog_material_decoration_0208_name" translatable="false">AquaDeco Zen-Pebbles</string>
+    <string name="catalog_material_decoration_0209_name" translatable="false">AquaDeco Black Slim Wood</string>
+    <string name="catalog_material_decoration_0210_name" translatable="false">AquaDeco Mopani Wood</string>
+    <string name="catalog_material_decoration_0211_name" translatable="false">AquaDeco Red Moor Wood</string>
+    <string name="catalog_material_decoration_0212_name" translatable="false">AquaDeco Black Root</string>
+    <string name="catalog_material_decoration_0213_name" translatable="false">AquaDeco Dragon Wood</string>
+    <string name="catalog_material_decoration_0214_name" translatable="false">AquaDeco Savanna Wood</string>
+    <string name="catalog_material_decoration_0215_name" translatable="false">AquaDeco Octopus-Wood</string>
+    <string name="catalog_material_decoration_0216_name" translatable="false">AquaDeco Aqua-Bonsai</string>
+    <string name="catalog_material_decoration_0217_name" translatable="false">AquaDeco Forest-Bonsai</string>
+    <string name="catalog_material_decoration_0218_name" translatable="false">Aquael Lava Red Mix</string>
+    <string name="catalog_material_decoration_0219_name" translatable="false">Aquael Leopard Stone Mix</string>
+    <string name="catalog_material_decoration_0220_name" translatable="false">Aquael Dinosaur Bone Stone Mix</string>
+    <string name="catalog_material_decoration_0221_name" translatable="false">Aquael Black Quartz Rock Stone Mix</string>
+    <string name="catalog_material_decoration_0222_name" translatable="false">Aquael Mangro Root</string>
+    <string name="catalog_material_decoration_0223_name" translatable="false">Aquael Root Driftwood</string>
+    <string name="catalog_material_decoration_0224_name" translatable="false">Aquael Driftwood Mix</string>
+    <string name="catalog_material_decoration_0225_name" translatable="false">Aquael Shrimp Wood Mix</string>
+    <string name="catalog_material_decoration_0226_name" translatable="false">Aquael Red Driftwood Mix</string>
+    <string name="catalog_material_decoration_0227_name" translatable="false">Aquael Iron Driftwood Mix</string>
+    <string name="catalog_material_decoration_0228_name" translatable="false">Dennerle Spiderwood</string>
+    <string name="catalog_material_decoration_0229_name" translatable="false">Dennerle Decor Box Bonsai</string>
+    <string name="catalog_material_decoration_0230_name" translatable="false">Dennerle Decor Ceramic</string>
+    <string name="catalog_material_decoration_0231_name" translatable="false">ISTA Water Plant Cultivation Ceramic</string>
+    <string name="catalog_material_decoration_0232_name" translatable="false">ISTA Water Plant Rock Ceramic</string>
+    <string name="catalog_material_decoration_0233_name" translatable="false">ISTA Water Plant Stylish Rock Ceramic</string>
+</resources>

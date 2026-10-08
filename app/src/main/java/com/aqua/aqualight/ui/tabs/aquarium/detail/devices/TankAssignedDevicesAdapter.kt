@@ -2,12 +2,17 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
 import com.aqua.aqualight.databinding.ItemCoolingDeviceSpotlightCardBinding
 import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
+import com.aqua.aqualight.databinding.ItemLightDeviceSpotlightCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 
@@ -15,6 +20,7 @@ data class TankAssignedDeviceItem(
     val deviceUid: String,
     val title: String,
     val card: DeviceCompactCardUi,
+    val lightCard: LightDeviceSpotlightCardUi? = null,
     val dosingCard: DosingDeviceSpotlightCardUi? = null,
     val coolingCard: CoolingDeviceSpotlightCardUi? = null
 )
@@ -26,6 +32,7 @@ class TankAssignedDevicesAdapter(
 
     override fun getItemViewType(position: Int): Int {
         return when {
+            getItem(position).lightCard != null -> VIEW_TYPE_LIGHT_SPOTLIGHT
             getItem(position).dosingCard != null -> VIEW_TYPE_DOSING_SPOTLIGHT
             getItem(position).coolingCard != null -> VIEW_TYPE_COOLING_SPOTLIGHT
             else -> VIEW_TYPE_COMPACT
@@ -38,6 +45,15 @@ class TankAssignedDevicesAdapter(
     ): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
+            VIEW_TYPE_LIGHT_SPOTLIGHT -> LightViewHolder(
+                binding = ItemLightDeviceSpotlightCardBinding.inflate(
+                    inflater,
+                    parent,
+                    false
+                ),
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick
+            )
             VIEW_TYPE_DOSING_SPOTLIGHT -> DosingViewHolder(
                 binding = ItemDosingDeviceSpotlightCardBinding.inflate(
                     inflater,
@@ -70,9 +86,43 @@ class TankAssignedDevicesAdapter(
     ) {
         val item = getItem(position)
         when (holder) {
+            is LightViewHolder -> holder.bind(item)
             is DosingViewHolder -> holder.bind(item)
             is CoolingViewHolder -> holder.bind(item)
             is CompactViewHolder -> holder.bind(item)
+        }
+    }
+
+    private class LightViewHolder(
+        private val binding: ItemLightDeviceSpotlightCardBinding,
+        private val onDeviceClick: (TankAssignedDeviceItem) -> Unit,
+        private val onDeviceLongClick: (TankAssignedDeviceItem) -> Unit
+    ) : RecyclerView.ViewHolder(binding.root) {
+
+        private var cardUi by mutableStateOf<LightDeviceSpotlightCardUi?>(null)
+
+        init {
+            binding.lightCardCompose.setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool
+            )
+            binding.lightCardCompose.setContent {
+                val current = cardUi
+                if (current != null) {
+                    LightDeviceSpotlightCard(current)
+                }
+            }
+        }
+
+        fun bind(item: TankAssignedDeviceItem) {
+            val lightCard = requireNotNull(item.lightCard)
+            cardUi = lightCard
+            binding.root.contentDescription =
+                lightDeviceSpotlightAccessibilityDescription(binding.root.context, lightCard)
+            binding.root.setOnClickListener { onDeviceClick(item) }
+            binding.root.setOnLongClickListener {
+                onDeviceLongClick(item)
+                true
+            }
         }
     }
 
@@ -197,5 +247,6 @@ class TankAssignedDevicesAdapter(
         const val VIEW_TYPE_COMPACT = 0
         const val VIEW_TYPE_DOSING_SPOTLIGHT = 1
         const val VIEW_TYPE_COOLING_SPOTLIGHT = 2
+        const val VIEW_TYPE_LIGHT_SPOTLIGHT = 3
     }
 }

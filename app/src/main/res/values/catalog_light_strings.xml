@@ -1,0 +1,1431 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official lighting brand and product names are locale-independent. -->
+    <string name="catalog_light_brand_ada" translatable="false">ADA</string>
+    <string name="catalog_light_brand_aqua_medic" translatable="false">Aqua Medic</string>
+    <string name="catalog_light_brand_aqua_one" translatable="false">Aqua One</string>
+    <string name="catalog_light_brand_aquael" translatable="false">Aquael</string>
+    <string name="catalog_light_brand_aquaillumination" translatable="false">AquaIllumination</string>
+    <string name="catalog_light_brand_aqualed" translatable="false">AquaLed</string>
+    <string name="catalog_light_brand_aquareef" translatable="false">AquaReef</string>
+    <string name="catalog_light_brand_aqueon" translatable="false">Aqueon</string>
+    <string name="catalog_light_brand_aquatlantis" translatable="false">Aquatlantis</string>
+    <string name="catalog_light_brand_armaturk" translatable="false">Armatürk</string>
+    <string name="catalog_light_brand_ati_aquaristik" translatable="false">ATI Aquaristik</string>
+    <string name="catalog_light_brand_bioloark" translatable="false">Bioloark</string>
+    <string name="catalog_light_brand_chihiros" translatable="false">Chihiros</string>
+    <string name="catalog_light_brand_creaqua" translatable="false">Creaqua</string>
+    <string name="catalog_light_brand_current_usa" translatable="false">Current USA</string>
+    <string name="catalog_light_brand_daytime" translatable="false">daytime</string>
+    <string name="catalog_light_brand_dennerle" translatable="false">Dennerle</string>
+    <string name="catalog_light_brand_dooa" translatable="false">DOOA</string>
+    <string name="catalog_light_brand_ecotech_marine" translatable="false">EcoTech Marine</string>
+    <string name="catalog_light_brand_eheim" translatable="false">EHEIM</string>
+    <string name="catalog_light_brand_finnex" translatable="false">Finnex</string>
+    <string name="catalog_light_brand_fluval" translatable="false">Fluval</string>
+    <string name="catalog_light_brand_giesemann" translatable="false">Giesemann</string>
+    <string name="catalog_light_brand_hygger" translatable="false">hygger</string>
+    <string name="catalog_light_brand_jbl" translatable="false">JBL</string>
+    <string name="catalog_light_brand_juwel" translatable="false">Juwel</string>
+    <string name="catalog_light_brand_kessil" translatable="false">Kessil</string>
+    <string name="catalog_light_brand_maxspect" translatable="false">Maxspect</string>
+    <string name="catalog_light_brand_micmol" translatable="false">MicMol</string>
+    <string name="catalog_light_brand_netlea" translatable="false">Netlea</string>
+    <string name="catalog_light_brand_oase" translatable="false">Oase</string>
+    <string name="catalog_light_brand_onf" translatable="false">ONF</string>
+    <string name="catalog_light_brand_orionled" translatable="false">OrionLED</string>
+    <string name="catalog_light_brand_orphek" translatable="false">Orphek</string>
+    <string name="catalog_light_brand_philips_coralcare" translatable="false">Philips CoralCare</string>
+    <string name="catalog_light_brand_red_sea" translatable="false">Red Sea</string>
+    <string name="catalog_light_brand_reefbreeders" translatable="false">ReefBreeders</string>
+    <string name="catalog_light_brand_reef_factory" translatable="false">Reef Factory</string>
+    <string name="catalog_light_brand_reefi" translatable="false">ReeFi</string>
+    <string name="catalog_light_brand_sera" translatable="false">Sera</string>
+    <string name="catalog_light_brand_shark_akvaryum_aydinlatma_sistemleri" translatable="false">Shark Akvaryum Aydınlatma Sistemleri</string>
+    <string name="catalog_light_brand_skylight" translatable="false">SKYLIGHT</string>
+    <string name="catalog_light_brand_sobo" translatable="false">SOBO</string>
+    <string name="catalog_light_brand_spectra_aqua_knight" translatable="false">Spectra / Aqua Knight</string>
+    <string name="catalog_light_brand_sunsun_sensen" translatable="false">SunSun / Sensen</string>
+    <string name="catalog_light_brand_sylvania" translatable="false">Sylvania</string>
+    <string name="catalog_light_brand_tetra" translatable="false">Tetra</string>
+    <string name="catalog_light_brand_tunze" translatable="false">Tunze</string>
+    <string name="catalog_light_brand_twinstar" translatable="false">Twinstar</string>
+    <string name="catalog_light_brand_uns" translatable="false">UNS</string>
+    <string name="catalog_light_brand_week_aqua" translatable="false">WEEK AQUA</string>
+    <string name="catalog_light_brand_zetlight" translatable="false">Zetlight</string>
+
+    <string name="catalog_light_brand_alias_aqua_design_amano" translatable="false">aqua design amano</string>
+    <string name="catalog_light_brand_alias_ai" translatable="false">ai</string>
+    <string name="catalog_light_brand_alias_aqua_illumination" translatable="false">aqua illumination</string>
+    <string name="catalog_light_brand_alias_ultum_nature_systems" translatable="false">ultum nature systems</string>
+
+    <string name="catalog_material_light_0001_name" translatable="false">ADA NA LIGHT 300</string>
+    <string name="catalog_material_light_0002_name" translatable="false">ADA NA LIGHT 450</string>
+    <string name="catalog_material_light_0003_name" translatable="false">ADA NA LIGHT PRO 600</string>
+    <string name="catalog_material_light_0004_name" translatable="false">ADA SOLAR RGB II</string>
+    <string name="catalog_material_light_0005_name" translatable="false">ADA SHADE for SOLAR RGB</string>
+    <string name="catalog_material_light_0006_name" translatable="false">ADA Solar RGB Stand — W60×D30 cm</string>
+    <string name="catalog_material_light_0007_name" translatable="false">ADA Solar RGB Stand — W60×D45 cm, right-side mount</string>
+    <string name="catalog_material_light_0008_name" translatable="false">ADA Solar RGB Stand — W60×D45 cm, left-side mount</string>
+    <string name="catalog_material_light_0009_name" translatable="false">ADA Solar RGB Stand — W90×D45 cm</string>
+    <string name="catalog_material_light_0010_name" translatable="false">ADA Solar RGB Stand — W120 cm</string>
+    <string name="catalog_material_light_0011_name" translatable="false">ADA Solar RGB Stand — W180 cm</string>
+    <string name="catalog_material_light_0012_name" translatable="false">ADA SOLAR-RGB STAND for METAL CABINET 60</string>
+    <string name="catalog_material_light_0013_name" translatable="false">Aqua Medic aquarius plant plus series</string>
+    <string name="catalog_material_light_0014_name" translatable="false">Aqua Medic aquarius plus series</string>
+    <string name="catalog_material_light_0015_name" translatable="false">Aqua Medic Qube 30 plant</string>
+    <string name="catalog_material_light_0016_name" translatable="false">Aqua Medic Qube 40</string>
+    <string name="catalog_material_light_0017_name" translatable="false">Aqua Medic Qube 60.2</string>
+    <string name="catalog_material_light_0018_name" translatable="false">Aqua Medic spectrus</string>
+    <string name="catalog_material_light_0019_name" translatable="false">Aqua Medic spectrus twin</string>
+    <string name="catalog_material_light_0020_name" translatable="false">Aqua Medic sunbeam series</string>
+    <string name="catalog_material_light_0021_name" translatable="false">Aqua Medic LED FA 100 flex</string>
+    <string name="catalog_material_light_0022_name" translatable="false">Aqua Medic LED FA 200 flex</string>
+    <string name="catalog_material_light_0023_name" translatable="false">Aqua Medic LEDspot 100 W</string>
+    <string name="catalog_material_light_0024_name" translatable="false">Aqua Medic LEDspot 120 W flex</string>
+    <string name="catalog_material_light_0025_name" translatable="false">Aqua Medic LEDspot 200 W</string>
+    <string name="catalog_material_light_0026_name" translatable="false">Aqua Medic LEDspot 200 W flex</string>
+    <string name="catalog_material_light_0027_name" translatable="false">Aqua Medic LEDspot 400 W flex</string>
+    <string name="catalog_material_light_0028_name" translatable="false">Aqua Medic LEDspot 1000 W flex</string>
+    <string name="catalog_material_light_0029_name" translatable="false">Aqua One StripGlo Plant LED 30 cm</string>
+    <string name="catalog_material_light_0030_name" translatable="false">Aqua One StripGlo Plant LED 45 cm</string>
+    <string name="catalog_material_light_0031_name" translatable="false">Aqua One StripGlo Plant LED 60 cm</string>
+    <string name="catalog_material_light_0032_name" translatable="false">Aqua One StripGlo Plant LED 90 cm</string>
+    <string name="catalog_material_light_0033_name" translatable="false">Aqua One StripGlo Plant LED 120 cm</string>
+    <string name="catalog_material_light_0034_name" translatable="false">Aqua One StripGlo Tropical LED 30 cm</string>
+    <string name="catalog_material_light_0035_name" translatable="false">Aqua One StripGlo Tropical LED 45 cm</string>
+    <string name="catalog_material_light_0036_name" translatable="false">Aqua One StripGlo Tropical LED 60 cm</string>
+    <string name="catalog_material_light_0037_name" translatable="false">Aqua One StripGlo Tropical LED 90 cm</string>
+    <string name="catalog_material_light_0038_name" translatable="false">Aqua One StripGlo Tropical LED 120 cm</string>
+    <string name="catalog_material_light_0039_name" translatable="false">Aqua One StripGlo Marine/Cichlid Blue LED 30 cm</string>
+    <string name="catalog_material_light_0040_name" translatable="false">Aqua One StripGlo Marine/Cichlid Blue LED 45 cm</string>
+    <string name="catalog_material_light_0041_name" translatable="false">Aqua One StripGlo Marine/Cichlid Blue LED 60 cm</string>
+    <string name="catalog_material_light_0042_name" translatable="false">Aqua One StripGlo Marine/Cichlid Blue LED 90 cm</string>
+    <string name="catalog_material_light_0043_name" translatable="false">Aqua One StripGlo Marine/Cichlid Blue LED 120 cm</string>
+    <string name="catalog_material_light_0044_name" translatable="false">Aqua One StripGlo Sunlight LED 45 cm</string>
+    <string name="catalog_material_light_0045_name" translatable="false">Aqua One StripGlo Sunlight LED 60 cm</string>
+    <string name="catalog_material_light_0046_name" translatable="false">Aqua One StripGlo Sunlight LED 90 cm</string>
+    <string name="catalog_material_light_0047_name" translatable="false">Aqua One StripGlo Sunlight LED 120 cm</string>
+    <string name="catalog_material_light_0048_name" translatable="false">Aqua One Dynamic 58 Pendant Light</string>
+    <string name="catalog_material_light_0049_name" translatable="false">Aqua One AquaLume LED strip light</string>
+    <string name="catalog_material_light_0050_name" translatable="false">Aqua One ArcGlo LED</string>
+    <string name="catalog_material_light_0051_name" translatable="false">Aqua One J-Bar LED</string>
+    <string name="catalog_material_light_0052_name" translatable="false">Aqua One AquaNano LED 25</string>
+    <string name="catalog_material_light_0053_name" translatable="false">Aqua One AquaNano LED 30</string>
+    <string name="catalog_material_light_0054_name" translatable="false">Aqua One AquaNano LED 40</string>
+    <string name="catalog_material_light_0055_name" translatable="false">Aqua One PlantGlo LED 45 cm</string>
+    <string name="catalog_material_light_0056_name" translatable="false">Aqua One PlantGlo LED 60 cm</string>
+    <string name="catalog_material_light_0057_name" translatable="false">Aqua One PlantGlo LED 90 cm</string>
+    <string name="catalog_material_light_0058_name" translatable="false">Aqua One PlantGlo LED 120 cm</string>
+    <string name="catalog_material_light_0059_name" translatable="false">Aqua One MariGlo LED 45 cm</string>
+    <string name="catalog_material_light_0060_name" translatable="false">Aqua One MariGlo LED 60 cm</string>
+    <string name="catalog_material_light_0061_name" translatable="false">Aqua One MariGlo LED 90 cm</string>
+    <string name="catalog_material_light_0062_name" translatable="false">Aqua One MariGlo LED 120 cm</string>
+    <string name="catalog_material_light_0063_name" translatable="false">Aqua One ReefGlow LED 60 cm</string>
+    <string name="catalog_material_light_0064_name" translatable="false">Aqua One ReefGlow LED 90 cm</string>
+    <string name="catalog_material_light_0065_name" translatable="false">Aqua One ReefGlow LED 120 cm</string>
+    <string name="catalog_material_light_0066_name" translatable="false">Aqua One TropicGlo LED 45 cm</string>
+    <string name="catalog_material_light_0067_name" translatable="false">Aqua One TropicGlo LED 60 cm</string>
+    <string name="catalog_material_light_0068_name" translatable="false">Aqua One TropicGlo LED 90 cm</string>
+    <string name="catalog_material_light_0069_name" translatable="false">Aqua One TropicGlo LED 120 cm</string>
+    <string name="catalog_material_light_0070_name" translatable="false">Aqua One Reflex LED 13</string>
+    <string name="catalog_material_light_0071_name" translatable="false">Aqua One Reflex LED 35</string>
+    <string name="catalog_material_light_0072_name" translatable="false">Aqua One EcoGlo</string>
+    <string name="catalog_material_light_0073_name" translatable="false">Aqua One Extendable LED</string>
+    <string name="catalog_material_light_0074_name" translatable="false">Aqua One FluroGlow</string>
+    <string name="catalog_material_light_0075_name" translatable="false">Aqua One StripGlo telescopic tall bracket</string>
+    <string name="catalog_material_light_0076_name" translatable="false">Aqua One StripGlo telescopic short bracket</string>
+    <string name="catalog_material_light_0077_name" translatable="false">Aqua One StripGlo T5/T8 retrofit mounting bracket</string>
+    <string name="catalog_material_light_0078_name" translatable="false">Aqua One StripGlo OakStyle mounting bracket</string>
+    <string name="catalog_material_light_0079_name" translatable="false">Aqua One PlantGlo Light Bracket</string>
+    <string name="catalog_material_light_0080_name" translatable="false">Aquael Leddy Slim Sunny Day &amp; Night</string>
+    <string name="catalog_material_light_0081_name" translatable="false">Aquael Leddy Slim Plant 2.0</string>
+    <string name="catalog_material_light_0082_name" translatable="false">Aquael Leddy Slim Marine Day &amp; Night</string>
+    <string name="catalog_material_light_0083_name" translatable="false">Aquael Leddy Slim Duo Marine &amp; Actinic</string>
+    <string name="catalog_material_light_0084_name" translatable="false">Aquael Leddy Slim Duo Sunny &amp; Plant</string>
+    <string name="catalog_material_light_0085_name" translatable="false">Aquael Leddy Slim Link 2.0</string>
+    <string name="catalog_material_light_0086_name" translatable="false">Aquael Leddy Smart BT</string>
+    <string name="catalog_material_light_0087_name" translatable="false">Aquael Leddy Smart Day &amp; Night Plant</string>
+    <string name="catalog_material_light_0088_name" translatable="false">Aquael Leddy Smart Day &amp; Night Sunny</string>
+    <string name="catalog_material_light_0089_name" translatable="false">Aquael Leddy Tube Retrofit Day &amp; Night Sunny</string>
+    <string name="catalog_material_light_0090_name" translatable="false">Aquael Leddy Tube Retrofit Day &amp; Night Plant</string>
+    <string name="catalog_material_light_0091_name" translatable="false">Aquael Leddy Tube Retrofit Marine</string>
+    <string name="catalog_material_light_0092_name" translatable="false">Aquael Leddy Tube Retrofit Actinic</string>
+    <string name="catalog_material_light_0093_name" translatable="false">AI Hydra Edge 44HD</string>
+    <string name="catalog_material_light_0094_name" translatable="false">AI Hydra Edge 68HD</string>
+    <string name="catalog_material_light_0095_name" translatable="false">AI Hydra 32HD</string>
+    <string name="catalog_material_light_0096_name" translatable="false">AI Hydra 64HD</string>
+    <string name="catalog_material_light_0097_name" translatable="false">AI Hydra 32 Freshwater</string>
+    <string name="catalog_material_light_0098_name" translatable="false">AI Prime 16HD Reef</string>
+    <string name="catalog_material_light_0099_name" translatable="false">AI Prime 16HD Freshwater</string>
+    <string name="catalog_material_light_0100_name" translatable="false">AI Prime Fuge</string>
+    <string name="catalog_material_light_0101_name" translatable="false">AI Blade Coral Grow 12\"</string>
+    <string name="catalog_material_light_0102_name" translatable="false">AI Blade Coral Grow 21\"</string>
+    <string name="catalog_material_light_0103_name" translatable="false">AI Blade Coral Grow 30\"</string>
+    <string name="catalog_material_light_0104_name" translatable="false">AI Blade Coral Grow 39\"</string>
+    <string name="catalog_material_light_0105_name" translatable="false">AI Blade Coral Grow 48\"</string>
+    <string name="catalog_material_light_0106_name" translatable="false">AI Blade Coral Grow 57\"</string>
+    <string name="catalog_material_light_0107_name" translatable="false">AI Blade Coral Grow 66\"</string>
+    <string name="catalog_material_light_0108_name" translatable="false">AI Blade Coral Glow 12\"</string>
+    <string name="catalog_material_light_0109_name" translatable="false">AI Blade Coral Glow 21\"</string>
+    <string name="catalog_material_light_0110_name" translatable="false">AI Blade Coral Glow 30\"</string>
+    <string name="catalog_material_light_0111_name" translatable="false">AI Blade Coral Glow 39\"</string>
+    <string name="catalog_material_light_0112_name" translatable="false">AI Blade Coral Glow 48\"</string>
+    <string name="catalog_material_light_0113_name" translatable="false">AI Blade Coral Glow 57\"</string>
+    <string name="catalog_material_light_0114_name" translatable="false">AI Blade Coral Glow 66\"</string>
+    <string name="catalog_material_light_0115_name" translatable="false">AI Blade Freshwater 12\"</string>
+    <string name="catalog_material_light_0116_name" translatable="false">AI Blade Freshwater 21\"</string>
+    <string name="catalog_material_light_0117_name" translatable="false">AI Blade Freshwater 30\"</string>
+    <string name="catalog_material_light_0118_name" translatable="false">AI Blade Freshwater 39\"</string>
+    <string name="catalog_material_light_0119_name" translatable="false">AI Blade Freshwater 48\"</string>
+    <string name="catalog_material_light_0120_name" translatable="false">AI Blade Freshwater 57\"</string>
+    <string name="catalog_material_light_0121_name" translatable="false">AI Blade Freshwater 66\"</string>
+    <string name="catalog_material_light_0122_name" translatable="false">AI Blade Refugium</string>
+    <string name="catalog_material_light_0123_name" translatable="false">AI Blade GloFish</string>
+    <string name="catalog_material_light_0124_name" translatable="false">AI Blade Hanging Kit — 3-light</string>
+    <string name="catalog_material_light_0125_name" translatable="false">AI Blade Hanging Kit — 4-light</string>
+    <string name="catalog_material_light_0126_name" translatable="false">AI Blade Hanging Kit — 6-light</string>
+    <string name="catalog_material_light_0127_name" translatable="false">AI Blade Elevated Tank Mount</string>
+    <string name="catalog_material_light_0128_name" translatable="false">AI Blade Hybrid Mount</string>
+    <string name="catalog_material_light_0129_name" translatable="false">AI Blade Tank Rest</string>
+    <string name="catalog_material_light_0130_name" translatable="false">AI Blade Low Profile Tank Rest</string>
+    <string name="catalog_material_light_0131_name" translatable="false">AI Blade Mounting Clips</string>
+    <string name="catalog_material_light_0132_name" translatable="false">AI HMS Single Arm Kit</string>
+    <string name="catalog_material_light_0133_name" translatable="false">AI HMS Double Arm Kit</string>
+    <string name="catalog_material_light_0134_name" translatable="false">AI HMS Hanging Kit</string>
+    <string name="catalog_material_light_0135_name" translatable="false">AI Prime Flex Arm 12\"</string>
+    <string name="catalog_material_light_0136_name" translatable="false">AI Prime Flex Arm 18\"</string>
+    <string name="catalog_material_light_0137_name" translatable="false">AI Prime Tank Mount</string>
+    <string name="catalog_material_light_0138_name" translatable="false">AI Prime Hanging Kit</string>
+    <string name="catalog_material_light_0139_name" translatable="false">AI Hydra Flex Arm</string>
+    <string name="catalog_material_light_0140_name" translatable="false">AI Hydra Edge mounting kit</string>
+    <string name="catalog_material_light_0141_name" translatable="false">AquaLed META Plant+ Full Spectrum 3 Row LED — Black body</string>
+    <string name="catalog_material_light_0142_name" translatable="false">AquaLed META Plant+ Full Spectrum 3 Row LED — Metallic body</string>
+    <string name="catalog_material_light_0143_name" translatable="false">AquaLed META Plant PRO Full Spectrum 20 cm</string>
+    <string name="catalog_material_light_0144_name" translatable="false">AquaLed META Plant PRO Full Spectrum 30 cm</string>
+    <string name="catalog_material_light_0145_name" translatable="false">AquaLed META Plant PRO Full Spectrum 40 cm</string>
+    <string name="catalog_material_light_0146_name" translatable="false">AquaLed META Plant PRO Full Spectrum 50 cm</string>
+    <string name="catalog_material_light_0147_name" translatable="false">AquaLed META Plant PRO Full Spectrum 60 cm</string>
+    <string name="catalog_material_light_0148_name" translatable="false">AquaLed META Plant PRO Full Spectrum 70 cm</string>
+    <string name="catalog_material_light_0149_name" translatable="false">AquaLed META Plant PRO Full Spectrum 80 cm</string>
+    <string name="catalog_material_light_0150_name" translatable="false">AquaLed META Plant PRO Full Spectrum 90 cm</string>
+    <string name="catalog_material_light_0151_name" translatable="false">AquaLed META Plant PRO Full Spectrum 100 cm</string>
+    <string name="catalog_material_light_0152_name" translatable="false">AquaLed META Plant PRO Full Spectrum 110 cm</string>
+    <string name="catalog_material_light_0153_name" translatable="false">AquaLed META Plant PRO Full Spectrum 120 cm</string>
+    <string name="catalog_material_light_0154_name" translatable="false">AquaLed META Plant PRO Full Spectrum 130 cm</string>
+    <string name="catalog_material_light_0155_name" translatable="false">AquaLed META Plant PRO Full Spectrum 140 cm</string>
+    <string name="catalog_material_light_0156_name" translatable="false">AquaLed META Plant PRO Full Spectrum 150 cm</string>
+    <string name="catalog_material_light_0157_name" translatable="false">AquaLed Meta Plus+ Full Spectrum 4 Row Special Layout</string>
+    <string name="catalog_material_light_0158_name" translatable="false">AquaLed Full Spectrum Planted Aquarium Lighting — 4-color mixed</string>
+    <string name="catalog_material_light_0159_name" translatable="false">AquaLed Grolux Planted Aquarium Lighting — 3-color mixed</string>
+    <string name="catalog_material_light_0160_name" translatable="false">AquaLed Blue &amp; White Aquarium Lighting</string>
+    <string name="catalog_material_light_0161_name" translatable="false">AquaLed Royal Blue 450 nm</string>
+    <string name="catalog_material_light_0162_name" translatable="false">AquaLed Lens LED White 6500 K</string>
+    <string name="catalog_material_light_0163_name" translatable="false">AquaLed LED Lighting Fixture Single-Leg Pair</string>
+    <string name="catalog_material_light_0164_name" translatable="false">AquaReef F30 — F V2 Series</string>
+    <string name="catalog_material_light_0165_name" translatable="false">AquaReef F50 — F V2 Series</string>
+    <string name="catalog_material_light_0166_name" translatable="false">AquaReef F80 — F V2 Series</string>
+    <string name="catalog_material_light_0167_name" translatable="false">AquaReef F100 — F V2 Series</string>
+    <string name="catalog_material_light_0168_name" translatable="false">AquaReef F130 — F V2 Series</string>
+    <string name="catalog_material_light_0169_name" translatable="false">AquaReef Pro5</string>
+    <string name="catalog_material_light_0170_name" translatable="false">AquaReef Pro5 Max</string>
+    <string name="catalog_material_light_0171_name" translatable="false">AquaReef A Series</string>
+    <string name="catalog_material_light_0172_name" translatable="false">AquaReef L Series</string>
+    <string name="catalog_material_light_0173_name" translatable="false">AquaReef S35</string>
+    <string name="catalog_material_light_0174_name" translatable="false">AquaReef S45</string>
+    <string name="catalog_material_light_0175_name" translatable="false">AquaReef S60</string>
+    <string name="catalog_material_light_0176_name" translatable="false">AquaReef S70</string>
+    <string name="catalog_material_light_0177_name" translatable="false">AquaReef S90</string>
+    <string name="catalog_material_light_0178_name" translatable="false">AquaReef S110</string>
+    <string name="catalog_material_light_0179_name" translatable="false">AquaReef S35-W</string>
+    <string name="catalog_material_light_0180_name" translatable="false">AquaReef S45-W</string>
+    <string name="catalog_material_light_0181_name" translatable="false">AquaReef S60-W</string>
+    <string name="catalog_material_light_0182_name" translatable="false">AquaReef S70-W</string>
+    <string name="catalog_material_light_0183_name" translatable="false">AquaReef S90-W</string>
+    <string name="catalog_material_light_0184_name" translatable="false">AquaReef S110-W</string>
+    <string name="catalog_material_light_0185_name" translatable="false">AquaReef PRO5 mirror light shield</string>
+    <string name="catalog_material_light_0186_name" translatable="false">AquaReef adjustable hanging kit</string>
+    <string name="catalog_material_light_0187_name" translatable="false">AquaReef telescopic tank-edge mounting legs</string>
+    <string name="catalog_material_light_0188_name" translatable="false">AquaReef RMS-style mounting system</string>
+    <string name="catalog_material_light_0189_name" translatable="false">Aqueon Betta Light LED</string>
+    <string name="catalog_material_light_0190_name" translatable="false">Aqueon Clip-On LED Light</string>
+    <string name="catalog_material_light_0191_name" translatable="false">Aqueon Planted Aquarium Clip-On LED Light</string>
+    <string name="catalog_material_light_0192_name" translatable="false">Aqueon LED Deluxe Full Hood</string>
+    <string name="catalog_material_light_0193_name" translatable="false">Aqueon LED OptiBright Light Fixture</string>
+    <string name="catalog_material_light_0194_name" translatable="false">Aqueon LED OptiBright Plus+ Light Fixture</string>
+    <string name="catalog_material_light_0195_name" translatable="false">Aqueon LED Strip Light Fixture</string>
+    <string name="catalog_material_light_0196_name" translatable="false">Aqueon OptiBright SMART LED Light Fixture</string>
+    <string name="catalog_material_light_0197_name" translatable="false">Aqueon Day White LED Lamp</string>
+    <string name="catalog_material_light_0198_name" translatable="false">Aqueon ColorMax LED Lamp</string>
+    <string name="catalog_material_light_0199_name" translatable="false">Aqueon Beauty Max LED Lamp</string>
+    <string name="catalog_material_light_0200_name" translatable="false">Aqueon Max Blue LED Lamp</string>
+    <string name="catalog_material_light_0201_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 600</string>
+    <string name="catalog_material_light_0202_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 750</string>
+    <string name="catalog_material_light_0203_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 900</string>
+    <string name="catalog_material_light_0204_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 1050</string>
+    <string name="catalog_material_light_0205_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 1150</string>
+    <string name="catalog_material_light_0206_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 1350</string>
+    <string name="catalog_material_light_0207_name" translatable="false">Aquatlantis EASY LED UNIVERSAL RGBW ULTRA 1600</string>
+    <string name="catalog_material_light_0208_name" translatable="false">Aquatlantis UNIV LED PLUS</string>
+    <string name="catalog_material_light_0209_name" translatable="false">Aquatlantis UNIV LED</string>
+    <string name="catalog_material_light_0210_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 438 mm</string>
+    <string name="catalog_material_light_0211_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 590 mm</string>
+    <string name="catalog_material_light_0212_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 742 mm</string>
+    <string name="catalog_material_light_0213_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 895 mm</string>
+    <string name="catalog_material_light_0214_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 1047 mm</string>
+    <string name="catalog_material_light_0215_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 1200 mm</string>
+    <string name="catalog_material_light_0216_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Freshwater 1450 mm</string>
+    <string name="catalog_material_light_0217_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 438 mm</string>
+    <string name="catalog_material_light_0218_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 590 mm</string>
+    <string name="catalog_material_light_0219_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 742 mm</string>
+    <string name="catalog_material_light_0220_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 895 mm</string>
+    <string name="catalog_material_light_0221_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 1047 mm</string>
+    <string name="catalog_material_light_0222_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 1200 mm</string>
+    <string name="catalog_material_light_0223_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine &amp; Reef 1450 mm</string>
+    <string name="catalog_material_light_0224_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Marine Blue — 438/590/742/895/1047/1200/1450 mm</string>
+    <string name="catalog_material_light_0225_name" translatable="false">Aquatlantis EASY LED UNIVERSAL 2.0 Deep Blue — 438/590/742/895/1047/1200/1450 mm</string>
+    <string name="catalog_material_light_0226_name" translatable="false">Aquatlantis EASY LED TUBE</string>
+    <string name="catalog_material_light_0227_name" translatable="false">Aquatlantis EASY LED Universal Model ≈5 W — Black</string>
+    <string name="catalog_material_light_0228_name" translatable="false">Aquatlantis EASY LED Universal Model ≈5 W — White</string>
+    <string name="catalog_material_light_0229_name" translatable="false">Aquatlantis SAFE LIGHTING LED</string>
+    <string name="catalog_material_light_0230_name" translatable="false">Aquatlantis Stainless Steel Cable Kit</string>
+    <string name="catalog_material_light_0231_name" translatable="false">Armatürk 1030L — 30 cm</string>
+    <string name="catalog_material_light_0232_name" translatable="false">Armatürk 1040L — 40 cm</string>
+    <string name="catalog_material_light_0233_name" translatable="false">Armatürk 1050L — 50 cm</string>
+    <string name="catalog_material_light_0234_name" translatable="false">Armatürk 1060L — 60 cm</string>
+    <string name="catalog_material_light_0235_name" translatable="false">Armatürk 1070L — 70 cm</string>
+    <string name="catalog_material_light_0236_name" translatable="false">Armatürk 1080L — 80 cm</string>
+    <string name="catalog_material_light_0237_name" translatable="false">Armatürk 1090L — 90 cm</string>
+    <string name="catalog_material_light_0238_name" translatable="false">Armatürk 1100L — 100 cm</string>
+    <string name="catalog_material_light_0239_name" translatable="false">Armatürk 1200L — 120 cm</string>
+    <string name="catalog_material_light_0240_name" translatable="false">Armatürk 1300L — 130 cm</string>
+    <string name="catalog_material_light_0241_name" translatable="false">Armatürk 1500L — 150 cm</string>
+    <string name="catalog_material_light_0242_name" translatable="false">Armatürk 1030H — 30 cm</string>
+    <string name="catalog_material_light_0243_name" translatable="false">Armatürk 2040H — 40 cm</string>
+    <string name="catalog_material_light_0244_name" translatable="false">Armatürk 2050H — 50 cm</string>
+    <string name="catalog_material_light_0245_name" translatable="false">Armatürk 2060H — 60 cm</string>
+    <string name="catalog_material_light_0246_name" translatable="false">Armatürk 2070H — 70 cm</string>
+    <string name="catalog_material_light_0247_name" translatable="false">Armatürk 2080H — 80 cm</string>
+    <string name="catalog_material_light_0248_name" translatable="false">Armatürk 2090H — 90 cm</string>
+    <string name="catalog_material_light_0249_name" translatable="false">Armatürk 2100H — 100 cm</string>
+    <string name="catalog_material_light_0250_name" translatable="false">Armatürk 2200H — 120 cm</string>
+    <string name="catalog_material_light_0251_name" translatable="false">Armatürk 2300H — 130 cm</string>
+    <string name="catalog_material_light_0252_name" translatable="false">Armatürk 2500H — 150 cm</string>
+    <string name="catalog_material_light_0253_name" translatable="false">Armatürk Nano Türk</string>
+    <string name="catalog_material_light_0254_name" translatable="false">Armatürk Plant Nano20 LED</string>
+    <string name="catalog_material_light_0255_name" translatable="false">Armatürk Plant Nano25 LED</string>
+    <string name="catalog_material_light_0256_name" translatable="false">Armatürk Eko 40 cm</string>
+    <string name="catalog_material_light_0257_name" translatable="false">Armatürk Eko 50 cm</string>
+    <string name="catalog_material_light_0258_name" translatable="false">Armatürk Eko 60 cm</string>
+    <string name="catalog_material_light_0259_name" translatable="false">Armatürk Eko 70 cm</string>
+    <string name="catalog_material_light_0260_name" translatable="false">Armatürk Eko 80 cm</string>
+    <string name="catalog_material_light_0261_name" translatable="false">ATI Straton X</string>
+    <string name="catalog_material_light_0262_name" translatable="false">ATI Straton Pro G2 102 — White</string>
+    <string name="catalog_material_light_0263_name" translatable="false">ATI Straton Pro G2 102 — Anthracite</string>
+    <string name="catalog_material_light_0264_name" translatable="false">ATI Straton Pro G2 153 — White</string>
+    <string name="catalog_material_light_0265_name" translatable="false">ATI Straton Pro G2 153 — Anthracite</string>
+    <string name="catalog_material_light_0266_name" translatable="false">ATI Straton Pro G2 204 — White</string>
+    <string name="catalog_material_light_0267_name" translatable="false">ATI Straton Pro G2 204 — Anthracite</string>
+    <string name="catalog_material_light_0268_name" translatable="false">ATI Straton Flex G2 102 — White</string>
+    <string name="catalog_material_light_0269_name" translatable="false">ATI Straton Flex G2 102 — Black</string>
+    <string name="catalog_material_light_0270_name" translatable="false">ATI Straton Flex G2 153 — White</string>
+    <string name="catalog_material_light_0271_name" translatable="false">ATI Straton Flex G2 153 — Black</string>
+    <string name="catalog_material_light_0272_name" translatable="false">ATI Aquablue Special T5</string>
+    <string name="catalog_material_light_0273_name" translatable="false">ATI Blue Plus T5</string>
+    <string name="catalog_material_light_0274_name" translatable="false">ATI Coral Plus T5</string>
+    <string name="catalog_material_light_0275_name" translatable="false">ATI Straton X Mounting Arm</string>
+    <string name="catalog_material_light_0276_name" translatable="false">ATI Straton X Hanging Kit</string>
+    <string name="catalog_material_light_0277_name" translatable="false">Bioloark Magnet Plant Light DL-05</string>
+    <string name="catalog_material_light_0278_name" translatable="false">Bioloark Wabi-Kusa Lamp TF</string>
+    <string name="catalog_material_light_0279_name" translatable="false">Bioloark Wabi-Kusa Lamp DX-03</string>
+    <string name="catalog_material_light_0280_name" translatable="false">Bioloark Wabi-Kusa Light DX-5B</string>
+    <string name="catalog_material_light_0281_name" translatable="false">Chihiros WRGB VIVID 3</string>
+    <string name="catalog_material_light_0282_name" translatable="false">Chihiros RGB VIVID 2 Mate</string>
+    <string name="catalog_material_light_0283_name" translatable="false">Chihiros RGB VIVID II 10th Edition</string>
+    <string name="catalog_material_light_0284_name" translatable="false">Chihiros RGB VIVID II Mini</string>
+    <string name="catalog_material_light_0285_name" translatable="false">Chihiros WRGB II Pro 30</string>
+    <string name="catalog_material_light_0286_name" translatable="false">Chihiros WRGB II Pro 45</string>
+    <string name="catalog_material_light_0287_name" translatable="false">Chihiros WRGB II Pro 60</string>
+    <string name="catalog_material_light_0288_name" translatable="false">Chihiros WRGB II Pro 80</string>
+    <string name="catalog_material_light_0289_name" translatable="false">Chihiros WRGB II Pro 90</string>
+    <string name="catalog_material_light_0290_name" translatable="false">Chihiros WRGB II Pro 120</string>
+    <string name="catalog_material_light_0291_name" translatable="false">Chihiros WRGB II 30 — 10th Edition</string>
+    <string name="catalog_material_light_0292_name" translatable="false">Chihiros WRGB II 45 — 10th Edition</string>
+    <string name="catalog_material_light_0293_name" translatable="false">Chihiros WRGB II 60 — 10th Edition</string>
+    <string name="catalog_material_light_0294_name" translatable="false">Chihiros WRGB II 90 — 10th Edition</string>
+    <string name="catalog_material_light_0295_name" translatable="false">Chihiros WRGB II 120 — 10th Edition</string>
+    <string name="catalog_material_light_0296_name" translatable="false">Chihiros WRGB II Slim 30</string>
+    <string name="catalog_material_light_0297_name" translatable="false">Chihiros WRGB II Slim 45</string>
+    <string name="catalog_material_light_0298_name" translatable="false">Chihiros WRGB II Slim 60</string>
+    <string name="catalog_material_light_0299_name" translatable="false">Chihiros WRGB II Slim 90</string>
+    <string name="catalog_material_light_0300_name" translatable="false">Chihiros WRGB II Slim 120</string>
+    <string name="catalog_material_light_0301_name" translatable="false">Chihiros C II RGB</string>
+    <string name="catalog_material_light_0302_name" translatable="false">Chihiros Magnetic Light</string>
+    <string name="catalog_material_light_0303_name" translatable="false">Chihiros Magnetic Light 2</string>
+    <string name="catalog_material_light_0304_name" translatable="false">Chihiros Nova 1</string>
+    <string name="catalog_material_light_0305_name" translatable="false">Chihiros Saltwater</string>
+    <string name="catalog_material_light_0306_name" translatable="false">Chihiros Nature</string>
+    <string name="catalog_material_light_0307_name" translatable="false">Chihiros Universal RGB Nano 20</string>
+    <string name="catalog_material_light_0308_name" translatable="false">Chihiros Universal RGB Nano 30</string>
+    <string name="catalog_material_light_0309_name" translatable="false">Chihiros Universal WRGB</string>
+    <string name="catalog_material_light_0310_name" translatable="false">Chihiros A II Max 301</string>
+    <string name="catalog_material_light_0311_name" translatable="false">Chihiros A II Max 451</string>
+    <string name="catalog_material_light_0312_name" translatable="false">Chihiros A II Max 601</string>
+    <string name="catalog_material_light_0313_name" translatable="false">Chihiros A II Max 801</string>
+    <string name="catalog_material_light_0314_name" translatable="false">Chihiros A II Max 901</string>
+    <string name="catalog_material_light_0315_name" translatable="false">Chihiros A II Max 1201</string>
+    <string name="catalog_material_light_0316_name" translatable="false">Chihiros A II 301</string>
+    <string name="catalog_material_light_0317_name" translatable="false">Chihiros A II 401</string>
+    <string name="catalog_material_light_0318_name" translatable="false">Chihiros A II 501</string>
+    <string name="catalog_material_light_0319_name" translatable="false">Chihiros A II 601</string>
+    <string name="catalog_material_light_0320_name" translatable="false">Chihiros A II 801</string>
+    <string name="catalog_material_light_0321_name" translatable="false">Chihiros A II 901</string>
+    <string name="catalog_material_light_0322_name" translatable="false">Chihiros A II 1201</string>
+    <string name="catalog_material_light_0323_name" translatable="false">Chihiros A Series</string>
+    <string name="catalog_material_light_0324_name" translatable="false">Chihiros B20</string>
+    <string name="catalog_material_light_0325_name" translatable="false">Chihiros B30</string>
+    <string name="catalog_material_light_0326_name" translatable="false">Chihiros B45</string>
+    <string name="catalog_material_light_0327_name" translatable="false">Chihiros B60</string>
+    <string name="catalog_material_light_0328_name" translatable="false">Chihiros B80</string>
+    <string name="catalog_material_light_0329_name" translatable="false">Chihiros B90</string>
+    <string name="catalog_material_light_0330_name" translatable="false">Chihiros B120</string>
+    <string name="catalog_material_light_0331_name" translatable="false">Chihiros C II</string>
+    <string name="catalog_material_light_0332_name" translatable="false">Chihiros C Series</string>
+    <string name="catalog_material_light_0333_name" translatable="false">Chihiros Z Series</string>
+    <string name="catalog_material_light_0334_name" translatable="false">Chihiros Z Light Tiny</string>
+    <string name="catalog_material_light_0335_name" translatable="false">Chihiros WRGB VIVID 3 Shades with Mirror</string>
+    <string name="catalog_material_light_0336_name" translatable="false">Chihiros RGB VIVID II / RGB VIVID 2 Mate Shades with Mirror — Black</string>
+    <string name="catalog_material_light_0337_name" translatable="false">Chihiros RGB VIVID II / RGB VIVID 2 Mate Shades with Mirror — Silver</string>
+    <string name="catalog_material_light_0338_name" translatable="false">Chihiros WRGB II Pro Shades with Mirror — 30 cm</string>
+    <string name="catalog_material_light_0339_name" translatable="false">Chihiros WRGB II Pro Shades with Mirror — 40 cm</string>
+    <string name="catalog_material_light_0340_name" translatable="false">Chihiros WRGB II Pro Shades with Mirror — 45 cm</string>
+    <string name="catalog_material_light_0341_name" translatable="false">Chihiros WRGB II Pro Shades with Mirror — 60 cm</string>
+    <string name="catalog_material_light_0342_name" translatable="false">Chihiros WRGB II / WRGB II Slim Shades with Mirror — 30 cm</string>
+    <string name="catalog_material_light_0343_name" translatable="false">Chihiros WRGB II / WRGB II Slim Shades with Mirror — 45 cm</string>
+    <string name="catalog_material_light_0344_name" translatable="false">Chihiros WRGB II / WRGB II Slim Shades with Mirror — 60 cm</string>
+    <string name="catalog_material_light_0345_name" translatable="false">Chihiros B Series Shades with Mirror — B20</string>
+    <string name="catalog_material_light_0346_name" translatable="false">Chihiros B Series Shades with Mirror — B30</string>
+    <string name="catalog_material_light_0347_name" translatable="false">Chihiros B Series Shades with Mirror — B60</string>
+    <string name="catalog_material_light_0348_name" translatable="false">Chihiros B Series Shades with Mirror — B80</string>
+    <string name="catalog_material_light_0349_name" translatable="false">Chihiros B Series Shades with Mirror — B90</string>
+    <string name="catalog_material_light_0350_name" translatable="false">Chihiros B Series Shades with Mirror — B120</string>
+    <string name="catalog_material_light_0351_name" translatable="false">Chihiros C II RGB Mirror Shade</string>
+    <string name="catalog_material_light_0352_name" translatable="false">Chihiros WRGB II Hanging Rope Kit</string>
+    <string name="catalog_material_light_0353_name" translatable="false">Chihiros WRGB II Slim Hanging Rope Kit</string>
+    <string name="catalog_material_light_0354_name" translatable="false">Chihiros WRGB II Pro Hanging Rope Kit</string>
+    <string name="catalog_material_light_0355_name" translatable="false">Chihiros RGB VIVID II Hanging Rope Kit</string>
+    <string name="catalog_material_light_0356_name" translatable="false">Chihiros RGB VIVID II Mini Hanging Rope Kit</string>
+    <string name="catalog_material_light_0357_name" translatable="false">Chihiros A II Hanging Rope Kit</string>
+    <string name="catalog_material_light_0358_name" translatable="false">Chihiros A II Max Hanging Rope Kit</string>
+    <string name="catalog_material_light_0359_name" translatable="false">Chihiros A II Max Acrylic Stand</string>
+    <string name="catalog_material_light_0360_name" translatable="false">Chihiros WRGB II Acrylic Stand</string>
+    <string name="catalog_material_light_0361_name" translatable="false">Chihiros WRGB II Pro Non-adjustable Metal Stand</string>
+    <string name="catalog_material_light_0362_name" translatable="false">Chihiros Small Hanging Stand Kit for RGB VIVID / WRGB</string>
+    <string name="catalog_material_light_0363_name" translatable="false">Chihiros New Stand for RGB VIVID / WRGB Series</string>
+    <string name="catalog_material_light_0364_name" translatable="false">Chihiros C II Base Stand</string>
+    <string name="catalog_material_light_0365_name" translatable="false">Chihiros C II RGB Base Stand</string>
+    <string name="catalog_material_light_0366_name" translatable="false">Chihiros Z Light Tiny Extend Arm</string>
+    <string name="catalog_material_light_0367_name" translatable="false">Chihiros Z Light Tiny L Clip 12–20 mm</string>
+    <string name="catalog_material_light_0368_name" translatable="false">Chihiros Magnetic Light Base</string>
+    <string name="catalog_material_light_0369_name" translatable="false">Chihiros Magnetic Light Stand 10W</string>
+    <string name="catalog_material_light_0370_name" translatable="false">Creaqua Alpha RGB+W 60</string>
+    <string name="catalog_material_light_0371_name" translatable="false">Creaqua Alpha RGB+W 90</string>
+    <string name="catalog_material_light_0372_name" translatable="false">Creaqua Alpha RGB+W 120</string>
+    <string name="catalog_material_light_0373_name" translatable="false">Creaqua Alpha RGB+W 150</string>
+    <string name="catalog_material_light_0374_name" translatable="false">Creaqua Alpha PW 60–85 cm</string>
+    <string name="catalog_material_light_0375_name" translatable="false">Creaqua Alpha PW 90–115 cm</string>
+    <string name="catalog_material_light_0376_name" translatable="false">Creaqua Alpha PW 120–140 cm</string>
+    <string name="catalog_material_light_0377_name" translatable="false">Creaqua Alpha PW 150–175 cm</string>
+    <string name="catalog_material_light_0378_name" translatable="false">Creaqua Delta PW 35–55 cm</string>
+    <string name="catalog_material_light_0379_name" translatable="false">Creaqua Delta PW 60–85 cm</string>
+    <string name="catalog_material_light_0380_name" translatable="false">Creaqua Delta PW 90–115 cm</string>
+    <string name="catalog_material_light_0381_name" translatable="false">Creaqua Delta PW 120–150 cm</string>
+    <string name="catalog_material_light_0382_name" translatable="false">Creaqua Delta Marine 35</string>
+    <string name="catalog_material_light_0383_name" translatable="false">Creaqua Delta Marine 40</string>
+    <string name="catalog_material_light_0384_name" translatable="false">Creaqua Sigma PW 35–55 cm</string>
+    <string name="catalog_material_light_0385_name" translatable="false">Creaqua Sigma PW 60–85 cm</string>
+    <string name="catalog_material_light_0386_name" translatable="false">Creaqua Sigma PW 90–115 cm</string>
+    <string name="catalog_material_light_0387_name" translatable="false">Creaqua Sigma PW 120–150 cm</string>
+    <string name="catalog_material_light_0388_name" translatable="false">Creaqua Nano Elite Black</string>
+    <string name="catalog_material_light_0389_name" translatable="false">Creaqua Nano S Black</string>
+    <string name="catalog_material_light_0390_name" translatable="false">Creaqua Alpha PW Hanging Kit</string>
+    <string name="catalog_material_light_0391_name" translatable="false">Creaqua Alpha PW Expandable Mounting Feet</string>
+    <string name="catalog_material_light_0392_name" translatable="false">Current USA ColorPlus Smart Freshwater LED</string>
+    <string name="catalog_material_light_0393_name" translatable="false">Current USA Satellite LED Plus PRO</string>
+    <string name="catalog_material_light_0394_name" translatable="false">Current USA SereneSun LED</string>
+    <string name="catalog_material_light_0395_name" translatable="false">Current USA Orbit Marine LED</string>
+    <string name="catalog_material_light_0396_name" translatable="false">Current USA Orbit Marine IC LED</string>
+    <string name="catalog_material_light_0397_name" translatable="false">Current USA Orbit Marine IC PRO Dual LED</string>
+    <string name="catalog_material_light_0398_name" translatable="false">Current USA Orbit R24 Reef LED 52W</string>
+    <string name="catalog_material_light_0399_name" translatable="false">Current USA Orbit R24 Reef LED 95W</string>
+    <string name="catalog_material_light_0400_name" translatable="false">Current USA Add-on Orbit Marine LED</string>
+    <string name="catalog_material_light_0401_name" translatable="false">Current USA Add-on Orbit Marine IC LED</string>
+    <string name="catalog_material_light_0402_name" translatable="false">Current USA Add-on R24 Reef LED</string>
+    <string name="catalog_material_light_0403_name" translatable="false">Current USA Ecoxotic Cannon 80 LED — 460 nm Blue</string>
+    <string name="catalog_material_light_0404_name" translatable="false">Current USA Ecoxotic Cannon 80 LED — 10,000 K White</string>
+    <string name="catalog_material_light_0405_name" translatable="false">Current USA Ecoxotic Cannon 80 LED — 5,000 K Sun White</string>
+    <string name="catalog_material_light_0406_name" translatable="false">Current USA Cannon PRO LED</string>
+    <string name="catalog_material_light_0407_name" translatable="false">Current USA Dual Adjustable LED Light Arm Kit</string>
+    <string name="catalog_material_light_0408_name" translatable="false">Current USA Single Adjustable LED Light Arm</string>
+    <string name="catalog_material_light_0409_name" translatable="false">Current USA XW Arm Mount</string>
+    <string name="catalog_material_light_0410_name" translatable="false">Current USA Flex Arm Tank Mount</string>
+    <string name="catalog_material_light_0411_name" translatable="false">Current USA Flex Arm Stand Mount</string>
+    <string name="catalog_material_light_0412_name" translatable="false">daytime matrix</string>
+    <string name="catalog_material_light_0413_name" translatable="false">daytime pendix</string>
+    <string name="catalog_material_light_0414_name" translatable="false">daytime Unix</string>
+    <string name="catalog_material_light_0415_name" translatable="false">daytime onex</string>
+    <string name="catalog_material_light_0416_name" translatable="false">daytime onex black</string>
+    <string name="catalog_material_light_0417_name" translatable="false">daytime cobra</string>
+    <string name="catalog_material_light_0418_name" translatable="false">daytime kingcobra</string>
+    <string name="catalog_material_light_0419_name" translatable="false">daytime Acrylic Nano Adapter Set</string>
+    <string name="catalog_material_light_0420_name" translatable="false">daytime T5/T8 Adapter Set</string>
+    <string name="catalog_material_light_0421_name" translatable="false">daytime matrix Acrylic Adapter</string>
+    <string name="catalog_material_light_0422_name" translatable="false">daytime pendix Attachment Adapter Set</string>
+    <string name="catalog_material_light_0423_name" translatable="false">Dennerle Trocal LED 40 cm / 18W</string>
+    <string name="catalog_material_light_0424_name" translatable="false">Dennerle Trocal LED 70 cm / 36W</string>
+    <string name="catalog_material_light_0425_name" translatable="false">Dennerle Trocal LED 110 cm / 60W</string>
+    <string name="catalog_material_light_0426_name" translatable="false">Dennerle Trocal LED 140 cm / 78W</string>
+    <string name="catalog_material_light_0427_name" translatable="false">Dennerle Trocal Flat</string>
+    <string name="catalog_material_light_0428_name" translatable="false">Dennerle Nano Style LED</string>
+    <string name="catalog_material_light_0429_name" translatable="false">Dennerle Scaper\'s Light</string>
+    <string name="catalog_material_light_0430_name" translatable="false">DOOA PALUDA LIGHT II 300</string>
+    <string name="catalog_material_light_0431_name" translatable="false">DOOA PALUDA LIGHT II 600</string>
+    <string name="catalog_material_light_0432_name" translatable="false">DOOA MAGNET LIGHT G SLIM</string>
+    <string name="catalog_material_light_0433_name" translatable="false">DOOA MAGNET LIGHT G SLIM WOOD BASE SET</string>
+    <string name="catalog_material_light_0434_name" translatable="false">DOOA PALUDA LIGHT STAND</string>
+    <string name="catalog_material_light_0435_name" translatable="false">DOOA LIGHT STAND Z</string>
+    <string name="catalog_material_light_0436_name" translatable="false">DOOA MAGNET LIGHT WIRE ARM</string>
+    <string name="catalog_material_light_0437_name" translatable="false">DOOA MAGNET LIGHT MOUNTING ARM</string>
+    <string name="catalog_material_light_0438_name" translatable="false">DOOA MAGNET LIGHT STAND 15H</string>
+    <string name="catalog_material_light_0439_name" translatable="false">DOOA MAGNET LIGHT STAND 20H</string>
+    <string name="catalog_material_light_0440_name" translatable="false">DOOA MAGNET LIGHT STAND 20L</string>
+    <string name="catalog_material_light_0441_name" translatable="false">DOOA MAGNET LIGHT STAND MARU 95</string>
+    <string name="catalog_material_light_0442_name" translatable="false">DOOA MAGNET LIGHT STAND MARU 130</string>
+    <string name="catalog_material_light_0443_name" translatable="false">EcoTech Radion XR15 G6 Pro</string>
+    <string name="catalog_material_light_0444_name" translatable="false">EcoTech Radion XR15 G6 Blue</string>
+    <string name="catalog_material_light_0445_name" translatable="false">EcoTech Radion XR30 G6 Pro</string>
+    <string name="catalog_material_light_0446_name" translatable="false">EcoTech Radion XR30 G6 Blue</string>
+    <string name="catalog_material_light_0447_name" translatable="false">EcoTech Radion Freshwater Pro</string>
+    <string name="catalog_material_light_0448_name" translatable="false">EcoTech Radion Diffuser XR15</string>
+    <string name="catalog_material_light_0449_name" translatable="false">EcoTech Radion Diffuser XR30</string>
+    <string name="catalog_material_light_0450_name" translatable="false">EcoTech Single Light RMS for XR15</string>
+    <string name="catalog_material_light_0451_name" translatable="false">EcoTech Single Light RMS for XR30</string>
+    <string name="catalog_material_light_0452_name" translatable="false">EcoTech Multi-Light RMS</string>
+    <string name="catalog_material_light_0453_name" translatable="false">EcoTech RMS Hanging Kit</string>
+    <string name="catalog_material_light_0454_name" translatable="false">EHEIM classicLED daylight</string>
+    <string name="catalog_material_light_0455_name" translatable="false">EHEIM powerLED+ fresh daylight</string>
+    <string name="catalog_material_light_0456_name" translatable="false">EHEIM powerLED+ fresh plants</string>
+    <string name="catalog_material_light_0457_name" translatable="false">EHEIM powerLED+ marine hybrid</string>
+    <string name="catalog_material_light_0458_name" translatable="false">EHEIM powerLED+ marine actinic</string>
+    <string name="catalog_material_light_0459_name" translatable="false">EHEIM powerRGB</string>
+    <string name="catalog_material_light_0460_name" translatable="false">EHEIM powerLED+ mounting brackets</string>
+    <string name="catalog_material_light_0461_name" translatable="false">EHEIM powerLED+ suspension / hanging set</string>
+    <string name="catalog_material_light_0462_name" translatable="false">EHEIM classicLED adapter / holder set</string>
+    <string name="catalog_material_light_0463_name" translatable="false">Finnex Stingray 12\"</string>
+    <string name="catalog_material_light_0464_name" translatable="false">Finnex Stingray 16\"</string>
+    <string name="catalog_material_light_0465_name" translatable="false">Finnex Stingray 20\"</string>
+    <string name="catalog_material_light_0466_name" translatable="false">Finnex Stingray 24\"</string>
+    <string name="catalog_material_light_0467_name" translatable="false">Finnex Stingray 30\"</string>
+    <string name="catalog_material_light_0468_name" translatable="false">Finnex Stingray 36\"</string>
+    <string name="catalog_material_light_0469_name" translatable="false">Finnex Stingray 48\"</string>
+    <string name="catalog_material_light_0470_name" translatable="false">Finnex Stingray 3.0 12\"</string>
+    <string name="catalog_material_light_0471_name" translatable="false">Finnex Stingray 3.0 18\"</string>
+    <string name="catalog_material_light_0472_name" translatable="false">Finnex Stingray 3.0 24\"</string>
+    <string name="catalog_material_light_0473_name" translatable="false">Finnex Stingray 3.0 36\"</string>
+    <string name="catalog_material_light_0474_name" translatable="false">Finnex Stingray 3.0 48\"</string>
+    <string name="catalog_material_light_0475_name" translatable="false">Finnex KLC Series 20\"</string>
+    <string name="catalog_material_light_0476_name" translatable="false">Finnex KLC Series 24\"</string>
+    <string name="catalog_material_light_0477_name" translatable="false">Finnex KLC Series 30\"</string>
+    <string name="catalog_material_light_0478_name" translatable="false">Finnex KLC Series 36\"</string>
+    <string name="catalog_material_light_0479_name" translatable="false">Finnex KLC Series 48\"</string>
+    <string name="catalog_material_light_0480_name" translatable="false">Finnex HLC Series 20\"</string>
+    <string name="catalog_material_light_0481_name" translatable="false">Finnex HLC Series 24\"</string>
+    <string name="catalog_material_light_0482_name" translatable="false">Finnex HLC Series 30\"</string>
+    <string name="catalog_material_light_0483_name" translatable="false">Finnex HLC Series 36\"</string>
+    <string name="catalog_material_light_0484_name" translatable="false">Finnex HLC Series 48\"</string>
+    <string name="catalog_material_light_0485_name" translatable="false">Finnex CRV Series 20\"</string>
+    <string name="catalog_material_light_0486_name" translatable="false">Finnex CRV Series 24\"</string>
+    <string name="catalog_material_light_0487_name" translatable="false">Finnex CRV Series 30\"</string>
+    <string name="catalog_material_light_0488_name" translatable="false">Finnex CRV Series 36\"</string>
+    <string name="catalog_material_light_0489_name" translatable="false">Finnex CRV Series 48\"</string>
+    <string name="catalog_material_light_0490_name" translatable="false">Finnex Planted+ 3.0 24\"</string>
+    <string name="catalog_material_light_0491_name" translatable="false">Finnex Planted+ 3.0 36\"</string>
+    <string name="catalog_material_light_0492_name" translatable="false">Finnex Planted+ 3.0 48\"</string>
+    <string name="catalog_material_light_0493_name" translatable="false">Finnex Vivid+ 3.0 12\"</string>
+    <string name="catalog_material_light_0494_name" translatable="false">Finnex Vivid+ 3.0 18\"</string>
+    <string name="catalog_material_light_0495_name" translatable="false">Finnex Vivid+ 3.0 24\"</string>
+    <string name="catalog_material_light_0496_name" translatable="false">Finnex Vivid+ 3.0 30\"</string>
+    <string name="catalog_material_light_0497_name" translatable="false">Finnex Vivid+ 3.0 36\"</string>
+    <string name="catalog_material_light_0498_name" translatable="false">Finnex Vivid+ 3.0 48\"</string>
+    <string name="catalog_material_light_0499_name" translatable="false">Fluval Plant 4.0 Nano LED 20W</string>
+    <string name="catalog_material_light_0500_name" translatable="false">Fluval Plant 4.0 LED 22W</string>
+    <string name="catalog_material_light_0501_name" translatable="false">Fluval Plant 4.0 LED 32W</string>
+    <string name="catalog_material_light_0502_name" translatable="false">Fluval Plant 4.0 LED 46W</string>
+    <string name="catalog_material_light_0503_name" translatable="false">Fluval Plant 4.0 LED 59W</string>
+    <string name="catalog_material_light_0504_name" translatable="false">Fluval Plant Pro 60 — 38W</string>
+    <string name="catalog_material_light_0505_name" translatable="false">Fluval Plant Pro 90 — 60W</string>
+    <string name="catalog_material_light_0506_name" translatable="false">Fluval Plant Pro 120 — 90W</string>
+    <string name="catalog_material_light_0507_name" translatable="false">Fluval Plant Pro 150 — 120W</string>
+    <string name="catalog_material_light_0508_name" translatable="false">Fluval Reef 4.0 Nano LED 25W</string>
+    <string name="catalog_material_light_0509_name" translatable="false">Fluval Reef 4.0 LED 22W</string>
+    <string name="catalog_material_light_0510_name" translatable="false">Fluval Reef 4.0 LED 32W</string>
+    <string name="catalog_material_light_0511_name" translatable="false">Fluval Reef 4.0 LED 46W</string>
+    <string name="catalog_material_light_0512_name" translatable="false">Fluval Reef 4.0 LED 59W</string>
+    <string name="catalog_material_light_0513_name" translatable="false">Fluval Aquasky 3.0 LED 12W</string>
+    <string name="catalog_material_light_0514_name" translatable="false">Fluval Aquasky 3.0 LED 16W</string>
+    <string name="catalog_material_light_0515_name" translatable="false">Fluval Aquasky 3.0 LED 18W</string>
+    <string name="catalog_material_light_0516_name" translatable="false">Fluval Aquasky 3.0 LED 21W</string>
+    <string name="catalog_material_light_0517_name" translatable="false">Fluval Aquasky 3.0 LED 25W</string>
+    <string name="catalog_material_light_0518_name" translatable="false">Fluval Aquasky 3.0 LED 27W</string>
+    <string name="catalog_material_light_0519_name" translatable="false">Fluval Aquasky 3.0 LED 30W</string>
+    <string name="catalog_material_light_0520_name" translatable="false">Fluval Aquasky 3.0 LED 33W</string>
+    <string name="catalog_material_light_0521_name" translatable="false">Fluval Aquasky 3.0 LED 35W</string>
+    <string name="catalog_material_light_0522_name" translatable="false">Giesemann TESZLA evo</string>
+    <string name="catalog_material_light_0523_name" translatable="false">Giesemann MINOX tropic</string>
+    <string name="catalog_material_light_0524_name" translatable="false">Giesemann VERVVE pro</string>
+    <string name="catalog_material_light_0525_name" translatable="false">Giesemann AURORA V12 pro</string>
+    <string name="catalog_material_light_0526_name" translatable="false">Giesemann AURORA V8</string>
+    <string name="catalog_material_light_0527_name" translatable="false">Giesemann PULZAR G3 Marine</string>
+    <string name="catalog_material_light_0528_name" translatable="false">Giesemann PULZAR G3 Tropic</string>
+    <string name="catalog_material_light_0529_name" translatable="false">Giesemann STELLAR LED</string>
+    <string name="catalog_material_light_0530_name" translatable="false">Giesemann STELLARIS pro</string>
+    <string name="catalog_material_light_0531_name" translatable="false">Giesemann VIVA</string>
+    <string name="catalog_material_light_0532_name" translatable="false">Giesemann MATRIXX II DIMMTEC</string>
+    <string name="catalog_material_light_0533_name" translatable="false">Giesemann STELLAR mounting system</string>
+    <string name="catalog_material_light_0534_name" translatable="false">hygger HG978 LED Fish Tank Light — 12–18\"</string>
+    <string name="catalog_material_light_0535_name" translatable="false">hygger HG978 LED Fish Tank Light — 18–24\"</string>
+    <string name="catalog_material_light_0536_name" translatable="false">hygger HG978 LED Fish Tank Light — 24–30\"</string>
+    <string name="catalog_material_light_0537_name" translatable="false">hygger HG978 LED Fish Tank Light — 30–36\"</string>
+    <string name="catalog_material_light_0538_name" translatable="false">hygger HG978 LED Fish Tank Light — 36–42\"</string>
+    <string name="catalog_material_light_0539_name" translatable="false">hygger HG978 LED Fish Tank Light — 48–54\"</string>
+    <string name="catalog_material_light_0540_name" translatable="false">hygger HG957 Planted Aquarium Light — 12–18\"</string>
+    <string name="catalog_material_light_0541_name" translatable="false">hygger HG957 Planted Aquarium Light — 18–24\"</string>
+    <string name="catalog_material_light_0542_name" translatable="false">hygger HG957 Planted Aquarium Light — 24–30\"</string>
+    <string name="catalog_material_light_0543_name" translatable="false">hygger HG957 Planted Aquarium Light — 30–36\"</string>
+    <string name="catalog_material_light_0544_name" translatable="false">hygger HG957 Planted Aquarium Light — 36–42\"</string>
+    <string name="catalog_material_light_0545_name" translatable="false">hygger HG957 Planted Aquarium Light — 48–55\"</string>
+    <string name="catalog_material_light_0546_name" translatable="false">hygger AquaSense Aquarium Light</string>
+    <string name="catalog_material_light_0547_name" translatable="false">hygger Plant One Aquarium LED Light</string>
+    <string name="catalog_material_light_0548_name" translatable="false">hygger HG248 NatureLite Aquarium Light</string>
+    <string name="catalog_material_light_0549_name" translatable="false">hygger HG075 Aquarium LED Plant Light</string>
+    <string name="catalog_material_light_0550_name" translatable="false">hygger Simple Aquarium LED Light</string>
+    <string name="catalog_material_light_0551_name" translatable="false">hygger Pro Simple Aquarium LED Light</string>
+    <string name="catalog_material_light_0552_name" translatable="false">hygger Slim LED Light</string>
+    <string name="catalog_material_light_0553_name" translatable="false">hygger Full Spectrum Clip-On Light</string>
+    <string name="catalog_material_light_0554_name" translatable="false">hygger Submersible Aquarium LED Light</string>
+    <string name="catalog_material_light_0555_name" translatable="false">hygger Dunker Pro Submersible Aquarium LED Light</string>
+    <string name="catalog_material_light_0556_name" translatable="false">hygger Sun Aquarium LED Light</string>
+    <string name="catalog_material_light_0557_name" translatable="false">hygger Sun Moon LED Aquarium Light</string>
+    <string name="catalog_material_light_0558_name" translatable="false">hygger HG999 Aquarium Light</string>
+    <string name="catalog_material_light_0559_name" translatable="false">hygger adjustable light holder / extendable bracket set</string>
+    <string name="catalog_material_light_0560_name" translatable="false">JBL LED SOLAR NATUR gen2 16W / 438 mm</string>
+    <string name="catalog_material_light_0561_name" translatable="false">JBL LED SOLAR NATUR gen2 20W / 549–590 mm</string>
+    <string name="catalog_material_light_0562_name" translatable="false">JBL LED SOLAR NATUR gen2 28W / 742 mm</string>
+    <string name="catalog_material_light_0563_name" translatable="false">JBL LED SOLAR NATUR gen2 31W / 849–895 mm</string>
+    <string name="catalog_material_light_0564_name" translatable="false">JBL LED SOLAR NATUR gen2 47W / 1047 mm</string>
+    <string name="catalog_material_light_0565_name" translatable="false">JBL LED SOLAR NATUR gen2 48W / 1149–1200 mm</string>
+    <string name="catalog_material_light_0566_name" translatable="false">JBL LED SOLAR NATUR gen2 53W / 1449–1500 mm</string>
+    <string name="catalog_material_light_0567_name" translatable="false">JBL LED SOLAR EFFECT RGB gen2</string>
+    <string name="catalog_material_light_0568_name" translatable="false">JBL LED SOLAR EFFECT RGB 85–110 cm</string>
+    <string name="catalog_material_light_0569_name" translatable="false">JBL LED SOLAR Hanging</string>
+    <string name="catalog_material_light_0570_name" translatable="false">JBL LED SOLAR Holding Bracket Set</string>
+    <string name="catalog_material_light_0571_name" translatable="false">JBL LED SOLAR End Cap Set 25 mm</string>
+    <string name="catalog_material_light_0572_name" translatable="false">JBL LED SOLAR End Cap Set 45 mm</string>
+    <string name="catalog_material_light_0573_name" translatable="false">Juwel HeliaLux Spectrum 550</string>
+    <string name="catalog_material_light_0574_name" translatable="false">Juwel HeliaLux Spectrum 600</string>
+    <string name="catalog_material_light_0575_name" translatable="false">Juwel HeliaLux Spectrum 700</string>
+    <string name="catalog_material_light_0576_name" translatable="false">Juwel HeliaLux Spectrum 800</string>
+    <string name="catalog_material_light_0577_name" translatable="false">Juwel HeliaLux Spectrum 920</string>
+    <string name="catalog_material_light_0578_name" translatable="false">Juwel HeliaLux Spectrum 1000</string>
+    <string name="catalog_material_light_0579_name" translatable="false">Juwel HeliaLux Spectrum 1200</string>
+    <string name="catalog_material_light_0580_name" translatable="false">Juwel HeliaLux Spectrum 1500</string>
+    <string name="catalog_material_light_0581_name" translatable="false">Juwel MultiLux LED 55</string>
+    <string name="catalog_material_light_0582_name" translatable="false">Juwel MultiLux LED 60</string>
+    <string name="catalog_material_light_0583_name" translatable="false">Juwel MultiLux LED 70</string>
+    <string name="catalog_material_light_0584_name" translatable="false">Juwel MultiLux LED 80</string>
+    <string name="catalog_material_light_0585_name" translatable="false">Juwel MultiLux LED 92</string>
+    <string name="catalog_material_light_0586_name" translatable="false">Juwel MultiLux LED 100</string>
+    <string name="catalog_material_light_0587_name" translatable="false">Juwel MultiLux LED 120</string>
+    <string name="catalog_material_light_0588_name" translatable="false">Juwel MultiLux LED 150</string>
+    <string name="catalog_material_light_0589_name" translatable="false">Juwel LED Day Tube</string>
+    <string name="catalog_material_light_0590_name" translatable="false">Juwel LED Nature Tube</string>
+    <string name="catalog_material_light_0591_name" translatable="false">Juwel LED Colour Tube</string>
+    <string name="catalog_material_light_0592_name" translatable="false">Juwel NovoLux LED Neo White</string>
+    <string name="catalog_material_light_0593_name" translatable="false">Juwel HeliaLux UniversalFit</string>
+    <string name="catalog_material_light_0594_name" translatable="false">Kessil AP9X</string>
+    <string name="catalog_material_light_0595_name" translatable="false">Kessil A500X</string>
+    <string name="catalog_material_light_0596_name" translatable="false">Kessil A360XE</string>
+    <string name="catalog_material_light_0597_name" translatable="false">Kessil A360X</string>
+    <string name="catalog_material_light_0598_name" translatable="false">Kessil A360X Refugium</string>
+    <string name="catalog_material_light_0599_name" translatable="false">Kessil A160WE</string>
+    <string name="catalog_material_light_0600_name" translatable="false">Kessil A80</string>
+    <string name="catalog_material_light_0601_name" translatable="false">Kessil H160 Tuna Flora</string>
+    <string name="catalog_material_light_0602_name" translatable="false">Kessil H80 Tuna Flora</string>
+    <string name="catalog_material_light_0603_name" translatable="false">Kessil AP9X Mounting Arm</string>
+    <string name="catalog_material_light_0604_name" translatable="false">Kessil Mounting Arm</string>
+    <string name="catalog_material_light_0605_name" translatable="false">Kessil Hanging Kit</string>
+    <string name="catalog_material_light_0606_name" translatable="false">Kessil A-Series Gooseneck</string>
+    <string name="catalog_material_light_0607_name" translatable="false">Kessil Mini A-Series Gooseneck</string>
+    <string name="catalog_material_light_0608_name" translatable="false">Kessil Extension Mount</string>
+    <string name="catalog_material_light_0609_name" translatable="false">Kessil Extended Slide Bar</string>
+    <string name="catalog_material_light_0610_name" translatable="false">Maxspect Jump MJ-L165</string>
+    <string name="catalog_material_light_0611_name" translatable="false">Maxspect Jump MJ-L165 Blue</string>
+    <string name="catalog_material_light_0612_name" translatable="false">Maxspect Jump MJ-L130 Standard</string>
+    <string name="catalog_material_light_0613_name" translatable="false">Maxspect Jump MJ-L130 Refugium</string>
+    <string name="catalog_material_light_0614_name" translatable="false">Maxspect Ethereal</string>
+    <string name="catalog_material_light_0615_name" translatable="false">Maxspect RSX</string>
+    <string name="catalog_material_light_0616_name" translatable="false">Maxspect Jump mounting stand</string>
+    <string name="catalog_material_light_0617_name" translatable="false">Maxspect RSX Hanging Kit</string>
+    <string name="catalog_material_light_0618_name" translatable="false">MicMol G3 Aqua Mini — G3-AM Marine</string>
+    <string name="catalog_material_light_0619_name" translatable="false">MicMol G3 Aqua Mini — G3-AM Planted</string>
+    <string name="catalog_material_light_0620_name" translatable="false">MicMol G3 Aqua Pro — G3-AP Marine</string>
+    <string name="catalog_material_light_0621_name" translatable="false">MicMol G3 Aqua Pro — G3-AP Planted</string>
+    <string name="catalog_material_light_0622_name" translatable="false">MicMol Adjustable Hanging Kit</string>
+    <string name="catalog_material_light_0623_name" translatable="false">MicMol Super Bracket</string>
+    <string name="catalog_material_light_0624_name" translatable="false">Netlea NL-545S-AT5-Z0/4 — 50W</string>
+    <string name="catalog_material_light_0625_name" translatable="false">Netlea NL-560S-AT5-Z0/4</string>
+    <string name="catalog_material_light_0626_name" translatable="false">Netlea NL-580S-AT5-Z0/4 — 80W</string>
+    <string name="catalog_material_light_0627_name" translatable="false">Netlea NL-590S-AT5-Z0/4 — 95W</string>
+    <string name="catalog_material_light_0628_name" translatable="false">Netlea NL-5120S-AT5-Z0/4 — 120W</string>
+    <string name="catalog_material_light_0629_name" translatable="false">Netlea NL-580P-AT5-D0/3 — 80W pendant</string>
+    <string name="catalog_material_light_0630_name" translatable="false">Netlea NL-6105P-AT5-D0/4 — 105W pendant</string>
+    <string name="catalog_material_light_0631_name" translatable="false">Netlea NL-560S-RGB-Z0/4 — 60W</string>
+    <string name="catalog_material_light_0632_name" translatable="false">Netlea AT6S III</string>
+    <string name="catalog_material_light_0633_name" translatable="false">Netlea AT7S II</string>
+    <string name="catalog_material_light_0634_name" translatable="false">Netlea AT-5 Hanging Kit</string>
+    <string name="catalog_material_light_0635_name" translatable="false">Netlea AT-5 Parallel Hanging Kit</string>
+    <string name="catalog_material_light_0636_name" translatable="false">Oase HighLine Premium LED 45</string>
+    <string name="catalog_material_light_0637_name" translatable="false">Oase HighLine Premium LED 65</string>
+    <string name="catalog_material_light_0638_name" translatable="false">Oase HighLine Premium LED 80</string>
+    <string name="catalog_material_light_0639_name" translatable="false">Oase HighLine Premium LED 100</string>
+    <string name="catalog_material_light_0640_name" translatable="false">Oase HighLine Premium LED 120</string>
+    <string name="catalog_material_light_0641_name" translatable="false">Oase MotionControl LED</string>
+    <string name="catalog_material_light_0642_name" translatable="false">Oase HighLine Premium LED Swing Adapter</string>
+    <string name="catalog_material_light_0643_name" translatable="false">Oase LED Rope Suspension Set</string>
+    <string name="catalog_material_light_0644_name" translatable="false">ONF MIST O+</string>
+    <string name="catalog_material_light_0645_name" translatable="false">ONF MIST O</string>
+    <string name="catalog_material_light_0646_name" translatable="false">ONF Flat One+</string>
+    <string name="catalog_material_light_0647_name" translatable="false">ONF Flat Nano+</string>
+    <string name="catalog_material_light_0648_name" translatable="false">ONF Flat Nano</string>
+    <string name="catalog_material_light_0649_name" translatable="false">ONF Square</string>
+    <string name="catalog_material_light_0650_name" translatable="false">ONF MIST O Two-in-One Bracket</string>
+    <string name="catalog_material_light_0651_name" translatable="false">ONF Stand for Flat Nano</string>
+    <string name="catalog_material_light_0652_name" translatable="false">ONF Cable Strap</string>
+    <string name="catalog_material_light_0653_name" translatable="false">ONF Angle-Iron Shelf Bracket for ONF Square</string>
+    <string name="catalog_material_light_0654_name" translatable="false">ONF / ANA Stainless Light Stand Set for MIST O+</string>
+    <string name="catalog_material_light_0655_name" translatable="false">OrionLED Aquaslim Grolüx Fire</string>
+    <string name="catalog_material_light_0656_name" translatable="false">OrionLED Aquaslim Grolüx Ice</string>
+    <string name="catalog_material_light_0657_name" translatable="false">OrionLED Aquaslim Series — 4 Color Aquarium LED</string>
+    <string name="catalog_material_light_0658_name" translatable="false">OrionLED Aquaslim Series — Royal Blue Aquarium LED</string>
+    <string name="catalog_material_light_0659_name" translatable="false">OrionLED Bluetooth Phone Controlled RGB Aquarium LED</string>
+    <string name="catalog_material_light_0660_name" translatable="false">OrionLED Nano M1-B White 6500 K</string>
+    <string name="catalog_material_light_0661_name" translatable="false">OrionLED B Series Controlled</string>
+    <string name="catalog_material_light_0662_name" translatable="false">OrionLED C Series Black</string>
+    <string name="catalog_material_light_0663_name" translatable="false">OrionLED C Series Grey</string>
+    <string name="catalog_material_light_0664_name" translatable="false">OrionLED C Series RGB-W Controlled</string>
+    <string name="catalog_material_light_0665_name" translatable="false">OrionLED D-REEF Series Marine Aquarium Lighting</string>
+    <string name="catalog_material_light_0666_name" translatable="false">OrionLED D-RGBW Black — Wi-Fi / App Controlled</string>
+    <string name="catalog_material_light_0667_name" translatable="false">OrionLED D-RGBW — Wi-Fi / App Controlled</string>
+    <string name="catalog_material_light_0668_name" translatable="false">OrionLED E Series 5-Row LED Lighting</string>
+    <string name="catalog_material_light_0669_name" translatable="false">OrionLED Fanus &amp; Nano Aquarium LED Spiral Gooseneck 5V</string>
+    <string name="catalog_material_light_0670_name" translatable="false">OrionLED Grolux Series A</string>
+    <string name="catalog_material_light_0671_name" translatable="false">OrionLED Grolux T8 Series</string>
+    <string name="catalog_material_light_0672_name" translatable="false">OrionLED Nano Arc 5.5W</string>
+    <string name="catalog_material_light_0673_name" translatable="false">OrionLED Nano C Reef Series</string>
+    <string name="catalog_material_light_0674_name" translatable="false">OrionLED Nano Grolux Series</string>
+    <string name="catalog_material_light_0675_name" translatable="false">OrionLED Nano M-1 Mixed Color — Dimmer</string>
+    <string name="catalog_material_light_0676_name" translatable="false">OrionLED Nano M-2</string>
+    <string name="catalog_material_light_0677_name" translatable="false">OrionLED Nano M-3 Series</string>
+    <string name="catalog_material_light_0678_name" translatable="false">OrionLED Nano SPOT LED 5V / 3W</string>
+    <string name="catalog_material_light_0679_name" translatable="false">OrionLED Plant A Series 4 Color</string>
+    <string name="catalog_material_light_0680_name" translatable="false">OrionLED SPOT LED 24V 12W Adjustable Lens</string>
+    <string name="catalog_material_light_0681_name" translatable="false">OrionLED Aquaslim 4 Color — 20 cm</string>
+    <string name="catalog_material_light_0682_name" translatable="false">OrionLED Aquaslim 4 Color — 30 cm</string>
+    <string name="catalog_material_light_0683_name" translatable="false">OrionLED Aquaslim 4 Color — 40 cm</string>
+    <string name="catalog_material_light_0684_name" translatable="false">OrionLED Aquaslim 4 Color — 50 cm</string>
+    <string name="catalog_material_light_0685_name" translatable="false">OrionLED Aquaslim 4 Color — 60 cm</string>
+    <string name="catalog_material_light_0686_name" translatable="false">OrionLED Aquaslim 4 Color — 70 cm</string>
+    <string name="catalog_material_light_0687_name" translatable="false">OrionLED Aquaslim 4 Color — 80 cm</string>
+    <string name="catalog_material_light_0688_name" translatable="false">OrionLED Aquaslim 4 Color — 90 cm</string>
+    <string name="catalog_material_light_0689_name" translatable="false">OrionLED Aquaslim 4 Color — 100 cm</string>
+    <string name="catalog_material_light_0690_name" translatable="false">OrionLED Aquaslim 4 Color — 110 cm</string>
+    <string name="catalog_material_light_0691_name" translatable="false">OrionLED Aquaslim 4 Color — 120 cm</string>
+    <string name="catalog_material_light_0692_name" translatable="false">OrionLED Aquaslim 4 Color — 130 cm</string>
+    <string name="catalog_material_light_0693_name" translatable="false">OrionLED Aquaslim 4 Color — 140 cm</string>
+    <string name="catalog_material_light_0694_name" translatable="false">OrionLED D Series Shade Mirror — Mirrored Shade</string>
+    <string name="catalog_material_light_0695_name" translatable="false">Orphek Natura iCon</string>
+    <string name="catalog_material_light_0696_name" translatable="false">Orphek Natura iCon MAX 290W</string>
+    <string name="catalog_material_light_0697_name" translatable="false">Orphek OR4 iCon LED Bar</string>
+    <string name="catalog_material_light_0698_name" translatable="false">Orphek Atlantik iCon</string>
+    <string name="catalog_material_light_0699_name" translatable="false">Orphek Hanging Kit</string>
+    <string name="catalog_material_light_0700_name" translatable="false">Orphek Mounting Arm / Bracket System</string>
+    <string name="catalog_material_light_0701_name" translatable="false">Philips CoralCare Gen2 LED Fixture — White</string>
+    <string name="catalog_material_light_0702_name" translatable="false">Philips CoralCare Gen2 LED Fixture — Black</string>
+    <string name="catalog_material_light_0703_name" translatable="false">Philips CoralCare Gen2 Hanging Kit</string>
+    <string name="catalog_material_light_0704_name" translatable="false">Red Sea ReefLED G2 60</string>
+    <string name="catalog_material_light_0705_name" translatable="false">Red Sea ReefLED G2 115</string>
+    <string name="catalog_material_light_0706_name" translatable="false">Red Sea ReefLED G2 170</string>
+    <string name="catalog_material_light_0707_name" translatable="false">Red Sea ReefLED G2 Clip-On Visor 60</string>
+    <string name="catalog_material_light_0708_name" translatable="false">Red Sea ReefLED G2 Clip-On Visor 115</string>
+    <string name="catalog_material_light_0709_name" translatable="false">Red Sea ReefLED G2 Clip-On Visor 170</string>
+    <string name="catalog_material_light_0710_name" translatable="false">Red Sea ReefLED 50/60 Mounting Arm</string>
+    <string name="catalog_material_light_0711_name" translatable="false">Red Sea ReefLED 90/115 Universal Mounting Arm</string>
+    <string name="catalog_material_light_0712_name" translatable="false">Red Sea ReefLED 160/170 Universal Mounting Arm</string>
+    <string name="catalog_material_light_0713_name" translatable="false">Red Sea ReefLED Pendant — Black</string>
+    <string name="catalog_material_light_0714_name" translatable="false">Red Sea ReefLED Pendant — White</string>
+    <string name="catalog_material_light_0715_name" translatable="false">Red Sea ReefLED Hanging Kit</string>
+    <string name="catalog_material_light_0716_name" translatable="false">ReefBreeders Meridian</string>
+    <string name="catalog_material_light_0717_name" translatable="false">ReefBreeders Meridian Edge</string>
+    <string name="catalog_material_light_0718_name" translatable="false">ReefBreeders Photon V2 Pro</string>
+    <string name="catalog_material_light_0719_name" translatable="false">ReefBreeders Reef Nano</string>
+    <string name="catalog_material_light_0720_name" translatable="false">ReefBreeders LumenBar V2</string>
+    <string name="catalog_material_light_0721_name" translatable="false">ReefBreeders Edge Bar</string>
+    <string name="catalog_material_light_0722_name" translatable="false">ReefBreeders Mounting Legs</string>
+    <string name="catalog_material_light_0723_name" translatable="false">ReefBreeders Hanging Wires</string>
+    <string name="catalog_material_light_0724_name" translatable="false">ReefBreeders Photon Link Kit</string>
+    <string name="catalog_material_light_0725_name" translatable="false">ReefBreeders OHM Optics</string>
+    <string name="catalog_material_light_0726_name" translatable="false">Reef Factory Reef Flare Pro S</string>
+    <string name="catalog_material_light_0727_name" translatable="false">Reef Factory Reef Flare Pro M</string>
+    <string name="catalog_material_light_0728_name" translatable="false">Reef Factory Reef Flare Pro L</string>
+    <string name="catalog_material_light_0729_name" translatable="false">Reef Factory Reef Flare Pro S Blue</string>
+    <string name="catalog_material_light_0730_name" translatable="false">Reef Factory Reef Flare Pro M Blue</string>
+    <string name="catalog_material_light_0731_name" translatable="false">Reef Factory Reef Flare Pro L Blue</string>
+    <string name="catalog_material_light_0732_name" translatable="false">ReeFi Uno 2.1 Pro</string>
+    <string name="catalog_material_light_0733_name" translatable="false">ReeFi LED Duo Extreme</string>
+    <string name="catalog_material_light_0734_name" translatable="false">ReeFi Tank Mount Kit</string>
+    <string name="catalog_material_light_0735_name" translatable="false">ReeFi Wire Hanging Kit</string>
+    <string name="catalog_material_light_0736_name" translatable="false">sera LED X-Change Tube daylight sunrise — 360 mm</string>
+    <string name="catalog_material_light_0737_name" translatable="false">sera LED X-Change Tube daylight sunrise — 520 mm</string>
+    <string name="catalog_material_light_0738_name" translatable="false">sera LED X-Change Tube daylight sunrise — 660 mm</string>
+    <string name="catalog_material_light_0739_name" translatable="false">sera LED X-Change Tube daylight sunrise — 820 mm</string>
+    <string name="catalog_material_light_0740_name" translatable="false">sera LED X-Change Tube daylight sunrise — 965 mm</string>
+    <string name="catalog_material_light_0741_name" translatable="false">sera LED X-Change Tube daylight sunrise — 1120 mm</string>
+    <string name="catalog_material_light_0742_name" translatable="false">sera LED X-Change Tube cool daylight — 360 mm</string>
+    <string name="catalog_material_light_0743_name" translatable="false">sera LED X-Change Tube cool daylight — 520 mm</string>
+    <string name="catalog_material_light_0744_name" translatable="false">sera LED X-Change Tube cool daylight — 660 mm</string>
+    <string name="catalog_material_light_0745_name" translatable="false">sera LED X-Change Tube cool daylight — 820 mm</string>
+    <string name="catalog_material_light_0746_name" translatable="false">sera LED X-Change Tube cool daylight — 965 mm</string>
+    <string name="catalog_material_light_0747_name" translatable="false">sera LED X-Change Tube cool daylight — 1120 mm</string>
+    <string name="catalog_material_light_0748_name" translatable="false">sera LED X-Change Tube neutral brilliant white</string>
+    <string name="catalog_material_light_0749_name" translatable="false">sera LED X-Change Tube plantcolor sunrise — 360 mm</string>
+    <string name="catalog_material_light_0750_name" translatable="false">sera LED X-Change Tube plantcolor sunrise — 520 mm</string>
+    <string name="catalog_material_light_0751_name" translatable="false">sera LED X-Change Tube plantcolor sunrise — 660 mm</string>
+    <string name="catalog_material_light_0752_name" translatable="false">sera LED X-Change Tube plantcolor sunrise — 820 mm</string>
+    <string name="catalog_material_light_0753_name" translatable="false">sera LED X-Change Tube plantcolor sunrise — 965 mm</string>
+    <string name="catalog_material_light_0754_name" translatable="false">sera LED X-Change Tube plantcolor sunrise — 1120 mm</string>
+    <string name="catalog_material_light_0755_name" translatable="false">sera LED X-Change Tube marine blue sunrise — 360 mm</string>
+    <string name="catalog_material_light_0756_name" translatable="false">sera LED X-Change Tube marine blue sunrise — 520 mm</string>
+    <string name="catalog_material_light_0757_name" translatable="false">sera LED X-Change Tube marine blue sunrise — 660 mm</string>
+    <string name="catalog_material_light_0758_name" translatable="false">sera LED X-Change Tube marine blue sunrise — 820 mm</string>
+    <string name="catalog_material_light_0759_name" translatable="false">sera LED X-Change Tube marine blue sunrise — 965 mm</string>
+    <string name="catalog_material_light_0760_name" translatable="false">sera LED X-Change Tube marine blue sunrise — 1120 mm</string>
+    <string name="catalog_material_light_0761_name" translatable="false">sera LED light 6W</string>
+    <string name="catalog_material_light_0762_name" translatable="false">sera Nano LED light 4W</string>
+    <string name="catalog_material_light_0763_name" translatable="false">sera LED Tube Holder Clear</string>
+    <string name="catalog_material_light_0764_name" translatable="false">sera LED fiXture 800</string>
+    <string name="catalog_material_light_0765_name" translatable="false">sera LED fiXture 1000</string>
+    <string name="catalog_material_light_0766_name" translatable="false">sera LED fiXture 1200</string>
+    <string name="catalog_material_light_0767_name" translatable="false">sera LED fiXture Clips</string>
+    <string name="catalog_material_light_0768_name" translatable="false">sera T5 Short Adapter</string>
+    <string name="catalog_material_light_0769_name" translatable="false">sera T5 Adapter</string>
+    <string name="catalog_material_light_0770_name" translatable="false">sera T8 Adapter</string>
+    <string name="catalog_material_light_0771_name" translatable="false">Shark ONE Series 30–45 cm</string>
+    <string name="catalog_material_light_0772_name" translatable="false">Shark ONE Series 45–60 cm</string>
+    <string name="catalog_material_light_0773_name" translatable="false">Shark ONE Series 60–75 cm</string>
+    <string name="catalog_material_light_0774_name" translatable="false">Shark ONE Series 75–90 cm</string>
+    <string name="catalog_material_light_0775_name" translatable="false">Shark ONE Series 90–105 cm</string>
+    <string name="catalog_material_light_0776_name" translatable="false">Shark ONE Series 105–120 cm</string>
+    <string name="catalog_material_light_0777_name" translatable="false">Shark DUO Series 30–45 cm</string>
+    <string name="catalog_material_light_0778_name" translatable="false">Shark DUO Series 45–60 cm</string>
+    <string name="catalog_material_light_0779_name" translatable="false">Shark DUO Series 60–75 cm</string>
+    <string name="catalog_material_light_0780_name" translatable="false">Shark DUO Series 75–90 cm</string>
+    <string name="catalog_material_light_0781_name" translatable="false">Shark DUO Series 90–105 cm</string>
+    <string name="catalog_material_light_0782_name" translatable="false">Shark DUO Series 105–120 cm</string>
+    <string name="catalog_material_light_0783_name" translatable="false">Shark 3 Color Grolux Bar LED 20 cm</string>
+    <string name="catalog_material_light_0784_name" translatable="false">SKYLIGHT HYPERSPOT F — FS</string>
+    <string name="catalog_material_light_0785_name" translatable="false">SKYLIGHT HYPERSPOT F — FM</string>
+    <string name="catalog_material_light_0786_name" translatable="false">SKYLIGHT HYPERSPOT F — FL</string>
+    <string name="catalog_material_light_0787_name" translatable="false">SKYLIGHT PARMASTER F</string>
+    <string name="catalog_material_light_0788_name" translatable="false">SKYLIGHT ENTRIQ</string>
+    <string name="catalog_material_light_0789_name" translatable="false">SKYLIGHT FOQAL S</string>
+    <string name="catalog_material_light_0790_name" translatable="false">SKYLIGHT FOQAL H</string>
+    <string name="catalog_material_light_0791_name" translatable="false">SKYLIGHT HYPERBAR F — FS.30</string>
+    <string name="catalog_material_light_0792_name" translatable="false">SKYLIGHT HYPERBAR F — FM.45</string>
+    <string name="catalog_material_light_0793_name" translatable="false">SKYLIGHT HYPERBAR F — FL.60</string>
+    <string name="catalog_material_light_0794_name" translatable="false">SKYLIGHT HYPERBAR F — FXL.75</string>
+    <string name="catalog_material_light_0795_name" translatable="false">SKYLIGHT HYPERSPOT R — RS</string>
+    <string name="catalog_material_light_0796_name" translatable="false">SKYLIGHT HYPERSPOT R — RM</string>
+    <string name="catalog_material_light_0797_name" translatable="false">SKYLIGHT HYPERSPOT R — RL</string>
+    <string name="catalog_material_light_0798_name" translatable="false">SKYLIGHT PARMASTER R</string>
+    <string name="catalog_material_light_0799_name" translatable="false">SKYLIGHT ENTRIQ R</string>
+    <string name="catalog_material_light_0800_name" translatable="false">SKYLIGHT HYPERBAR R</string>
+    <string name="catalog_material_light_0801_name" translatable="false">SKYLIGHT HYPERBAR Stand Holder</string>
+    <string name="catalog_material_light_0802_name" translatable="false">SKYLIGHT HYPERBAR Edge Holder</string>
+    <string name="catalog_material_light_0803_name" translatable="false">SKYLIGHT HYPERBAR Edge Holder Adjustable</string>
+    <string name="catalog_material_light_0804_name" translatable="false">SKYLIGHT HYPERBAR Hanging Kit</string>
+    <string name="catalog_material_light_0805_name" translatable="false">SKYLIGHT HYPERBAR Aquarium Edge Stand</string>
+    <string name="catalog_material_light_0806_name" translatable="false">SKYLIGHT HYPERBAR Cabinet Stand</string>
+    <string name="catalog_material_light_0807_name" translatable="false">SKYLIGHT HYPERBAR Holder Extensions</string>
+    <string name="catalog_material_light_0808_name" translatable="false">SKYLIGHT HYPERSPOT Mounting Bracket</string>
+    <string name="catalog_material_light_0809_name" translatable="false">SKYLIGHT HYPERSPOT Stand</string>
+    <string name="catalog_material_light_0810_name" translatable="false">SKYLIGHT HYPERSPOT Hanging Kit</string>
+    <string name="catalog_material_light_0811_name" translatable="false">SOBO L-28C Mini LED — Black</string>
+    <string name="catalog_material_light_0812_name" translatable="false">SOBO L-28C Mini LED — White</string>
+    <string name="catalog_material_light_0813_name" translatable="false">SOBO L-28C Mini LED — Red</string>
+    <string name="catalog_material_light_0814_name" translatable="false">SOBO SB-CL3W Clip-On LED</string>
+    <string name="catalog_material_light_0815_name" translatable="false">SOBO SB-CL6W Clip-On LED</string>
+    <string name="catalog_material_light_0816_name" translatable="false">SOBO SB-CL9W Clip-On LED</string>
+    <string name="catalog_material_light_0817_name" translatable="false">SOBO SD-4W Clip-On LED — White + Pink</string>
+    <string name="catalog_material_light_0818_name" translatable="false">SOBO SD-6W Clip-On LED — White + Pink</string>
+    <string name="catalog_material_light_0819_name" translatable="false">SOBO SD-9W Clip-On LED — White + Pink</string>
+    <string name="catalog_material_light_0820_name" translatable="false">SOBO S-CL3W Clip-On LED — White</string>
+    <string name="catalog_material_light_0821_name" translatable="false">SOBO S-CL6W Clip-On LED — White</string>
+    <string name="catalog_material_light_0822_name" translatable="false">SOBO S-CL9W Clip-On LED — White</string>
+    <string name="catalog_material_light_0823_name" translatable="false">SOBO AL-300P Plant LED — 9.5W / 30–40 cm</string>
+    <string name="catalog_material_light_0824_name" translatable="false">SOBO AL-400P Plant LED — 12W / 40–50 cm</string>
+    <string name="catalog_material_light_0825_name" translatable="false">SOBO AL-500P Plant LED — 16W / 50–60 cm</string>
+    <string name="catalog_material_light_0826_name" translatable="false">SOBO AL-600P Plant LED — 18W / 60–70 cm</string>
+    <string name="catalog_material_light_0827_name" translatable="false">SOBO T4-30LED Submersible Light</string>
+    <string name="catalog_material_light_0828_name" translatable="false">SOBO T4-40LED Submersible Light</string>
+    <string name="catalog_material_light_0829_name" translatable="false">SOBO T4-50LED Submersible Light</string>
+    <string name="catalog_material_light_0830_name" translatable="false">SOBO T4-60LED Submersible Light</string>
+    <string name="catalog_material_light_0831_name" translatable="false">SOBO T4-70LED Submersible Light</string>
+    <string name="catalog_material_light_0832_name" translatable="false">SOBO T4-80LED Submersible Light</string>
+    <string name="catalog_material_light_0833_name" translatable="false">SOBO T4-100LED Submersible Light</string>
+    <string name="catalog_material_light_0834_name" translatable="false">SOBO T4-120LED Submersible Light</string>
+    <string name="catalog_material_light_0835_name" translatable="false">SOBO T4-150LED Submersible Light</string>
+    <string name="catalog_material_light_0836_name" translatable="false">Spectra Neo Super Blue LED</string>
+    <string name="catalog_material_light_0837_name" translatable="false">Spectra Aqua Knight M029</string>
+    <string name="catalog_material_light_0838_name" translatable="false">Spectra Aqua Knight M029 V</string>
+    <string name="catalog_material_light_0839_name" translatable="false">Spectra Aqua Knight V2 LED</string>
+    <string name="catalog_material_light_0840_name" translatable="false">Spectra Aqua Knight V3 LED</string>
+    <string name="catalog_material_light_0841_name" translatable="false">Spectra SP20 Marine</string>
+    <string name="catalog_material_light_0842_name" translatable="false">Spectra SP20 Freshwater</string>
+    <string name="catalog_material_light_0843_name" translatable="false">Spectra SP20 Refugium</string>
+    <string name="catalog_material_light_0844_name" translatable="false">Spectra Aqua Helios R60</string>
+    <string name="catalog_material_light_0845_name" translatable="false">Spectra Aqua Helios R90</string>
+    <string name="catalog_material_light_0846_name" translatable="false">Spectra Aqua Helios R120</string>
+    <string name="catalog_material_light_0847_name" translatable="false">Spectra IPL Series Freshwater</string>
+    <string name="catalog_material_light_0848_name" translatable="false">Spectra SPL Series Freshwater</string>
+    <string name="catalog_material_light_0849_name" translatable="false">Spectra CPL Series Freshwater</string>
+    <string name="catalog_material_light_0850_name" translatable="false">Spectra SJL5 Nano Freshwater</string>
+    <string name="catalog_material_light_0851_name" translatable="false">Spectra Freshwater LED F001-D-60</string>
+    <string name="catalog_material_light_0852_name" translatable="false">Spectra Freshwater LED F001-D-90</string>
+    <string name="catalog_material_light_0853_name" translatable="false">Spectra Freshwater LED F001-D-120</string>
+    <string name="catalog_material_light_0854_name" translatable="false">SunSun ADP-080J</string>
+    <string name="catalog_material_light_0855_name" translatable="false">SunSun ADP-160J</string>
+    <string name="catalog_material_light_0856_name" translatable="false">SunSun ADP-200J</string>
+    <string name="catalog_material_light_0857_name" translatable="false">SunSun ADP-250J</string>
+    <string name="catalog_material_light_0858_name" translatable="false">SunSun ADP-300J</string>
+    <string name="catalog_material_light_0859_name" translatable="false">SunSun ADP-400J</string>
+    <string name="catalog_material_light_0860_name" translatable="false">SunSun ADP-500J</string>
+    <string name="catalog_material_light_0861_name" translatable="false">SunSun ADP-700J</string>
+    <string name="catalog_material_light_0862_name" translatable="false">SunSun ADP-800J</string>
+    <string name="catalog_material_light_0863_name" translatable="false">SunSun ADP-900J</string>
+    <string name="catalog_material_light_0864_name" translatable="false">SunSun ADP-1050J</string>
+    <string name="catalog_material_light_0865_name" translatable="false">Sylvania Grolux T5 — 24W</string>
+    <string name="catalog_material_light_0866_name" translatable="false">Sylvania Grolux T5 — 39W</string>
+    <string name="catalog_material_light_0867_name" translatable="false">Sylvania Grolux T5 — 54W</string>
+    <string name="catalog_material_light_0868_name" translatable="false">Sylvania Grolux T5 — 80W</string>
+    <string name="catalog_material_light_0869_name" translatable="false">Sylvania T8 — 36W</string>
+    <string name="catalog_material_light_0870_name" translatable="false">Tetra LightWave Complete Set</string>
+    <string name="catalog_material_light_0871_name" translatable="false">Tetra LightWave Single Light</string>
+    <string name="catalog_material_light_0872_name" translatable="false">Tetra AquaArt LED 20/30L Lamp — 4.8W</string>
+    <string name="catalog_material_light_0873_name" translatable="false">Tetra AquaArt LED 60L Lamp — 9.6W</string>
+    <string name="catalog_material_light_0874_name" translatable="false">Tetra Tetronic LED ProLine</string>
+    <string name="catalog_material_light_0875_name" translatable="false">Tunze LED marine eco chic 8811</string>
+    <string name="catalog_material_light_0876_name" translatable="false">Tunze LED white eco chic 8821</string>
+    <string name="catalog_material_light_0877_name" translatable="false">Tunze LED eco chic refugium 8831</string>
+    <string name="catalog_material_light_0878_name" translatable="false">Tunze LED full spectrum 8850</string>
+    <string name="catalog_material_light_0879_name" translatable="false">Twinstar S LINE V 200S</string>
+    <string name="catalog_material_light_0880_name" translatable="false">Twinstar S LINE V 300S</string>
+    <string name="catalog_material_light_0881_name" translatable="false">Twinstar S LINE V 450S</string>
+    <string name="catalog_material_light_0882_name" translatable="false">Twinstar S LINE V 600S</string>
+    <string name="catalog_material_light_0883_name" translatable="false">Twinstar S LINE V 900S</string>
+    <string name="catalog_material_light_0884_name" translatable="false">Twinstar S LINE V 1200S</string>
+    <string name="catalog_material_light_0885_name" translatable="false">Twinstar E LINE V 200EA</string>
+    <string name="catalog_material_light_0886_name" translatable="false">Twinstar E LINE V 300EA</string>
+    <string name="catalog_material_light_0887_name" translatable="false">Twinstar E LINE V 450EA</string>
+    <string name="catalog_material_light_0888_name" translatable="false">Twinstar E LINE V 600EA</string>
+    <string name="catalog_material_light_0889_name" translatable="false">Twinstar E LINE V 750EA</string>
+    <string name="catalog_material_light_0890_name" translatable="false">Twinstar E LINE V 900EA</string>
+    <string name="catalog_material_light_0891_name" translatable="false">Twinstar E LINE V 1200EA</string>
+    <string name="catalog_material_light_0892_name" translatable="false">Twinstar E LINE V 450EC</string>
+    <string name="catalog_material_light_0893_name" translatable="false">Twinstar E LINE V 600EC</string>
+    <string name="catalog_material_light_0894_name" translatable="false">Twinstar E LINE V Pro 200E Pro</string>
+    <string name="catalog_material_light_0895_name" translatable="false">Twinstar E LINE V Pro 300E Pro</string>
+    <string name="catalog_material_light_0896_name" translatable="false">Twinstar E LINE V Pro 450E Pro</string>
+    <string name="catalog_material_light_0897_name" translatable="false">Twinstar E LINE V Pro 600E Pro</string>
+    <string name="catalog_material_light_0898_name" translatable="false">Twinstar E LINE V Pro 750E Pro</string>
+    <string name="catalog_material_light_0899_name" translatable="false">Twinstar E LINE V Pro 900E Pro</string>
+    <string name="catalog_material_light_0900_name" translatable="false">Twinstar E LINE V Pro 1200E Pro</string>
+    <string name="catalog_material_light_0901_name" translatable="false">Twinstar B LINE 20B</string>
+    <string name="catalog_material_light_0902_name" translatable="false">Twinstar B LINE 30B</string>
+    <string name="catalog_material_light_0903_name" translatable="false">Twinstar B LINE 45B</string>
+    <string name="catalog_material_light_0904_name" translatable="false">Twinstar B LINE 60B</string>
+    <string name="catalog_material_light_0905_name" translatable="false">Twinstar B LINE 75B</string>
+    <string name="catalog_material_light_0906_name" translatable="false">Twinstar B LINE 90B</string>
+    <string name="catalog_material_light_0907_name" translatable="false">Twinstar B LINE 120B</string>
+    <string name="catalog_material_light_0908_name" translatable="false">Twinstar A LINE 20A</string>
+    <string name="catalog_material_light_0909_name" translatable="false">Twinstar A LINE 30A</string>
+    <string name="catalog_material_light_0910_name" translatable="false">Twinstar A LINE 45A</string>
+    <string name="catalog_material_light_0911_name" translatable="false">Twinstar A LINE 60A</string>
+    <string name="catalog_material_light_0912_name" translatable="false">Twinstar A LINE 80A</string>
+    <string name="catalog_material_light_0913_name" translatable="false">Twinstar A LINE 90A</string>
+    <string name="catalog_material_light_0914_name" translatable="false">Twinstar A LINE 120A</string>
+    <string name="catalog_material_light_0915_name" translatable="false">Twinstar G LINE II 60G II</string>
+    <string name="catalog_material_light_0916_name" translatable="false">Twinstar G LINE II 90G II</string>
+    <string name="catalog_material_light_0917_name" translatable="false">Twinstar G LINE II 100G II</string>
+    <string name="catalog_material_light_0918_name" translatable="false">Twinstar G LINE II 120G II</string>
+    <string name="catalog_material_light_0919_name" translatable="false">Twinstar G+ LINE II 80G+ II</string>
+    <string name="catalog_material_light_0920_name" translatable="false">Twinstar G+ LINE II 100G+ II</string>
+    <string name="catalog_material_light_0921_name" translatable="false">Twinstar G+ LINE II 120G+ II</string>
+    <string name="catalog_material_light_0922_name" translatable="false">Twinstar G+ LINE II 140G+ II</string>
+    <string name="catalog_material_light_0923_name" translatable="false">Twinstar S LINE V Pendant Kit</string>
+    <string name="catalog_material_light_0924_name" translatable="false">Twinstar G / G+ T5/T8 Adapter</string>
+    <string name="catalog_material_light_0925_name" translatable="false">Twinstar G / G+ Inverted Bracket</string>
+    <string name="catalog_material_light_0926_name" translatable="false">UNS Titan 1</string>
+    <string name="catalog_material_light_0927_name" translatable="false">WEEK AQUA Mag Series</string>
+    <string name="catalog_material_light_0928_name" translatable="false">WEEK AQUA S Series</string>
+    <string name="catalog_material_light_0929_name" translatable="false">WEEK AQUA M Series</string>
+    <string name="catalog_material_light_0930_name" translatable="false">WEEK AQUA M Series Pendant</string>
+    <string name="catalog_material_light_0931_name" translatable="false">WEEK AQUA V Series Standard</string>
+    <string name="catalog_material_light_0932_name" translatable="false">WEEK AQUA V Series Pendant</string>
+    <string name="catalog_material_light_0933_name" translatable="false">WEEK AQUA V Series Amphibious</string>
+    <string name="catalog_material_light_0934_name" translatable="false">WEEK AQUA L Series</string>
+    <string name="catalog_material_light_0935_name" translatable="false">WEEK AQUA P Series</string>
+    <string name="catalog_material_light_0936_name" translatable="false">WEEK AQUA A Series</string>
+    <string name="catalog_material_light_0937_name" translatable="false">WEEK AQUA T Series</string>
+    <string name="catalog_material_light_0938_name" translatable="false">WEEK AQUA T95</string>
+    <string name="catalog_material_light_0939_name" translatable="false">WEEK AQUA T95 Pro</string>
+    <string name="catalog_material_light_0940_name" translatable="false">WEEK AQUA T140 Pro</string>
+    <string name="catalog_material_light_0941_name" translatable="false">WEEK AQUA Z Series Freshwater</string>
+    <string name="catalog_material_light_0942_name" translatable="false">WEEK AQUA Z Series Marine / Seawater</string>
+    <string name="catalog_material_light_0943_name" translatable="false">WEEK AQUA Z400 Seawater</string>
+    <string name="catalog_material_light_0944_name" translatable="false">WEEK AQUA Y Series Amphibious</string>
+    <string name="catalog_material_light_0945_name" translatable="false">WEEK AQUA NP10</string>
+    <string name="catalog_material_light_0946_name" translatable="false">WEEK AQUA Mini7Pro-F</string>
+    <string name="catalog_material_light_0947_name" translatable="false">WEEK AQUA Mini7Pro-O</string>
+    <string name="catalog_material_light_0948_name" translatable="false">WEEK AQUA USB Magnetic Plant Grow Light</string>
+    <string name="catalog_material_light_0949_name" translatable="false">WEEK AQUA T8 Series</string>
+    <string name="catalog_material_light_0950_name" translatable="false">WEEK AQUA L Stand</string>
+    <string name="catalog_material_light_0951_name" translatable="false">WEEK AQUA S Stand</string>
+    <string name="catalog_material_light_0952_name" translatable="false">WEEK AQUA Longmen Bracket</string>
+    <string name="catalog_material_light_0953_name" translatable="false">WEEK AQUA Back-Style Bracket</string>
+    <string name="catalog_material_light_0954_name" translatable="false">WEEK AQUA Paludarium Lamp Bracket</string>
+    <string name="catalog_material_light_0955_name" translatable="false">Zetlight M1 PRO (M)</string>
+    <string name="catalog_material_light_0956_name" translatable="false">Zetlight M1 PRO (F)</string>
+    <string name="catalog_material_light_0957_name" translatable="false">Zetlight UFO F8 MAX</string>
+    <string name="catalog_material_light_0958_name" translatable="false">Zetlight S1</string>
+    <string name="catalog_material_light_0959_name" translatable="false">Zetlight X9</string>
+    <string name="catalog_material_light_0960_name" translatable="false">Zetlight UFO A8</string>
+    <string name="catalog_material_light_0961_name" translatable="false">Zetlight UFO F8 PRO</string>
+    <string name="catalog_material_light_0962_name" translatable="false">Zetlight AQUA ZA1201 Ai</string>
+    <string name="catalog_material_light_0963_name" translatable="false">Zetlight Qmaven Q6</string>
+    <string name="catalog_material_light_0964_name" translatable="false">Zetlight Lancia2 Series — Marine</string>
+
+    <!-- Search aliases and hardware semantics. -->
+    <string name="catalog_light_keyword_lighting">lighting</string>
+    <string name="catalog_light_keyword_aquarium_light">aquarium light</string>
+    <string name="catalog_light_keyword_fixture">light fixture</string>
+    <string name="catalog_light_keyword_replacement_lamp">replacement lamp</string>
+    <string name="catalog_light_keyword_replacement_module">replacement light module</string>
+    <string name="catalog_light_keyword_light_shield">light shield</string>
+    <string name="catalog_light_keyword_visor">visor</string>
+    <string name="catalog_light_keyword_mirror">mirror</string>
+    <string name="catalog_light_keyword_diffuser">diffuser</string>
+    <string name="catalog_light_keyword_mount">mount</string>
+    <string name="catalog_light_keyword_mounting">mounting</string>
+    <string name="catalog_light_keyword_stand">stand</string>
+    <string name="catalog_light_keyword_hanging">hanging</string>
+    <string name="catalog_light_keyword_hanging_kit">hanging kit</string>
+    <string name="catalog_light_keyword_bracket">bracket</string>
+    <string name="catalog_light_keyword_arm">arm</string>
+    <string name="catalog_light_keyword_holder">holder</string>
+    <string name="catalog_light_keyword_clip">clip</string>
+    <string name="catalog_light_keyword_leg">leg</string>
+    <string name="catalog_light_keyword_feet">feet</string>
+    <string name="catalog_light_keyword_suspension">suspension</string>
+    <string name="catalog_light_keyword_rope">rope</string>
+    <string name="catalog_light_keyword_cable">cable</string>
+    <string name="catalog_light_keyword_gooseneck">gooseneck</string>
+    <string name="catalog_light_keyword_adapter">adapter</string>
+    <string name="catalog_light_keyword_retrofit">retrofit</string>
+    <string name="catalog_light_keyword_optics">optics</string>
+    <string name="catalog_light_keyword_optical_accessory">optical accessory</string>
+    <string name="catalog_light_keyword_lens">lens</string>
+    <string name="catalog_light_keyword_freshwater">freshwater</string>
+    <string name="catalog_light_keyword_marine">marine</string>
+    <string name="catalog_light_keyword_reef">reef</string>
+    <string name="catalog_light_keyword_saltwater">saltwater</string>
+    <string name="catalog_light_keyword_planted">planted aquarium</string>
+    <string name="catalog_light_keyword_full_spectrum">full spectrum</string>
+    <string name="catalog_light_keyword_rgbw" translatable="false">rgbw</string>
+    <string name="catalog_light_keyword_t5" translatable="false">t5</string>
+    <string name="catalog_light_keyword_t8" translatable="false">t8</string>
+    <string name="catalog_light_keyword_tube">tube</string>
+    <string name="catalog_light_keyword_strip_light">strip light</string>
+    <string name="catalog_light_keyword_pendant">pendant</string>
+    <string name="catalog_light_keyword_clip_on">clip-on</string>
+    <string name="catalog_light_keyword_smart">smart</string>
+    <string name="catalog_light_keyword_day_night">day night</string>
+    <string name="catalog_light_keyword_daylight">daylight</string>
+    <string name="catalog_light_keyword_actinic">actinic</string>
+    <string name="catalog_light_keyword_coral">coral</string>
+    <string name="catalog_light_keyword_refugium">refugium</string>
+    <string name="catalog_light_keyword_grow">grow</string>
+    <string name="catalog_light_keyword_blue">blue</string>
+    <string name="catalog_light_keyword_sunlight">sunlight</string>
+    <string name="catalog_light_keyword_grolux" translatable="false">grolux</string>
+    <string name="catalog_light_keyword_dimmable">dimmable</string>
+    <string name="catalog_light_keyword_spectrum">spectrum</string>
+
+    <string name="catalog_light_search_alias_0006" translatable="false">ada solar rgb stand w60xd30 cm</string>
+    <string name="catalog_light_search_alias_0007" translatable="false">ada solar rgb stand w60xd45 cm right-side mount</string>
+    <string name="catalog_light_search_alias_0008" translatable="false">ada solar rgb stand w60xd45 cm left-side mount</string>
+    <string name="catalog_light_search_alias_0009" translatable="false">ada solar rgb stand w90xd45 cm</string>
+    <string name="catalog_light_search_alias_0010" translatable="false">ada solar rgb stand w120 cm</string>
+    <string name="catalog_light_search_alias_0011" translatable="false">ada solar rgb stand w180 cm</string>
+    <string name="catalog_light_search_alias_0039" translatable="false">aqua one stripglo marine cichlid blue led 30 cm</string>
+    <string name="catalog_light_search_alias_0040" translatable="false">aqua one stripglo marine cichlid blue led 45 cm</string>
+    <string name="catalog_light_search_alias_0041" translatable="false">aqua one stripglo marine cichlid blue led 60 cm</string>
+    <string name="catalog_light_search_alias_0042" translatable="false">aqua one stripglo marine cichlid blue led 90 cm</string>
+    <string name="catalog_light_search_alias_0043" translatable="false">aqua one stripglo marine cichlid blue led 120 cm</string>
+    <string name="catalog_light_search_alias_0077" translatable="false">aqua one stripglo t5 t8 retrofit mounting bracket</string>
+    <string name="catalog_light_search_alias_0080" translatable="false">aquael leddy slim sunny day and night</string>
+    <string name="catalog_light_search_alias_0082" translatable="false">aquael leddy slim marine day and night</string>
+    <string name="catalog_light_search_alias_0083" translatable="false">aquael leddy slim duo marine and actinic</string>
+    <string name="catalog_light_search_alias_0084" translatable="false">aquael leddy slim duo sunny and plant</string>
+    <string name="catalog_light_search_alias_0087" translatable="false">aquael leddy smart day and night plant</string>
+    <string name="catalog_light_search_alias_0088" translatable="false">aquael leddy smart day and night sunny</string>
+    <string name="catalog_light_search_alias_0089" translatable="false">aquael leddy tube retrofit day and night sunny</string>
+    <string name="catalog_light_search_alias_0090" translatable="false">aquael leddy tube retrofit day and night plant</string>
+    <string name="catalog_light_search_alias_0101" translatable="false">ai blade coral grow 12 inch</string>
+    <string name="catalog_light_search_alias_0102" translatable="false">ai blade coral grow 21 inch</string>
+    <string name="catalog_light_search_alias_0103" translatable="false">ai blade coral grow 30 inch</string>
+    <string name="catalog_light_search_alias_0104" translatable="false">ai blade coral grow 39 inch</string>
+    <string name="catalog_light_search_alias_0105" translatable="false">ai blade coral grow 48 inch</string>
+    <string name="catalog_light_search_alias_0106" translatable="false">ai blade coral grow 57 inch</string>
+    <string name="catalog_light_search_alias_0107" translatable="false">ai blade coral grow 66 inch</string>
+    <string name="catalog_light_search_alias_0108" translatable="false">ai blade coral glow 12 inch</string>
+    <string name="catalog_light_search_alias_0109" translatable="false">ai blade coral glow 21 inch</string>
+    <string name="catalog_light_search_alias_0110" translatable="false">ai blade coral glow 30 inch</string>
+    <string name="catalog_light_search_alias_0111" translatable="false">ai blade coral glow 39 inch</string>
+    <string name="catalog_light_search_alias_0112" translatable="false">ai blade coral glow 48 inch</string>
+    <string name="catalog_light_search_alias_0113" translatable="false">ai blade coral glow 57 inch</string>
+    <string name="catalog_light_search_alias_0114" translatable="false">ai blade coral glow 66 inch</string>
+    <string name="catalog_light_search_alias_0115" translatable="false">ai blade freshwater 12 inch</string>
+    <string name="catalog_light_search_alias_0116" translatable="false">ai blade freshwater 21 inch</string>
+    <string name="catalog_light_search_alias_0117" translatable="false">ai blade freshwater 30 inch</string>
+    <string name="catalog_light_search_alias_0118" translatable="false">ai blade freshwater 39 inch</string>
+    <string name="catalog_light_search_alias_0119" translatable="false">ai blade freshwater 48 inch</string>
+    <string name="catalog_light_search_alias_0120" translatable="false">ai blade freshwater 57 inch</string>
+    <string name="catalog_light_search_alias_0121" translatable="false">ai blade freshwater 66 inch</string>
+    <string name="catalog_light_search_alias_0124" translatable="false">ai blade hanging kit 3-light</string>
+    <string name="catalog_light_search_alias_0125" translatable="false">ai blade hanging kit 4-light</string>
+    <string name="catalog_light_search_alias_0126" translatable="false">ai blade hanging kit 6-light</string>
+    <string name="catalog_light_search_alias_0135" translatable="false">ai prime flex arm 12 inch</string>
+    <string name="catalog_light_search_alias_0136" translatable="false">ai prime flex arm 18 inch</string>
+    <string name="catalog_light_search_alias_0141" translatable="false">aqualed meta plant full spectrum 3 row led black body</string>
+    <string name="catalog_light_search_alias_0142" translatable="false">aqualed meta plant full spectrum 3 row led metallic body</string>
+    <string name="catalog_light_search_alias_0157" translatable="false">aqualed meta plus full spectrum 4 row special layout</string>
+    <string name="catalog_light_search_alias_0158" translatable="false">aqualed full spectrum planted aquarium lighting 4-color mixed</string>
+    <string name="catalog_light_search_alias_0159" translatable="false">aqualed grolux planted aquarium lighting 3-color mixed</string>
+    <string name="catalog_light_search_alias_0160" translatable="false">aqualed blue and white aquarium lighting</string>
+    <string name="catalog_light_search_alias_0164" translatable="false">aquareef f30 f v2 series</string>
+    <string name="catalog_light_search_alias_0165" translatable="false">aquareef f50 f v2 series</string>
+    <string name="catalog_light_search_alias_0166" translatable="false">aquareef f80 f v2 series</string>
+    <string name="catalog_light_search_alias_0167" translatable="false">aquareef f100 f v2 series</string>
+    <string name="catalog_light_search_alias_0168" translatable="false">aquareef f130 f v2 series</string>
+    <string name="catalog_light_search_alias_0194" translatable="false">aqueon led optibright plus light fixture</string>
+    <string name="catalog_light_search_alias_0217" translatable="false">aquatlantis easy led universal 2.0 marine and reef 438 mm</string>
+    <string name="catalog_light_search_alias_0218" translatable="false">aquatlantis easy led universal 2.0 marine and reef 590 mm</string>
+    <string name="catalog_light_search_alias_0219" translatable="false">aquatlantis easy led universal 2.0 marine and reef 742 mm</string>
+    <string name="catalog_light_search_alias_0220" translatable="false">aquatlantis easy led universal 2.0 marine and reef 895 mm</string>
+    <string name="catalog_light_search_alias_0221" translatable="false">aquatlantis easy led universal 2.0 marine and reef 1047 mm</string>
+    <string name="catalog_light_search_alias_0222" translatable="false">aquatlantis easy led universal 2.0 marine and reef 1200 mm</string>
+    <string name="catalog_light_search_alias_0223" translatable="false">aquatlantis easy led universal 2.0 marine and reef 1450 mm</string>
+    <string name="catalog_light_search_alias_0224" translatable="false">aquatlantis easy led universal 2.0 marine blue 438 590 742 895 1047 1200 1450 mm</string>
+    <string name="catalog_light_search_alias_0225" translatable="false">aquatlantis easy led universal 2.0 deep blue 438 590 742 895 1047 1200 1450 mm</string>
+    <string name="catalog_light_search_alias_0227" translatable="false">aquatlantis easy led universal model 5 w black</string>
+    <string name="catalog_light_search_alias_0228" translatable="false">aquatlantis easy led universal model 5 w white</string>
+    <string name="catalog_light_search_alias_0231" translatable="false">armaturk 1030l 30 cm</string>
+    <string name="catalog_light_search_alias_0232" translatable="false">armaturk 1040l 40 cm</string>
+    <string name="catalog_light_search_alias_0233" translatable="false">armaturk 1050l 50 cm</string>
+    <string name="catalog_light_search_alias_0234" translatable="false">armaturk 1060l 60 cm</string>
+    <string name="catalog_light_search_alias_0235" translatable="false">armaturk 1070l 70 cm</string>
+    <string name="catalog_light_search_alias_0236" translatable="false">armaturk 1080l 80 cm</string>
+    <string name="catalog_light_search_alias_0237" translatable="false">armaturk 1090l 90 cm</string>
+    <string name="catalog_light_search_alias_0238" translatable="false">armaturk 1100l 100 cm</string>
+    <string name="catalog_light_search_alias_0239" translatable="false">armaturk 1200l 120 cm</string>
+    <string name="catalog_light_search_alias_0240" translatable="false">armaturk 1300l 130 cm</string>
+    <string name="catalog_light_search_alias_0241" translatable="false">armaturk 1500l 150 cm</string>
+    <string name="catalog_light_search_alias_0242" translatable="false">armaturk 1030h 30 cm</string>
+    <string name="catalog_light_search_alias_0243" translatable="false">armaturk 2040h 40 cm</string>
+    <string name="catalog_light_search_alias_0244" translatable="false">armaturk 2050h 50 cm</string>
+    <string name="catalog_light_search_alias_0245" translatable="false">armaturk 2060h 60 cm</string>
+    <string name="catalog_light_search_alias_0246" translatable="false">armaturk 2070h 70 cm</string>
+    <string name="catalog_light_search_alias_0247" translatable="false">armaturk 2080h 80 cm</string>
+    <string name="catalog_light_search_alias_0248" translatable="false">armaturk 2090h 90 cm</string>
+    <string name="catalog_light_search_alias_0249" translatable="false">armaturk 2100h 100 cm</string>
+    <string name="catalog_light_search_alias_0250" translatable="false">armaturk 2200h 120 cm</string>
+    <string name="catalog_light_search_alias_0251" translatable="false">armaturk 2300h 130 cm</string>
+    <string name="catalog_light_search_alias_0252" translatable="false">armaturk 2500h 150 cm</string>
+    <string name="catalog_light_search_alias_0253" translatable="false">armaturk nano turk</string>
+    <string name="catalog_light_search_alias_0254" translatable="false">armaturk plant nano20 led</string>
+    <string name="catalog_light_search_alias_0255" translatable="false">armaturk plant nano25 led</string>
+    <string name="catalog_light_search_alias_0256" translatable="false">armaturk eko 40 cm</string>
+    <string name="catalog_light_search_alias_0257" translatable="false">armaturk eko 50 cm</string>
+    <string name="catalog_light_search_alias_0258" translatable="false">armaturk eko 60 cm</string>
+    <string name="catalog_light_search_alias_0259" translatable="false">armaturk eko 70 cm</string>
+    <string name="catalog_light_search_alias_0260" translatable="false">armaturk eko 80 cm</string>
+    <string name="catalog_light_search_alias_0262" translatable="false">ati straton pro g2 102 white</string>
+    <string name="catalog_light_search_alias_0263" translatable="false">ati straton pro g2 102 anthracite</string>
+    <string name="catalog_light_search_alias_0264" translatable="false">ati straton pro g2 153 white</string>
+    <string name="catalog_light_search_alias_0265" translatable="false">ati straton pro g2 153 anthracite</string>
+    <string name="catalog_light_search_alias_0266" translatable="false">ati straton pro g2 204 white</string>
+    <string name="catalog_light_search_alias_0267" translatable="false">ati straton pro g2 204 anthracite</string>
+    <string name="catalog_light_search_alias_0268" translatable="false">ati straton flex g2 102 white</string>
+    <string name="catalog_light_search_alias_0269" translatable="false">ati straton flex g2 102 black</string>
+    <string name="catalog_light_search_alias_0270" translatable="false">ati straton flex g2 153 white</string>
+    <string name="catalog_light_search_alias_0271" translatable="false">ati straton flex g2 153 black</string>
+    <string name="catalog_light_search_alias_0291" translatable="false">chihiros wrgb ii 30 10th edition</string>
+    <string name="catalog_light_search_alias_0292" translatable="false">chihiros wrgb ii 45 10th edition</string>
+    <string name="catalog_light_search_alias_0293" translatable="false">chihiros wrgb ii 60 10th edition</string>
+    <string name="catalog_light_search_alias_0294" translatable="false">chihiros wrgb ii 90 10th edition</string>
+    <string name="catalog_light_search_alias_0295" translatable="false">chihiros wrgb ii 120 10th edition</string>
+    <string name="catalog_light_search_alias_0336" translatable="false">chihiros rgb vivid ii rgb vivid 2 mate shades with mirror black</string>
+    <string name="catalog_light_search_alias_0337" translatable="false">chihiros rgb vivid ii rgb vivid 2 mate shades with mirror silver</string>
+    <string name="catalog_light_search_alias_0338" translatable="false">chihiros wrgb ii pro shades with mirror 30 cm</string>
+    <string name="catalog_light_search_alias_0339" translatable="false">chihiros wrgb ii pro shades with mirror 40 cm</string>
+    <string name="catalog_light_search_alias_0340" translatable="false">chihiros wrgb ii pro shades with mirror 45 cm</string>
+    <string name="catalog_light_search_alias_0341" translatable="false">chihiros wrgb ii pro shades with mirror 60 cm</string>
+    <string name="catalog_light_search_alias_0342" translatable="false">chihiros wrgb ii wrgb ii slim shades with mirror 30 cm</string>
+    <string name="catalog_light_search_alias_0343" translatable="false">chihiros wrgb ii wrgb ii slim shades with mirror 45 cm</string>
+    <string name="catalog_light_search_alias_0344" translatable="false">chihiros wrgb ii wrgb ii slim shades with mirror 60 cm</string>
+    <string name="catalog_light_search_alias_0345" translatable="false">chihiros b series shades with mirror b20</string>
+    <string name="catalog_light_search_alias_0346" translatable="false">chihiros b series shades with mirror b30</string>
+    <string name="catalog_light_search_alias_0347" translatable="false">chihiros b series shades with mirror b60</string>
+    <string name="catalog_light_search_alias_0348" translatable="false">chihiros b series shades with mirror b80</string>
+    <string name="catalog_light_search_alias_0349" translatable="false">chihiros b series shades with mirror b90</string>
+    <string name="catalog_light_search_alias_0350" translatable="false">chihiros b series shades with mirror b120</string>
+    <string name="catalog_light_search_alias_0362" translatable="false">chihiros small hanging stand kit for rgb vivid wrgb</string>
+    <string name="catalog_light_search_alias_0363" translatable="false">chihiros new stand for rgb vivid wrgb series</string>
+    <string name="catalog_light_search_alias_0367" translatable="false">chihiros z light tiny l clip 12-20 mm</string>
+    <string name="catalog_light_search_alias_0370" translatable="false">creaqua alpha rgbw 60</string>
+    <string name="catalog_light_search_alias_0371" translatable="false">creaqua alpha rgbw 90</string>
+    <string name="catalog_light_search_alias_0372" translatable="false">creaqua alpha rgbw 120</string>
+    <string name="catalog_light_search_alias_0373" translatable="false">creaqua alpha rgbw 150</string>
+    <string name="catalog_light_search_alias_0374" translatable="false">creaqua alpha pw 60-85 cm</string>
+    <string name="catalog_light_search_alias_0375" translatable="false">creaqua alpha pw 90-115 cm</string>
+    <string name="catalog_light_search_alias_0376" translatable="false">creaqua alpha pw 120-140 cm</string>
+    <string name="catalog_light_search_alias_0377" translatable="false">creaqua alpha pw 150-175 cm</string>
+    <string name="catalog_light_search_alias_0378" translatable="false">creaqua delta pw 35-55 cm</string>
+    <string name="catalog_light_search_alias_0379" translatable="false">creaqua delta pw 60-85 cm</string>
+    <string name="catalog_light_search_alias_0380" translatable="false">creaqua delta pw 90-115 cm</string>
+    <string name="catalog_light_search_alias_0381" translatable="false">creaqua delta pw 120-150 cm</string>
+    <string name="catalog_light_search_alias_0384" translatable="false">creaqua sigma pw 35-55 cm</string>
+    <string name="catalog_light_search_alias_0385" translatable="false">creaqua sigma pw 60-85 cm</string>
+    <string name="catalog_light_search_alias_0386" translatable="false">creaqua sigma pw 90-115 cm</string>
+    <string name="catalog_light_search_alias_0387" translatable="false">creaqua sigma pw 120-150 cm</string>
+    <string name="catalog_light_search_alias_0403" translatable="false">current usa ecoxotic cannon 80 led 460 nm blue</string>
+    <string name="catalog_light_search_alias_0404" translatable="false">current usa ecoxotic cannon 80 led 10 000 k white</string>
+    <string name="catalog_light_search_alias_0405" translatable="false">current usa ecoxotic cannon 80 led 5 000 k sun white</string>
+    <string name="catalog_light_search_alias_0420" translatable="false">daytime t5 t8 adapter set</string>
+    <string name="catalog_light_search_alias_0423" translatable="false">dennerle trocal led 40 cm 18w</string>
+    <string name="catalog_light_search_alias_0424" translatable="false">dennerle trocal led 70 cm 36w</string>
+    <string name="catalog_light_search_alias_0425" translatable="false">dennerle trocal led 110 cm 60w</string>
+    <string name="catalog_light_search_alias_0426" translatable="false">dennerle trocal led 140 cm 78w</string>
+    <string name="catalog_light_search_alias_0429" translatable="false">dennerle scapers light</string>
+    <string name="catalog_light_search_alias_0455" translatable="false">eheim powerled fresh daylight</string>
+    <string name="catalog_light_search_alias_0456" translatable="false">eheim powerled fresh plants</string>
+    <string name="catalog_light_search_alias_0457" translatable="false">eheim powerled marine hybrid</string>
+    <string name="catalog_light_search_alias_0458" translatable="false">eheim powerled marine actinic</string>
+    <string name="catalog_light_search_alias_0460" translatable="false">eheim powerled mounting brackets</string>
+    <string name="catalog_light_search_alias_0461" translatable="false">eheim powerled suspension hanging set</string>
+    <string name="catalog_light_search_alias_0462" translatable="false">eheim classicled adapter holder set</string>
+    <string name="catalog_light_search_alias_0463" translatable="false">finnex stingray 12 inch</string>
+    <string name="catalog_light_search_alias_0464" translatable="false">finnex stingray 16 inch</string>
+    <string name="catalog_light_search_alias_0465" translatable="false">finnex stingray 20 inch</string>
+    <string name="catalog_light_search_alias_0466" translatable="false">finnex stingray 24 inch</string>
+    <string name="catalog_light_search_alias_0467" translatable="false">finnex stingray 30 inch</string>
+    <string name="catalog_light_search_alias_0468" translatable="false">finnex stingray 36 inch</string>
+    <string name="catalog_light_search_alias_0469" translatable="false">finnex stingray 48 inch</string>
+    <string name="catalog_light_search_alias_0470" translatable="false">finnex stingray 3.0 12 inch</string>
+    <string name="catalog_light_search_alias_0471" translatable="false">finnex stingray 3.0 18 inch</string>
+    <string name="catalog_light_search_alias_0472" translatable="false">finnex stingray 3.0 24 inch</string>
+    <string name="catalog_light_search_alias_0473" translatable="false">finnex stingray 3.0 36 inch</string>
+    <string name="catalog_light_search_alias_0474" translatable="false">finnex stingray 3.0 48 inch</string>
+    <string name="catalog_light_search_alias_0475" translatable="false">finnex klc series 20 inch</string>
+    <string name="catalog_light_search_alias_0476" translatable="false">finnex klc series 24 inch</string>
+    <string name="catalog_light_search_alias_0477" translatable="false">finnex klc series 30 inch</string>
+    <string name="catalog_light_search_alias_0478" translatable="false">finnex klc series 36 inch</string>
+    <string name="catalog_light_search_alias_0479" translatable="false">finnex klc series 48 inch</string>
+    <string name="catalog_light_search_alias_0480" translatable="false">finnex hlc series 20 inch</string>
+    <string name="catalog_light_search_alias_0481" translatable="false">finnex hlc series 24 inch</string>
+    <string name="catalog_light_search_alias_0482" translatable="false">finnex hlc series 30 inch</string>
+    <string name="catalog_light_search_alias_0483" translatable="false">finnex hlc series 36 inch</string>
+    <string name="catalog_light_search_alias_0484" translatable="false">finnex hlc series 48 inch</string>
+    <string name="catalog_light_search_alias_0485" translatable="false">finnex crv series 20 inch</string>
+    <string name="catalog_light_search_alias_0486" translatable="false">finnex crv series 24 inch</string>
+    <string name="catalog_light_search_alias_0487" translatable="false">finnex crv series 30 inch</string>
+    <string name="catalog_light_search_alias_0488" translatable="false">finnex crv series 36 inch</string>
+    <string name="catalog_light_search_alias_0489" translatable="false">finnex crv series 48 inch</string>
+    <string name="catalog_light_search_alias_0490" translatable="false">finnex planted 3.0 24 inch</string>
+    <string name="catalog_light_search_alias_0491" translatable="false">finnex planted 3.0 36 inch</string>
+    <string name="catalog_light_search_alias_0492" translatable="false">finnex planted 3.0 48 inch</string>
+    <string name="catalog_light_search_alias_0493" translatable="false">finnex vivid 3.0 12 inch</string>
+    <string name="catalog_light_search_alias_0494" translatable="false">finnex vivid 3.0 18 inch</string>
+    <string name="catalog_light_search_alias_0495" translatable="false">finnex vivid 3.0 24 inch</string>
+    <string name="catalog_light_search_alias_0496" translatable="false">finnex vivid 3.0 30 inch</string>
+    <string name="catalog_light_search_alias_0497" translatable="false">finnex vivid 3.0 36 inch</string>
+    <string name="catalog_light_search_alias_0498" translatable="false">finnex vivid 3.0 48 inch</string>
+    <string name="catalog_light_search_alias_0504" translatable="false">fluval plant pro 60 38w</string>
+    <string name="catalog_light_search_alias_0505" translatable="false">fluval plant pro 90 60w</string>
+    <string name="catalog_light_search_alias_0506" translatable="false">fluval plant pro 120 90w</string>
+    <string name="catalog_light_search_alias_0507" translatable="false">fluval plant pro 150 120w</string>
+    <string name="catalog_light_search_alias_0534" translatable="false">hygger hg978 led fish tank light 12-18 inch</string>
+    <string name="catalog_light_search_alias_0535" translatable="false">hygger hg978 led fish tank light 18-24 inch</string>
+    <string name="catalog_light_search_alias_0536" translatable="false">hygger hg978 led fish tank light 24-30 inch</string>
+    <string name="catalog_light_search_alias_0537" translatable="false">hygger hg978 led fish tank light 30-36 inch</string>
+    <string name="catalog_light_search_alias_0538" translatable="false">hygger hg978 led fish tank light 36-42 inch</string>
+    <string name="catalog_light_search_alias_0539" translatable="false">hygger hg978 led fish tank light 48-54 inch</string>
+    <string name="catalog_light_search_alias_0540" translatable="false">hygger hg957 planted aquarium light 12-18 inch</string>
+    <string name="catalog_light_search_alias_0541" translatable="false">hygger hg957 planted aquarium light 18-24 inch</string>
+    <string name="catalog_light_search_alias_0542" translatable="false">hygger hg957 planted aquarium light 24-30 inch</string>
+    <string name="catalog_light_search_alias_0543" translatable="false">hygger hg957 planted aquarium light 30-36 inch</string>
+    <string name="catalog_light_search_alias_0544" translatable="false">hygger hg957 planted aquarium light 36-42 inch</string>
+    <string name="catalog_light_search_alias_0545" translatable="false">hygger hg957 planted aquarium light 48-55 inch</string>
+    <string name="catalog_light_search_alias_0559" translatable="false">hygger adjustable light holder extendable bracket set</string>
+    <string name="catalog_light_search_alias_0560" translatable="false">jbl led solar natur gen2 16w 438 mm</string>
+    <string name="catalog_light_search_alias_0561" translatable="false">jbl led solar natur gen2 20w 549-590 mm</string>
+    <string name="catalog_light_search_alias_0562" translatable="false">jbl led solar natur gen2 28w 742 mm</string>
+    <string name="catalog_light_search_alias_0563" translatable="false">jbl led solar natur gen2 31w 849-895 mm</string>
+    <string name="catalog_light_search_alias_0564" translatable="false">jbl led solar natur gen2 47w 1047 mm</string>
+    <string name="catalog_light_search_alias_0565" translatable="false">jbl led solar natur gen2 48w 1149-1200 mm</string>
+    <string name="catalog_light_search_alias_0566" translatable="false">jbl led solar natur gen2 53w 1449-1500 mm</string>
+    <string name="catalog_light_search_alias_0568" translatable="false">jbl led solar effect rgb 85-110 cm</string>
+    <string name="catalog_light_search_alias_0618" translatable="false">micmol g3 aqua mini g3-am marine</string>
+    <string name="catalog_light_search_alias_0619" translatable="false">micmol g3 aqua mini g3-am planted</string>
+    <string name="catalog_light_search_alias_0620" translatable="false">micmol g3 aqua pro g3-ap marine</string>
+    <string name="catalog_light_search_alias_0621" translatable="false">micmol g3 aqua pro g3-ap planted</string>
+    <string name="catalog_light_search_alias_0624" translatable="false">netlea nl-545s-at5-z0 4 50w</string>
+    <string name="catalog_light_search_alias_0625" translatable="false">netlea nl-560s-at5-z0 4</string>
+    <string name="catalog_light_search_alias_0626" translatable="false">netlea nl-580s-at5-z0 4 80w</string>
+    <string name="catalog_light_search_alias_0627" translatable="false">netlea nl-590s-at5-z0 4 95w</string>
+    <string name="catalog_light_search_alias_0628" translatable="false">netlea nl-5120s-at5-z0 4 120w</string>
+    <string name="catalog_light_search_alias_0629" translatable="false">netlea nl-580p-at5-d0 3 80w pendant</string>
+    <string name="catalog_light_search_alias_0630" translatable="false">netlea nl-6105p-at5-d0 4 105w pendant</string>
+    <string name="catalog_light_search_alias_0631" translatable="false">netlea nl-560s-rgb-z0 4 60w</string>
+    <string name="catalog_light_search_alias_0644" translatable="false">onf mist o</string>
+    <string name="catalog_light_search_alias_0646" translatable="false">onf flat one</string>
+    <string name="catalog_light_search_alias_0647" translatable="false">onf flat nano</string>
+    <string name="catalog_light_search_alias_0654" translatable="false">onf ana stainless light stand set for mist o</string>
+    <string name="catalog_light_search_alias_0655" translatable="false">orionled aquaslim grolux fire</string>
+    <string name="catalog_light_search_alias_0656" translatable="false">orionled aquaslim grolux ice</string>
+    <string name="catalog_light_search_alias_0657" translatable="false">orionled aquaslim series 4 color aquarium led</string>
+    <string name="catalog_light_search_alias_0658" translatable="false">orionled aquaslim series royal blue aquarium led</string>
+    <string name="catalog_light_search_alias_0666" translatable="false">orionled d-rgbw black wi-fi app controlled</string>
+    <string name="catalog_light_search_alias_0667" translatable="false">orionled d-rgbw wi-fi app controlled</string>
+    <string name="catalog_light_search_alias_0669" translatable="false">orionled fanus and nano aquarium led spiral gooseneck 5v</string>
+    <string name="catalog_light_search_alias_0675" translatable="false">orionled nano m-1 mixed color dimmer</string>
+    <string name="catalog_light_search_alias_0678" translatable="false">orionled nano spot led 5v 3w</string>
+    <string name="catalog_light_search_alias_0681" translatable="false">orionled aquaslim 4 color 20 cm</string>
+    <string name="catalog_light_search_alias_0682" translatable="false">orionled aquaslim 4 color 30 cm</string>
+    <string name="catalog_light_search_alias_0683" translatable="false">orionled aquaslim 4 color 40 cm</string>
+    <string name="catalog_light_search_alias_0684" translatable="false">orionled aquaslim 4 color 50 cm</string>
+    <string name="catalog_light_search_alias_0685" translatable="false">orionled aquaslim 4 color 60 cm</string>
+    <string name="catalog_light_search_alias_0686" translatable="false">orionled aquaslim 4 color 70 cm</string>
+    <string name="catalog_light_search_alias_0687" translatable="false">orionled aquaslim 4 color 80 cm</string>
+    <string name="catalog_light_search_alias_0688" translatable="false">orionled aquaslim 4 color 90 cm</string>
+    <string name="catalog_light_search_alias_0689" translatable="false">orionled aquaslim 4 color 100 cm</string>
+    <string name="catalog_light_search_alias_0690" translatable="false">orionled aquaslim 4 color 110 cm</string>
+    <string name="catalog_light_search_alias_0691" translatable="false">orionled aquaslim 4 color 120 cm</string>
+    <string name="catalog_light_search_alias_0692" translatable="false">orionled aquaslim 4 color 130 cm</string>
+    <string name="catalog_light_search_alias_0693" translatable="false">orionled aquaslim 4 color 140 cm</string>
+    <string name="catalog_light_search_alias_0694" translatable="false">orionled d series shade mirror mirrored shade</string>
+    <string name="catalog_light_search_alias_0700" translatable="false">orphek mounting arm bracket system</string>
+    <string name="catalog_light_search_alias_0701" translatable="false">philips coralcare gen2 led fixture white</string>
+    <string name="catalog_light_search_alias_0702" translatable="false">philips coralcare gen2 led fixture black</string>
+    <string name="catalog_light_search_alias_0710" translatable="false">red sea reefled 50 60 mounting arm</string>
+    <string name="catalog_light_search_alias_0711" translatable="false">red sea reefled 90 115 universal mounting arm</string>
+    <string name="catalog_light_search_alias_0712" translatable="false">red sea reefled 160 170 universal mounting arm</string>
+    <string name="catalog_light_search_alias_0713" translatable="false">red sea reefled pendant black</string>
+    <string name="catalog_light_search_alias_0714" translatable="false">red sea reefled pendant white</string>
+    <string name="catalog_light_search_alias_0736" translatable="false">sera led x-change tube daylight sunrise 360 mm</string>
+    <string name="catalog_light_search_alias_0737" translatable="false">sera led x-change tube daylight sunrise 520 mm</string>
+    <string name="catalog_light_search_alias_0738" translatable="false">sera led x-change tube daylight sunrise 660 mm</string>
+    <string name="catalog_light_search_alias_0739" translatable="false">sera led x-change tube daylight sunrise 820 mm</string>
+    <string name="catalog_light_search_alias_0740" translatable="false">sera led x-change tube daylight sunrise 965 mm</string>
+    <string name="catalog_light_search_alias_0741" translatable="false">sera led x-change tube daylight sunrise 1120 mm</string>
+    <string name="catalog_light_search_alias_0742" translatable="false">sera led x-change tube cool daylight 360 mm</string>
+    <string name="catalog_light_search_alias_0743" translatable="false">sera led x-change tube cool daylight 520 mm</string>
+    <string name="catalog_light_search_alias_0744" translatable="false">sera led x-change tube cool daylight 660 mm</string>
+    <string name="catalog_light_search_alias_0745" translatable="false">sera led x-change tube cool daylight 820 mm</string>
+    <string name="catalog_light_search_alias_0746" translatable="false">sera led x-change tube cool daylight 965 mm</string>
+    <string name="catalog_light_search_alias_0747" translatable="false">sera led x-change tube cool daylight 1120 mm</string>
+    <string name="catalog_light_search_alias_0749" translatable="false">sera led x-change tube plantcolor sunrise 360 mm</string>
+    <string name="catalog_light_search_alias_0750" translatable="false">sera led x-change tube plantcolor sunrise 520 mm</string>
+    <string name="catalog_light_search_alias_0751" translatable="false">sera led x-change tube plantcolor sunrise 660 mm</string>
+    <string name="catalog_light_search_alias_0752" translatable="false">sera led x-change tube plantcolor sunrise 820 mm</string>
+    <string name="catalog_light_search_alias_0753" translatable="false">sera led x-change tube plantcolor sunrise 965 mm</string>
+    <string name="catalog_light_search_alias_0754" translatable="false">sera led x-change tube plantcolor sunrise 1120 mm</string>
+    <string name="catalog_light_search_alias_0755" translatable="false">sera led x-change tube marine blue sunrise 360 mm</string>
+    <string name="catalog_light_search_alias_0756" translatable="false">sera led x-change tube marine blue sunrise 520 mm</string>
+    <string name="catalog_light_search_alias_0757" translatable="false">sera led x-change tube marine blue sunrise 660 mm</string>
+    <string name="catalog_light_search_alias_0758" translatable="false">sera led x-change tube marine blue sunrise 820 mm</string>
+    <string name="catalog_light_search_alias_0759" translatable="false">sera led x-change tube marine blue sunrise 965 mm</string>
+    <string name="catalog_light_search_alias_0760" translatable="false">sera led x-change tube marine blue sunrise 1120 mm</string>
+    <string name="catalog_light_search_alias_0771" translatable="false">shark one series 30-45 cm</string>
+    <string name="catalog_light_search_alias_0772" translatable="false">shark one series 45-60 cm</string>
+    <string name="catalog_light_search_alias_0773" translatable="false">shark one series 60-75 cm</string>
+    <string name="catalog_light_search_alias_0774" translatable="false">shark one series 75-90 cm</string>
+    <string name="catalog_light_search_alias_0775" translatable="false">shark one series 90-105 cm</string>
+    <string name="catalog_light_search_alias_0776" translatable="false">shark one series 105-120 cm</string>
+    <string name="catalog_light_search_alias_0777" translatable="false">shark duo series 30-45 cm</string>
+    <string name="catalog_light_search_alias_0778" translatable="false">shark duo series 45-60 cm</string>
+    <string name="catalog_light_search_alias_0779" translatable="false">shark duo series 60-75 cm</string>
+    <string name="catalog_light_search_alias_0780" translatable="false">shark duo series 75-90 cm</string>
+    <string name="catalog_light_search_alias_0781" translatable="false">shark duo series 90-105 cm</string>
+    <string name="catalog_light_search_alias_0782" translatable="false">shark duo series 105-120 cm</string>
+    <string name="catalog_light_search_alias_0784" translatable="false">skylight hyperspot f fs</string>
+    <string name="catalog_light_search_alias_0785" translatable="false">skylight hyperspot f fm</string>
+    <string name="catalog_light_search_alias_0786" translatable="false">skylight hyperspot f fl</string>
+    <string name="catalog_light_search_alias_0791" translatable="false">skylight hyperbar f fs.30</string>
+    <string name="catalog_light_search_alias_0792" translatable="false">skylight hyperbar f fm.45</string>
+    <string name="catalog_light_search_alias_0793" translatable="false">skylight hyperbar f fl.60</string>
+    <string name="catalog_light_search_alias_0794" translatable="false">skylight hyperbar f fxl.75</string>
+    <string name="catalog_light_search_alias_0795" translatable="false">skylight hyperspot r rs</string>
+    <string name="catalog_light_search_alias_0796" translatable="false">skylight hyperspot r rm</string>
+    <string name="catalog_light_search_alias_0797" translatable="false">skylight hyperspot r rl</string>
+    <string name="catalog_light_search_alias_0811" translatable="false">sobo l-28c mini led black</string>
+    <string name="catalog_light_search_alias_0812" translatable="false">sobo l-28c mini led white</string>
+    <string name="catalog_light_search_alias_0813" translatable="false">sobo l-28c mini led red</string>
+    <string name="catalog_light_search_alias_0817" translatable="false">sobo sd-4w clip-on led white pink</string>
+    <string name="catalog_light_search_alias_0818" translatable="false">sobo sd-6w clip-on led white pink</string>
+    <string name="catalog_light_search_alias_0819" translatable="false">sobo sd-9w clip-on led white pink</string>
+    <string name="catalog_light_search_alias_0820" translatable="false">sobo s-cl3w clip-on led white</string>
+    <string name="catalog_light_search_alias_0821" translatable="false">sobo s-cl6w clip-on led white</string>
+    <string name="catalog_light_search_alias_0822" translatable="false">sobo s-cl9w clip-on led white</string>
+    <string name="catalog_light_search_alias_0823" translatable="false">sobo al-300p plant led 9.5w 30-40 cm</string>
+    <string name="catalog_light_search_alias_0824" translatable="false">sobo al-400p plant led 12w 40-50 cm</string>
+    <string name="catalog_light_search_alias_0825" translatable="false">sobo al-500p plant led 16w 50-60 cm</string>
+    <string name="catalog_light_search_alias_0826" translatable="false">sobo al-600p plant led 18w 60-70 cm</string>
+    <string name="catalog_light_search_alias_0865" translatable="false">sylvania grolux t5 24w</string>
+    <string name="catalog_light_search_alias_0866" translatable="false">sylvania grolux t5 39w</string>
+    <string name="catalog_light_search_alias_0867" translatable="false">sylvania grolux t5 54w</string>
+    <string name="catalog_light_search_alias_0868" translatable="false">sylvania grolux t5 80w</string>
+    <string name="catalog_light_search_alias_0869" translatable="false">sylvania t8 36w</string>
+    <string name="catalog_light_search_alias_0872" translatable="false">tetra aquaart led 20 30l lamp 4.8w</string>
+    <string name="catalog_light_search_alias_0873" translatable="false">tetra aquaart led 60l lamp 9.6w</string>
+    <string name="catalog_light_search_alias_0919" translatable="false">twinstar g line ii 80g ii</string>
+    <string name="catalog_light_search_alias_0920" translatable="false">twinstar g line ii 100g ii</string>
+    <string name="catalog_light_search_alias_0921" translatable="false">twinstar g line ii 120g ii</string>
+    <string name="catalog_light_search_alias_0922" translatable="false">twinstar g line ii 140g ii</string>
+    <string name="catalog_light_search_alias_0924" translatable="false">twinstar g g t5 t8 adapter</string>
+    <string name="catalog_light_search_alias_0925" translatable="false">twinstar g g inverted bracket</string>
+    <string name="catalog_light_search_alias_0942" translatable="false">week aqua z series marine seawater</string>
+    <string name="catalog_light_search_alias_0955" translatable="false">zetlight m1 pro m</string>
+    <string name="catalog_light_search_alias_0956" translatable="false">zetlight m1 pro f</string>
+    <string name="catalog_light_search_alias_0964" translatable="false">zetlight lancia2 series marine</string>
+</resources>

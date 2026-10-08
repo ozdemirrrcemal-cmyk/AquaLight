@@ -248,7 +248,8 @@ class DeviceRuntimeRepository(
         revokeLocalCredential = ::revokeLocalCredentialAndSession,
         timerAccessProvider = { deviceUid ->
             currentTimerRuntimeAccess(metadataBootstrapCoordinator, deviceUid)
-        }
+        },
+        reconciliationScope = repositoryScope
     )
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(

@@ -97,6 +97,9 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 null
             )
 
+            val catalogId = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_CATALOG_ID
+            ) ?: return@observe
             val plantName = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_NAME
             ) ?: return@observe
@@ -106,6 +109,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
             selectedPlants.add(
                 AquariumPlantTag(
+                    catalogId = catalogId,
                     plantName = plantName,
                     category = category,
                     markerX = pendingMarkerX,

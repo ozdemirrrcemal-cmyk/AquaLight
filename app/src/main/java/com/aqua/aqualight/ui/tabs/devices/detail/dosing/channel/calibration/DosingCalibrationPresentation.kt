@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 
 internal fun DeviceDosingCalibrationUiState.illustrationOperationDurationMillis(): Int = when (step) {
     DeviceDosingCalibrationStep.CALIBRATION_RUN -> operationDurationMs
@@ -54,7 +55,7 @@ internal val DeviceDosingCalibrationStep.illustrationDescriptionRes: Int
             R.string.device_dosing_calibration_confirm_illustration_description
     }
 
-internal val DeviceDosingCalibrationError.messageRes: Int
+internal val DeviceDosingCalibrationError.validationMessageRes: Int
     @StringRes get() = when (this) {
         DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED ->
             R.string.device_dosing_calibration_name_required
@@ -64,17 +65,26 @@ internal val DeviceDosingCalibrationError.messageRes: Int
             R.string.device_dosing_calibration_name_too_long
         DeviceDosingCalibrationError.INVALID_MEASUREMENT ->
             R.string.device_dosing_calibration_invalid_measurement
-        DeviceDosingCalibrationError.CONNECTION -> R.string.device_dosing_calibration_connection_error
-        DeviceDosingCalibrationError.STORAGE -> R.string.device_dosing_calibration_storage_error
-        DeviceDosingCalibrationError.HARDWARE -> R.string.device_dosing_calibration_hardware_error
+        else -> error("$this is an operational calibration error")
+    }
+
+internal fun DeviceDosingCalibrationError.toOperationalFailureOrNull():
+    DeviceDosingCalibrationFailure? =
+    when (this) {
+        DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED,
+        DeviceDosingCalibrationError.DISPLAY_NAME_CONTROL_CHARACTER,
+        DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG,
+        DeviceDosingCalibrationError.INVALID_MEASUREMENT -> null
+        DeviceDosingCalibrationError.CONNECTION -> DeviceDosingCalibrationFailure.CONNECTION
+        DeviceDosingCalibrationError.STORAGE -> DeviceDosingCalibrationFailure.STORAGE
+        DeviceDosingCalibrationError.HARDWARE -> DeviceDosingCalibrationFailure.HARDWARE
         DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED ->
-            R.string.device_dosing_error_output_stop_unconfirmed
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED
         DeviceDosingCalibrationError.OPERATION_IN_PROGRESS ->
-            R.string.device_dosing_calibration_operation_in_progress
+            DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS
         DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY ->
-            R.string.device_dosing_calibration_device_time_not_ready
+            DeviceDosingCalibrationFailure.DEVICE_TIME_NOT_READY
         DeviceDosingCalibrationError.CALIBRATION_STATE_MISMATCH ->
-            R.string.device_dosing_calibration_state_mismatch
-        DeviceDosingCalibrationError.OPERATION_FAILED ->
-            R.string.device_dosing_calibration_operation_failed
+            DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH
+        DeviceDosingCalibrationError.OPERATION_FAILED -> DeviceDosingCalibrationFailure.INTERNAL
     }

@@ -22,6 +22,10 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingErrorContext
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingOperationFailure
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toCommercialDosingError
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toSnackType
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) {
@@ -116,9 +120,12 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.navigationFailureEvents.collect {
+                    val error = DeviceDosingOperationFailure.INTERNAL.toCommercialDosingError(
+                        DeviceDosingErrorContext.CHANNEL_OPEN
+                    )
                     (activity as? BaseActivity)?.showSnackBar(
-                        message = getString(R.string.device_dosing_channel_open_failed),
-                        type = BaseActivity.SnackType.ERROR
+                        message = getString(error.messageRes),
+                        type = error.severity.toSnackType()
                     )
                 }
             }

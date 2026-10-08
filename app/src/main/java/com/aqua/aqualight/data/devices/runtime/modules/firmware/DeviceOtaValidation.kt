@@ -90,8 +90,8 @@ internal object DeviceOtaStateMapper {
             releaseContent
         )
         DeviceFirmwareOtaPhase.SUCCEEDED -> if (
-            snapshot.lastErrorField ==
-            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+            snapshot.failureCode ==
+            DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
         ) {
             DeviceOtaState.Failed(
                 deviceUid = deviceUid.value,

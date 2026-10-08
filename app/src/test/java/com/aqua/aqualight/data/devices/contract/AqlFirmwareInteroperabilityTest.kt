@@ -20,7 +20,11 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProg
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramDeletePayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramEnabledSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramUpdatePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedAutoPlanApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedAutoPlanDeletePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanPhase
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomClearPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
@@ -68,7 +72,7 @@ class AqlFirmwareInteroperabilityTest {
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(62, authenticated.size)
+        assertEquals(66, authenticated.size)
         assertEquals(FIRMWARE_COMMIT, DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
@@ -383,6 +387,12 @@ class AqlFirmwareInteroperabilityTest {
 
     private fun lightSerializerFields(): Map<String, Set<String>> {
         val scene = DeviceLightScene.wrgb(red = 10, green = 20, blue = 30, white = 40)
+        return lightCoreSerializerFields(scene) +
+            lightManagedPlanSerializerFields(scene) +
+            lightPreviewSerializerFields(scene)
+    }
+
+    private fun lightCoreSerializerFields(scene: DeviceLightScene): Map<String, Set<String>> {
         val create = DeviceLightAutoProgramCreatePayload(
             expectedRevision = 1,
             enabled = true,
@@ -401,7 +411,6 @@ class AqlFirmwareInteroperabilityTest {
             rampDurationMs = 1_800_000,
             scene = scene
         )
-
         return linkedMapOf(
             "DeviceLightControlSetPayload" to
                 DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson().keySetExact(),
@@ -421,15 +430,58 @@ class AqlFirmwareInteroperabilityTest {
                 weekdaysMask = 127,
                 points = listOf(DeviceLightCustomPoint(0, scene))
             ).toJson().keySetExact(),
+            "DeviceLightCustomClearPayload" to
+                DeviceLightCustomClearPayload(1).toJson().keySetExact(),
             "DeviceLightAcclimationStartPayload" to
                 DeviceLightAcclimationStartPayload(1, 50, 30).toJson().keySetExact(),
             "DeviceLightAcclimationStopPayload" to
                 DeviceLightAcclimationStopPayload(1).toJson().keySetExact(),
+        )
+    }
+
+    private fun lightManagedPlanSerializerFields(
+        scene: DeviceLightScene
+    ): Map<String, Set<String>> {
+        val phase = DeviceLightManagedPlanPhase(
+            validFromEpochDay = 20_000,
+            validUntilEpochDayExclusive = null,
+            transitionDays = 7,
+            weekdaysMask = 127,
+            startTimeMs = 28_800_000,
+            endTimeMs = 64_800_000,
+            rampDurationMs = 1_800_000,
+            scene = scene
+        )
+        val apply = DeviceLightManagedAutoPlanApplyPayload(
+            expectedRevision = 0,
+            expectedStorageGeneration = 12,
+            planId = null,
+            initialStartPercent = 100,
+            phases = listOf(phase)
+        )
+        return linkedMapOf(
+            "DeviceLightManagedAutoPlanApplyPayload" to apply.toJson().keySetExact(),
+            "DeviceLightManagedPlanPhase" to phase.toJson().keySetExact(),
+            "DeviceLightManagedAutoPlanDeletePayload" to
+                DeviceLightManagedAutoPlanDeletePayload(
+                    expectedRevision = 1,
+                    expectedStorageGeneration = 12,
+                    planId = "lp-00000001"
+                ).toJson().keySetExact()
+        )
+    }
+
+    private fun lightPreviewSerializerFields(scene: DeviceLightScene): Map<String, Set<String>> =
+        linkedMapOf(
             "DeviceLightPreviewSetPayload.Scene" to
                 DeviceLightPreviewSetPayload.Scene(scene, 3_000).toJson().keySetExact(),
             "DeviceLightPreviewSetPayload.VirtualTime" to
                 DeviceLightPreviewSetPayload.VirtualTime(43_200_000, 3_000)
                     .toJson().keySetExact(),
+            "DeviceLightPreviewSetPayload.CustomDay" to
+                DeviceLightPreviewSetPayload.CustomDay(
+                    listOf(DeviceLightCustomPoint(0, scene))
+                ).toJson().keySetExact(),
             "DeviceLightTemperatureProtectionSetPayload" to
                 DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact(),
             "DeviceLightThermalConfigApplyPayload" to DeviceLightThermalConfigApplyPayload(
@@ -439,7 +491,6 @@ class AqlFirmwareInteroperabilityTest {
                 save = true
             ).toJson().keySetExact()
         )
-    }
 
     private fun deviceAndTimeSerializerFields(): Map<String, Set<String>> {
         val rtc = DeviceManualRtcPayload(
@@ -565,7 +616,7 @@ class AqlFirmwareInteroperabilityTest {
         const val TIMER_CONTRACT_FIXTURE = "aql_timer_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+        const val FIRMWARE_COMMIT = "9b4fbc00d09f71d9a0c8958a71650aee3cc94840"
         const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)

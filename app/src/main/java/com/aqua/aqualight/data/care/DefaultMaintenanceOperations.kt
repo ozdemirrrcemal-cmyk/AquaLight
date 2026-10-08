@@ -188,6 +188,7 @@ internal fun AquariumTankSnapshot.toDataTank(
 
 private fun AquariumPlantTag.toDataPlant(): SavedAquariumPlant = SavedAquariumPlant(
     id = id,
+    catalogId = catalogId,
     plantName = plantName,
     category = category,
     markerX = markerX,
@@ -208,6 +209,7 @@ private fun AquariumMaterialSelection.toDataMaterial(): SavedAquariumMaterial =
 private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
     SavedAquariumLivestock(
         id = id,
+        catalogEntryId = catalogEntryId,
         name = name,
         category = category,
         quantity = quantity,

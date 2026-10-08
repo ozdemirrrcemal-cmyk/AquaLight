@@ -1,0 +1,796 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official heater hardware brand and product names are not translated. -->
+    <string name="catalog_heater_brand_amtra" translatable="false">AMTRA</string>
+    <string name="catalog_heater_brand_aqpet" translatable="false">AQPET</string>
+    <string name="catalog_heater_brand_aqua_medic" translatable="false">AQUA MEDIC</string>
+    <string name="catalog_heater_brand_aqua_nova" translatable="false">AQUA NOVA</string>
+    <string name="catalog_heater_brand_aqua_one" translatable="false">AQUA ONE</string>
+    <string name="catalog_heater_brand_aqua_zonic" translatable="false">AQUA ZONIC</string>
+    <string name="catalog_heater_brand_aquael" translatable="false">AQUAEL</string>
+    <string name="catalog_heater_brand_aqualighter" translatable="false">AQUALIGHTER</string>
+    <string name="catalog_heater_brand_aquarium_co_op" translatable="false">AQUARIUM CO-OP</string>
+    <string name="catalog_heater_brand_aquarium_systems" translatable="false">AQUARIUM SYSTEMS</string>
+    <string name="catalog_heater_brand_aquatop" translatable="false">AQUATOP</string>
+    <string name="catalog_heater_brand_aqueon" translatable="false">AQUEON</string>
+    <string name="catalog_heater_brand_artakua" translatable="false">ARTAKUA</string>
+    <string name="catalog_heater_brand_askoll" translatable="false">ASKOLL</string>
+    <string name="catalog_heater_brand_atlantik" translatable="false">ATLANTIK</string>
+    <string name="catalog_heater_brand_atman" translatable="false">ATMAN</string>
+    <string name="catalog_heater_brand_bioscape" translatable="false">BIOSCAPE</string>
+    <string name="catalog_heater_brand_boyu" translatable="false">BOYU</string>
+    <string name="catalog_heater_brand_chihiros" translatable="false">CHIHIROS</string>
+    <string name="catalog_heater_brand_cobalt_aquatics" translatable="false">COBALT AQUATICS</string>
+    <string name="catalog_heater_brand_d_d_the_aquarium_solution" translatable="false">D-D THE AQUARIUM SOLUTION</string>
+    <string name="catalog_heater_brand_dennerle" translatable="false">DENNERLE</string>
+    <string name="catalog_heater_brand_diversa" translatable="false">DIVERSA</string>
+    <string name="catalog_heater_brand_dophin" translatable="false">DOPHIN</string>
+    <string name="catalog_heater_brand_dupla" translatable="false">DUPLA</string>
+    <string name="catalog_heater_brand_eheim" translatable="false">EHEIM</string>
+    <string name="catalog_heater_brand_finnex" translatable="false">FINNEX</string>
+    <string name="catalog_heater_brand_fluval" translatable="false">FLUVAL</string>
+    <string name="catalog_heater_brand_hailea" translatable="false">HAILEA</string>
+    <string name="catalog_heater_brand_hidom" translatable="false">HIDOM</string>
+    <string name="catalog_heater_brand_hitop" translatable="false">HITOP</string>
+    <string name="catalog_heater_brand_hopar" translatable="false">HOPAR</string>
+    <string name="catalog_heater_brand_hydor" translatable="false">HYDOR</string>
+    <string name="catalog_heater_brand_hygger" translatable="false">HYGGER</string>
+    <string name="catalog_heater_brand_innovative_marine" translatable="false">INNOVATIVE MARINE</string>
+    <string name="catalog_heater_brand_interpet" translatable="false">INTERPET</string>
+    <string name="catalog_heater_brand_ista" translatable="false">ISTA</string>
+    <string name="catalog_heater_brand_jbj" translatable="false">JBJ</string>
+    <string name="catalog_heater_brand_jbl" translatable="false">JBL</string>
+    <string name="catalog_heater_brand_jebo" translatable="false">JEBO</string>
+    <string name="catalog_heater_brand_jeneca" translatable="false">JENECA</string>
+    <string name="catalog_heater_brand_juwel" translatable="false">JUWEL</string>
+    <string name="catalog_heater_brand_lifegard_aquatics" translatable="false">LIFEGARD AQUATICS</string>
+    <string name="catalog_heater_brand_marina" translatable="false">MARINA</string>
+    <string name="catalog_heater_brand_marineland" translatable="false">MARINELAND</string>
+    <string name="catalog_heater_brand_newa" translatable="false">NEWA</string>
+    <string name="catalog_heater_brand_nicrew" translatable="false">NICREW</string>
+    <string name="catalog_heater_brand_oase" translatable="false">OASE</string>
+    <string name="catalog_heater_brand_penn_plax" translatable="false">PENN-PLAX</string>
+    <string name="catalog_heater_brand_periha" translatable="false">PERIHA</string>
+    <string name="catalog_heater_brand_petworx" translatable="false">PETWORX</string>
+    <string name="catalog_heater_brand_pro_tech_fish" translatable="false">PRO TECH FISH</string>
+    <string name="catalog_heater_brand_prodac" translatable="false">PRODAC</string>
+    <string name="catalog_heater_brand_resun" translatable="false">RESUN</string>
+    <string name="catalog_heater_brand_ribao" translatable="false">RIBAO</string>
+    <string name="catalog_heater_brand_rs_electrical" translatable="false">RS ELECTRICAL</string>
+    <string name="catalog_heater_brand_schego" translatable="false">SCHEGO</string>
+    <string name="catalog_heater_brand_sea_star" translatable="false">SEA STAR</string>
+    <string name="catalog_heater_brand_sera" translatable="false">SERA</string>
+    <string name="catalog_heater_brand_sicce" translatable="false">SICCE</string>
+    <string name="catalog_heater_brand_sl_aqua" translatable="false">SL-AQUA</string>
+    <string name="catalog_heater_brand_smart" translatable="false">SMART</string>
+    <string name="catalog_heater_brand_sobo" translatable="false">SOBO</string>
+    <string name="catalog_heater_brand_sunsun" translatable="false">SUNSUN</string>
+    <string name="catalog_heater_brand_superfish" translatable="false">SUPERFISH</string>
+    <string name="catalog_heater_brand_tetra" translatable="false">TETRA</string>
+    <string name="catalog_heater_brand_up_aqua" translatable="false">UP AQUA</string>
+    <string name="catalog_heater_brand_viaaqua" translatable="false">VIAAQUA</string>
+    <string name="catalog_heater_brand_xilong" translatable="false">XILONG</string>
+    <string name="catalog_heater_brand_zoo_med" translatable="false">ZOO MED</string>
+
+    <string name="catalog_material_heater_0001_name" translatable="false">AMTRA Klima Evo — 25 W</string>
+    <string name="catalog_material_heater_0002_name" translatable="false">AMTRA Klima Evo — 50 W</string>
+    <string name="catalog_material_heater_0003_name" translatable="false">AMTRA Klima Evo — 75 W</string>
+    <string name="catalog_material_heater_0004_name" translatable="false">AMTRA Klima Evo — 100 W</string>
+    <string name="catalog_material_heater_0005_name" translatable="false">AMTRA Klima Evo — 150 W</string>
+    <string name="catalog_material_heater_0006_name" translatable="false">AMTRA Klima Evo — 200 W</string>
+    <string name="catalog_material_heater_0007_name" translatable="false">AMTRA Klima Evo — 300 W</string>
+    <string name="catalog_material_heater_0008_name" translatable="false">AQPET Venus XS Rod — 25 W</string>
+    <string name="catalog_material_heater_0009_name" translatable="false">AQPET Venus — 50 W</string>
+    <string name="catalog_material_heater_0010_name" translatable="false">AQPET Venus — 100 W</string>
+    <string name="catalog_material_heater_0011_name" translatable="false">AQPET Venus — 200 W</string>
+    <string name="catalog_material_heater_0012_name" translatable="false">AQPET Venus — 300 W</string>
+    <string name="catalog_material_heater_0013_name" translatable="false">AQPET Venus Smart — 100 W</string>
+    <string name="catalog_material_heater_0014_name" translatable="false">AQPET Venus Smart — 300 W</string>
+    <string name="catalog_material_heater_0015_name" translatable="false">AQPET Venus Pro — 300 W</string>
+    <string name="catalog_material_heater_0016_name" translatable="false">AQPET Venus Pro — 500 W</string>
+    <string name="catalog_material_heater_0017_name" translatable="false">AQPET Venus S — 100 W</string>
+    <string name="catalog_material_heater_0018_name" translatable="false">AQUA MEDIC micro heater — 10 W</string>
+    <string name="catalog_material_heater_0019_name" translatable="false">AQUA MEDIC mini heater — 25 W</string>
+    <string name="catalog_material_heater_0020_name" translatable="false">AQUA MEDIC mini heater — 50 W</string>
+    <string name="catalog_material_heater_0021_name" translatable="false">AQUA MEDIC mini heater — 75 W</string>
+    <string name="catalog_material_heater_0022_name" translatable="false">AQUA MEDIC Titanium Heater — 100 W</string>
+    <string name="catalog_material_heater_0023_name" translatable="false">AQUA MEDIC Titanium Heater — 200 W</string>
+    <string name="catalog_material_heater_0024_name" translatable="false">AQUA MEDIC Titanium Heater — 300 W</string>
+    <string name="catalog_material_heater_0025_name" translatable="false">AQUA MEDIC Titanium Heater — 500 W</string>
+    <string name="catalog_material_heater_0026_name" translatable="false">AQUA MEDIC Titanium Heater PRO — 1000 W</string>
+    <string name="catalog_material_heater_0027_name" translatable="false">AQUA MEDIC Titanium Heater PRO — 2000 W</string>
+    <string name="catalog_material_heater_0028_name" translatable="false">AQUA MEDIC Titanium Heater PRO — 3000 W</string>
+    <string name="catalog_material_heater_0029_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 25 W</string>
+    <string name="catalog_material_heater_0030_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 50 W</string>
+    <string name="catalog_material_heater_0031_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 75 W</string>
+    <string name="catalog_material_heater_0032_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0033_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 150 W</string>
+    <string name="catalog_material_heater_0034_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0035_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 250 W</string>
+    <string name="catalog_material_heater_0036_name" translatable="false">AQUA NOVA NHA Aquarium Heater — 300 W</string>
+    <string name="catalog_material_heater_0037_name" translatable="false">AQUA NOVA MINI-HEATER — 50 W</string>
+    <string name="catalog_material_heater_0038_name" translatable="false">AQUA NOVA MINI-HEATER — 100 W</string>
+    <string name="catalog_material_heater_0039_name" translatable="false">AQUA ONE Glass Heater — 25 W</string>
+    <string name="catalog_material_heater_0040_name" translatable="false">AQUA ONE Glass Heater — 55 W</string>
+    <string name="catalog_material_heater_0041_name" translatable="false">AQUA ONE Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0042_name" translatable="false">AQUA ONE Glass Heater — 150 W</string>
+    <string name="catalog_material_heater_0043_name" translatable="false">AQUA ONE Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0044_name" translatable="false">AQUA ONE Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0045_name" translatable="false">AQUA ONE ThermoSafe Heater — 25 W</string>
+    <string name="catalog_material_heater_0046_name" translatable="false">AQUA ONE ThermoSafe Heater — 50 W</string>
+    <string name="catalog_material_heater_0047_name" translatable="false">AQUA ONE ThermoSafe Heater — 100 W</string>
+    <string name="catalog_material_heater_0048_name" translatable="false">AQUA ONE ThermoSafe Heater — 150 W</string>
+    <string name="catalog_material_heater_0049_name" translatable="false">AQUA ONE ThermoSafe Heater — 200 W</string>
+    <string name="catalog_material_heater_0050_name" translatable="false">AQUA ONE ThermoSafe Heater — 300 W</string>
+    <string name="catalog_material_heater_0051_name" translatable="false">AQUA ZONIC Eco Aquarium Heater — 25 W</string>
+    <string name="catalog_material_heater_0052_name" translatable="false">AQUA ZONIC Eco Aquarium Heater — 50 W</string>
+    <string name="catalog_material_heater_0053_name" translatable="false">AQUA ZONIC Eco Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0054_name" translatable="false">AQUA ZONIC Eco Aquarium Heater — 150 W</string>
+    <string name="catalog_material_heater_0055_name" translatable="false">AQUA ZONIC Eco Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0056_name" translatable="false">AQUA ZONIC Eco Aquarium Heater — 300 W</string>
+    <string name="catalog_material_heater_0057_name" translatable="false">AQUAEL Ultra Heater — 25 W</string>
+    <string name="catalog_material_heater_0058_name" translatable="false">AQUAEL Ultra Heater — 50 W</string>
+    <string name="catalog_material_heater_0059_name" translatable="false">AQUAEL Ultra Heater — 75 W</string>
+    <string name="catalog_material_heater_0060_name" translatable="false">AQUAEL Ultra Heater — 100 W</string>
+    <string name="catalog_material_heater_0061_name" translatable="false">AQUAEL Ultra Heater — 150 W</string>
+    <string name="catalog_material_heater_0062_name" translatable="false">AQUAEL Ultra Heater — 200 W</string>
+    <string name="catalog_material_heater_0063_name" translatable="false">AQUAEL Ultra Heater Day&amp;Night — 25 W</string>
+    <string name="catalog_material_heater_0064_name" translatable="false">AQUAEL Ultra Heater Day&amp;Night — 50 W</string>
+    <string name="catalog_material_heater_0065_name" translatable="false">AQUAEL Ultra Heater Day&amp;Night — 75 W</string>
+    <string name="catalog_material_heater_0066_name" translatable="false">AQUAEL Ultra Heater Day&amp;Night — 100 W</string>
+    <string name="catalog_material_heater_0067_name" translatable="false">AQUAEL Ultra Heater Day&amp;Night — 150 W</string>
+    <string name="catalog_material_heater_0068_name" translatable="false">AQUAEL Ultra Heater Day&amp;Night — 200 W</string>
+    <string name="catalog_material_heater_0069_name" translatable="false">AQUAEL Platinium Heater — 25 W</string>
+    <string name="catalog_material_heater_0070_name" translatable="false">AQUAEL Platinium Heater — 50 W</string>
+    <string name="catalog_material_heater_0071_name" translatable="false">AQUAEL Platinium Heater — 75 W</string>
+    <string name="catalog_material_heater_0072_name" translatable="false">AQUAEL Platinium Heater — 100 W</string>
+    <string name="catalog_material_heater_0073_name" translatable="false">AQUAEL Platinium Heater — 150 W</string>
+    <string name="catalog_material_heater_0074_name" translatable="false">AQUAEL Platinium Heater — 200 W</string>
+    <string name="catalog_material_heater_0075_name" translatable="false">AQUAEL Platinium Heater — 250 W</string>
+    <string name="catalog_material_heater_0076_name" translatable="false">AQUAEL Platinium Heater — 300 W</string>
+    <string name="catalog_material_heater_0077_name" translatable="false">AQUAEL Fix 2 — 50 W</string>
+    <string name="catalog_material_heater_0078_name" translatable="false">AQUAEL Fix 2 — 100 W</string>
+    <string name="catalog_material_heater_0079_name" translatable="false">AQUAEL Flow Heater 2.0 — 300 W</string>
+    <string name="catalog_material_heater_0080_name" translatable="false">AQUAEL Flow Heater 2.0 — 500 W</string>
+    <string name="catalog_material_heater_0081_name" translatable="false">AQUAEL Flow Heater BT — ayarlanabilir 50–500 W, 50 W adımlı</string>
+    <string name="catalog_material_heater_0082_name" translatable="false">AQUALIGHTER aHEATER MINI — 10 W</string>
+    <string name="catalog_material_heater_0083_name" translatable="false">Aquarium Co-Op Heater — 50 W</string>
+    <string name="catalog_material_heater_0084_name" translatable="false">Aquarium Co-Op Heater — 100 W</string>
+    <string name="catalog_material_heater_0085_name" translatable="false">AQUARIUM SYSTEMS VisiTherm — 25 W</string>
+    <string name="catalog_material_heater_0086_name" translatable="false">AQUARIUM SYSTEMS VisiTherm — 50 W</string>
+    <string name="catalog_material_heater_0087_name" translatable="false">AQUARIUM SYSTEMS VisiTherm — 100 W</string>
+    <string name="catalog_material_heater_0088_name" translatable="false">AQUARIUM SYSTEMS VisiTherm — 150 W</string>
+    <string name="catalog_material_heater_0089_name" translatable="false">AQUARIUM SYSTEMS VisiTherm — 200 W</string>
+    <string name="catalog_material_heater_0090_name" translatable="false">AQUARIUM SYSTEMS VisiTherm — 300 W</string>
+    <string name="catalog_material_heater_0091_name" translatable="false">AQUATOP GH Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0092_name" translatable="false">AQUATOP GH Glass Heater — 75 W</string>
+    <string name="catalog_material_heater_0093_name" translatable="false">AQUATOP GH Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0094_name" translatable="false">AQUATOP GH Glass Heater — 150 W</string>
+    <string name="catalog_material_heater_0095_name" translatable="false">AQUATOP GH Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0096_name" translatable="false">AQUATOP GH Glass Heater — 250 W</string>
+    <string name="catalog_material_heater_0097_name" translatable="false">AQUATOP GH Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0098_name" translatable="false">AQUATOP HTG Premier Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0099_name" translatable="false">AQUATOP HTG Premier Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0100_name" translatable="false">AQUATOP HTG Premier Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0101_name" translatable="false">AQUATOP HTG Premier Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0102_name" translatable="false">AQUATOP HTG Premier Glass Heater — 400 W</string>
+    <string name="catalog_material_heater_0103_name" translatable="false">AQUATOP EX Digital Heater — 100 W</string>
+    <string name="catalog_material_heater_0104_name" translatable="false">AQUATOP EX Digital Heater — 200 W</string>
+    <string name="catalog_material_heater_0105_name" translatable="false">AQUATOP EX Digital Heater — 300 W</string>
+    <string name="catalog_material_heater_0106_name" translatable="false">AQUATOP GHPRO Heater — 50 W</string>
+    <string name="catalog_material_heater_0107_name" translatable="false">AQUATOP GHPRO Heater — 100 W</string>
+    <string name="catalog_material_heater_0108_name" translatable="false">AQUATOP GHPRO Heater — 200 W</string>
+    <string name="catalog_material_heater_0109_name" translatable="false">AQUATOP GHPRO Heater — 300 W</string>
+    <string name="catalog_material_heater_0110_name" translatable="false">AQUATOP Pisces Nano Heater — 10 W</string>
+    <string name="catalog_material_heater_0111_name" translatable="false">AQUATOP Pisces Nano Heater — 25 W</string>
+    <string name="catalog_material_heater_0112_name" translatable="false">AQUATOP Mantis Mini Heater — 30 W</string>
+    <string name="catalog_material_heater_0113_name" translatable="false">AQUATOP Thermo Quartz TQ Heater — 100 W</string>
+    <string name="catalog_material_heater_0114_name" translatable="false">AQUATOP TH-C Titanium Heater — 100 W</string>
+    <string name="catalog_material_heater_0115_name" translatable="false">AQUATOP TH-C Titanium Heater — 200 W</string>
+    <string name="catalog_material_heater_0116_name" translatable="false">AQUATOP TH-C Titanium Heater — 300 W</string>
+    <string name="catalog_material_heater_0117_name" translatable="false">AQUATOP TH-C Titanium Heater — 400 W</string>
+    <string name="catalog_material_heater_0118_name" translatable="false">AQUATOP TH-C Titanium Heater — 500 W</string>
+    <string name="catalog_material_heater_0119_name" translatable="false">AQUATOP TH-C Titanium Heater — 800 W</string>
+    <string name="catalog_material_heater_0120_name" translatable="false">AQUATOP Hercules Titanium Heater — 1000 W</string>
+    <string name="catalog_material_heater_0121_name" translatable="false">AQUATOP Hercules Titanium Heater — 1500 W</string>
+    <string name="catalog_material_heater_0122_name" translatable="false">AQUEON Preset Heater — 50 W</string>
+    <string name="catalog_material_heater_0123_name" translatable="false">AQUEON Preset Heater — 100 W</string>
+    <string name="catalog_material_heater_0124_name" translatable="false">AQUEON Preset Heater — 150 W</string>
+    <string name="catalog_material_heater_0125_name" translatable="false">AQUEON Preset Heater — 200 W</string>
+    <string name="catalog_material_heater_0126_name" translatable="false">AQUEON Submersible Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0127_name" translatable="false">AQUEON Submersible Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0128_name" translatable="false">AQUEON Submersible Glass Heater — 150 W</string>
+    <string name="catalog_material_heater_0129_name" translatable="false">AQUEON Submersible Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0130_name" translatable="false">AQUEON Submersible Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0131_name" translatable="false">AQUEON Pro Adjustable Heater — 50 W</string>
+    <string name="catalog_material_heater_0132_name" translatable="false">AQUEON Pro Adjustable Heater — 100 W</string>
+    <string name="catalog_material_heater_0133_name" translatable="false">AQUEON Pro Adjustable Heater — 150 W</string>
+    <string name="catalog_material_heater_0134_name" translatable="false">AQUEON Pro Adjustable Heater — 200 W</string>
+    <string name="catalog_material_heater_0135_name" translatable="false">AQUEON Pro Adjustable Heater — 300 W</string>
+    <string name="catalog_material_heater_0136_name" translatable="false">ARTAKUA A-100 Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0137_name" translatable="false">ASKOLL Therm S — 35 W</string>
+    <string name="catalog_material_heater_0138_name" translatable="false">ASKOLL Therm M — 50 W</string>
+    <string name="catalog_material_heater_0139_name" translatable="false">ASKOLL Therm L — 100 W</string>
+    <string name="catalog_material_heater_0140_name" translatable="false">ASKOLL Therm XL — 200 W</string>
+    <string name="catalog_material_heater_0141_name" translatable="false">ASKOLL Therm XXL — 300 W</string>
+    <string name="catalog_material_heater_0142_name" translatable="false">Atlantik Akvaryum Isıtıcısı — 50 W</string>
+    <string name="catalog_material_heater_0143_name" translatable="false">Atlantik Akvaryum Isıtıcısı — 100 W</string>
+    <string name="catalog_material_heater_0144_name" translatable="false">Atlantik Akvaryum Isıtıcısı — 150 W</string>
+    <string name="catalog_material_heater_0145_name" translatable="false">Atlantik Akvaryum Isıtıcısı — 200 W</string>
+    <string name="catalog_material_heater_0146_name" translatable="false">Atlantik Akvaryum Isıtıcısı — 300 W</string>
+    <string name="catalog_material_heater_0147_name" translatable="false">ATLANTIK AE-100 Elektronik Akvaryum Isıtıcısı — 100 W</string>
+    <string name="catalog_material_heater_0148_name" translatable="false">ATMAN CH Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0149_name" translatable="false">ATMAN CH Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0150_name" translatable="false">ATMAN CH Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0151_name" translatable="false">ATMAN CH Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0152_name" translatable="false">ATMAN CH Series Heater — 500 W</string>
+    <string name="catalog_material_heater_0153_name" translatable="false">ATMAN EH Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0154_name" translatable="false">ATMAN EH Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0155_name" translatable="false">ATMAN EH Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0156_name" translatable="false">ATMAN EH Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0157_name" translatable="false">BIOSCAPE Tropic Aquarium Heater — 25 W</string>
+    <string name="catalog_material_heater_0158_name" translatable="false">BIOSCAPE Tropic Aquarium Heater — 55 W</string>
+    <string name="catalog_material_heater_0159_name" translatable="false">BIOSCAPE Tropic Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0160_name" translatable="false">BIOSCAPE Tropic Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0161_name" translatable="false">BIOSCAPE Tropic Aquarium Heater — 300 W</string>
+    <string name="catalog_material_heater_0162_name" translatable="false">BIOSCAPE PRO Electronic Heater — 500 W</string>
+    <string name="catalog_material_heater_0163_name" translatable="false">BIOSCAPE PRO Electronic Heater — 800 W</string>
+    <string name="catalog_material_heater_0164_name" translatable="false">BOYU DR Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0165_name" translatable="false">BOYU DR Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0166_name" translatable="false">BOYU DR Series Heater — 150 W</string>
+    <string name="catalog_material_heater_0167_name" translatable="false">BOYU DR Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0168_name" translatable="false">BOYU DR Series Heater — 250 W</string>
+    <string name="catalog_material_heater_0169_name" translatable="false">BOYU DR Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0170_name" translatable="false">BOYU HT Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0171_name" translatable="false">BOYU HT Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0172_name" translatable="false">BOYU HT Series Heater — 150 W</string>
+    <string name="catalog_material_heater_0173_name" translatable="false">BOYU HT Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0174_name" translatable="false">BOYU HT Series Heater — 250 W</string>
+    <string name="catalog_material_heater_0175_name" translatable="false">BOYU HT Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0176_name" translatable="false">BOYU PTC Digital Heater — 300 W</string>
+    <string name="catalog_material_heater_0177_name" translatable="false">BOYU PTC Digital Heater — 500 W</string>
+    <string name="catalog_material_heater_0178_name" translatable="false">BOYU PTC Digital Heater — 800 W</string>
+    <string name="catalog_material_heater_0179_name" translatable="false">BOYU PTC Digital Heater — 1000 W</string>
+    <string name="catalog_material_heater_0180_name" translatable="false">BOYU TR Titanium Heater — 100 W</string>
+    <string name="catalog_material_heater_0181_name" translatable="false">BOYU TR Titanium Heater — 150 W</string>
+    <string name="catalog_material_heater_0182_name" translatable="false">BOYU TR Titanium Heater — 200 W</string>
+    <string name="catalog_material_heater_0183_name" translatable="false">BOYU TR Titanium Heater — 250 W</string>
+    <string name="catalog_material_heater_0184_name" translatable="false">BOYU TR Titanium Heater — 300 W</string>
+    <string name="catalog_material_heater_0185_name" translatable="false">BOYU GR Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0186_name" translatable="false">BOYU GR Series Heater — 150 W</string>
+    <string name="catalog_material_heater_0187_name" translatable="false">BOYU GR Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0188_name" translatable="false">BOYU GR Series Heater — 250 W</string>
+    <string name="catalog_material_heater_0189_name" translatable="false">BOYU GR Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0190_name" translatable="false">CHIHIROS Heater Pro EU — 12/16 mm — ayarlanabilir 10–1000 W</string>
+    <string name="catalog_material_heater_0191_name" translatable="false">CHIHIROS Heater Pro EU — 16/22 mm — ayarlanabilir 10–1000 W</string>
+    <string name="catalog_material_heater_0192_name" translatable="false">COBALT AQUATICS Neo-Therm PRO — 25 W</string>
+    <string name="catalog_material_heater_0193_name" translatable="false">COBALT AQUATICS Neo-Therm PRO — 50 W</string>
+    <string name="catalog_material_heater_0194_name" translatable="false">COBALT AQUATICS Neo-Therm PRO — 75 W</string>
+    <string name="catalog_material_heater_0195_name" translatable="false">COBALT AQUATICS Neo-Therm PRO — 100 W</string>
+    <string name="catalog_material_heater_0196_name" translatable="false">COBALT AQUATICS Neo-Therm PRO — 150 W</string>
+    <string name="catalog_material_heater_0197_name" translatable="false">COBALT AQUATICS Neo-Therm PRO — 200 W</string>
+    <string name="catalog_material_heater_0198_name" translatable="false">D-D THE AQUARIUM SOLUTION Titanium Heater — 200 W</string>
+    <string name="catalog_material_heater_0199_name" translatable="false">D-D THE AQUARIUM SOLUTION Titanium Heater — 300 W</string>
+    <string name="catalog_material_heater_0200_name" translatable="false">D-D THE AQUARIUM SOLUTION Titanium Heater — 600 W</string>
+    <string name="catalog_material_heater_0201_name" translatable="false">DENNERLE Nano ThermoCompact — 25 W</string>
+    <string name="catalog_material_heater_0202_name" translatable="false">DENNERLE Nano ThermoCompact — 50 W</string>
+    <string name="catalog_material_heater_0203_name" translatable="false">DENNERLE Nano ThermoCompact — 100 W</string>
+    <string name="catalog_material_heater_0204_name" translatable="false">DENNERLE Nano Heater Constant — 35 W</string>
+    <string name="catalog_material_heater_0205_name" translatable="false">DENNERLE Nano Heater Constant — 50 W</string>
+    <string name="catalog_material_heater_0206_name" translatable="false">DENNERLE Nano Heater Constant — 75 W</string>
+    <string name="catalog_material_heater_0207_name" translatable="false">DIVERSA Thermoplus Heater — 25 W</string>
+    <string name="catalog_material_heater_0208_name" translatable="false">DIVERSA Thermoplus Heater — 50 W</string>
+    <string name="catalog_material_heater_0209_name" translatable="false">DIVERSA Thermoplus Heater — 100 W</string>
+    <string name="catalog_material_heater_0210_name" translatable="false">DIVERSA Thermoplus Heater — 150 W</string>
+    <string name="catalog_material_heater_0211_name" translatable="false">DIVERSA Thermoplus Heater — 200 W</string>
+    <string name="catalog_material_heater_0212_name" translatable="false">DIVERSA Thermoplus Heater — 250 W</string>
+    <string name="catalog_material_heater_0213_name" translatable="false">DIVERSA Thermoplus Heater — 300 W</string>
+    <string name="catalog_material_heater_0214_name" translatable="false">DOPHIN AH-1006 Glass Heater — 25 W</string>
+    <string name="catalog_material_heater_0215_name" translatable="false">DOPHIN AH-1006 Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0216_name" translatable="false">DOPHIN AH-1006 Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0217_name" translatable="false">DOPHIN AH-1006 Glass Heater — 150 W</string>
+    <string name="catalog_material_heater_0218_name" translatable="false">DOPHIN AH-1006 Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0219_name" translatable="false">DOPHIN AH-1006 Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0220_name" translatable="false">DOPHIN AH-1006 Glass Heater — 500 W</string>
+    <string name="catalog_material_heater_0221_name" translatable="false">DOPHIN AH-1008 Glass Heater — 25 W</string>
+    <string name="catalog_material_heater_0222_name" translatable="false">DOPHIN AH-1008 Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0223_name" translatable="false">DOPHIN AH-1008 Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0224_name" translatable="false">DOPHIN AH-1008 Glass Heater — 150 W</string>
+    <string name="catalog_material_heater_0225_name" translatable="false">DOPHIN AH-1008 Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0226_name" translatable="false">DOPHIN AH-1008 Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0227_name" translatable="false">DOPHIN AH-1008 Glass Heater — 500 W</string>
+    <string name="catalog_material_heater_0228_name" translatable="false">DOPHIN AH-1010 Mini Fixed Heater — 5 W</string>
+    <string name="catalog_material_heater_0229_name" translatable="false">DOPHIN AH-1010 Mini Fixed Heater — 10 W</string>
+    <string name="catalog_material_heater_0230_name" translatable="false">DOPHIN AH-1010 Mini Fixed Heater — 15 W</string>
+    <string name="catalog_material_heater_0231_name" translatable="false">DUPLA Heat Up — 50 W</string>
+    <string name="catalog_material_heater_0232_name" translatable="false">DUPLA Heat Up — 100 W</string>
+    <string name="catalog_material_heater_0233_name" translatable="false">DUPLA Heat Up — 200 W</string>
+    <string name="catalog_material_heater_0234_name" translatable="false">DUPLA Heat Up — 300 W</string>
+    <string name="catalog_material_heater_0235_name" translatable="false">EHEIM thermocontrol — 25 W</string>
+    <string name="catalog_material_heater_0236_name" translatable="false">EHEIM thermocontrol — 50 W</string>
+    <string name="catalog_material_heater_0237_name" translatable="false">EHEIM thermocontrol — 75 W</string>
+    <string name="catalog_material_heater_0238_name" translatable="false">EHEIM thermocontrol — 100 W</string>
+    <string name="catalog_material_heater_0239_name" translatable="false">EHEIM thermocontrol — 125 W</string>
+    <string name="catalog_material_heater_0240_name" translatable="false">EHEIM thermocontrol — 150 W</string>
+    <string name="catalog_material_heater_0241_name" translatable="false">EHEIM thermocontrol — 200 W</string>
+    <string name="catalog_material_heater_0242_name" translatable="false">EHEIM thermocontrol — 250 W</string>
+    <string name="catalog_material_heater_0243_name" translatable="false">EHEIM thermocontrol — 300 W</string>
+    <string name="catalog_material_heater_0244_name" translatable="false">EHEIM thermocontrol e — 25 W</string>
+    <string name="catalog_material_heater_0245_name" translatable="false">EHEIM thermocontrol e — 50 W</string>
+    <string name="catalog_material_heater_0246_name" translatable="false">EHEIM thermocontrol e — 75 W</string>
+    <string name="catalog_material_heater_0247_name" translatable="false">EHEIM thermocontrol e — 100 W</string>
+    <string name="catalog_material_heater_0248_name" translatable="false">EHEIM thermocontrol e — 125 W</string>
+    <string name="catalog_material_heater_0249_name" translatable="false">EHEIM thermocontrol e — 150 W</string>
+    <string name="catalog_material_heater_0250_name" translatable="false">EHEIM thermocontrol e — 200 W</string>
+    <string name="catalog_material_heater_0251_name" translatable="false">EHEIM thermocontrol e — 250 W</string>
+    <string name="catalog_material_heater_0252_name" translatable="false">EHEIM thermocontrol e — 300 W</string>
+    <string name="catalog_material_heater_0253_name" translatable="false">EHEIM thermocontrol e — 400 W</string>
+    <string name="catalog_material_heater_0254_name" translatable="false">EHEIM thermopreset — 50 W</string>
+    <string name="catalog_material_heater_0255_name" translatable="false">EHEIM thermopreset — 100 W</string>
+    <string name="catalog_material_heater_0256_name" translatable="false">EHEIM thermopreset — 150 W</string>
+    <string name="catalog_material_heater_0257_name" translatable="false">EHEIM thermopreset — 200 W</string>
+    <string name="catalog_material_heater_0258_name" translatable="false">EHEIM thermocontrol+ e WiFi — 150 W</string>
+    <string name="catalog_material_heater_0259_name" translatable="false">EHEIM thermocontrol+ e WiFi — 200 W</string>
+    <string name="catalog_material_heater_0260_name" translatable="false">EHEIM thermocontrol+ e WiFi — 250 W</string>
+    <string name="catalog_material_heater_0261_name" translatable="false">EHEIM thermocontrol+ e WiFi — 300 W</string>
+    <string name="catalog_material_heater_0262_name" translatable="false">FINNEX HMC Heater — 50 W</string>
+    <string name="catalog_material_heater_0263_name" translatable="false">FINNEX HMC Heater — 100 W</string>
+    <string name="catalog_material_heater_0264_name" translatable="false">FINNEX HMC Heater — 200 W</string>
+    <string name="catalog_material_heater_0265_name" translatable="false">FINNEX HMC Heater — 300 W</string>
+    <string name="catalog_material_heater_0266_name" translatable="false">FINNEX HMC Heater — 400 W</string>
+    <string name="catalog_material_heater_0267_name" translatable="false">FINNEX HMC Heater — 500 W</string>
+    <string name="catalog_material_heater_0268_name" translatable="false">FINNEX HMA Heater — 50 W</string>
+    <string name="catalog_material_heater_0269_name" translatable="false">FINNEX HMA Heater — 100 W</string>
+    <string name="catalog_material_heater_0270_name" translatable="false">FINNEX HMA Heater — 150 W</string>
+    <string name="catalog_material_heater_0271_name" translatable="false">FINNEX HMA Heater — 200 W</string>
+    <string name="catalog_material_heater_0272_name" translatable="false">FINNEX HMA Heater — 300 W</string>
+    <string name="catalog_material_heater_0273_name" translatable="false">FINNEX HMA Heater — 500 W</string>
+    <string name="catalog_material_heater_0274_name" translatable="false">FINNEX STE Digital Heater — 200 W</string>
+    <string name="catalog_material_heater_0275_name" translatable="false">FINNEX STE Digital Heater — 400 W</string>
+    <string name="catalog_material_heater_0276_name" translatable="false">FINNEX STE Digital Heater — 600 W</string>
+    <string name="catalog_material_heater_0277_name" translatable="false">FINNEX STE Digital Heater — 800 W</string>
+    <string name="catalog_material_heater_0278_name" translatable="false">FINNEX HMU Digital Heater — 50 W</string>
+    <string name="catalog_material_heater_0279_name" translatable="false">FINNEX HMU Digital Heater — 100 W</string>
+    <string name="catalog_material_heater_0280_name" translatable="false">FINNEX HMU Digital Heater — 200 W</string>
+    <string name="catalog_material_heater_0281_name" translatable="false">FINNEX HMU Digital Heater — 300 W</string>
+    <string name="catalog_material_heater_0282_name" translatable="false">FINNEX HMU Digital Heater — 400 W</string>
+    <string name="catalog_material_heater_0283_name" translatable="false">FINNEX HMU Digital Heater — 500 W</string>
+    <string name="catalog_material_heater_0284_name" translatable="false">FINNEX HPC Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0285_name" translatable="false">FINNEX HPC Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0286_name" translatable="false">FINNEX HPC Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0287_name" translatable="false">FLUVAL P10 Preset Heater — 10 W</string>
+    <string name="catalog_material_heater_0288_name" translatable="false">FLUVAL P25 Preset Heater — 25 W</string>
+    <string name="catalog_material_heater_0289_name" translatable="false">FLUVAL P50 Preset Heater — 50 W</string>
+    <string name="catalog_material_heater_0290_name" translatable="false">FLUVAL T50 Heater — 50 W</string>
+    <string name="catalog_material_heater_0291_name" translatable="false">FLUVAL T100 Heater — 100 W</string>
+    <string name="catalog_material_heater_0292_name" translatable="false">FLUVAL T150 Heater — 150 W</string>
+    <string name="catalog_material_heater_0293_name" translatable="false">FLUVAL T200 Heater — 200 W</string>
+    <string name="catalog_material_heater_0294_name" translatable="false">FLUVAL T300 Heater — 300 W</string>
+    <string name="catalog_material_heater_0295_name" translatable="false">FLUVAL E-Series Electronic Heater — 100 W</string>
+    <string name="catalog_material_heater_0296_name" translatable="false">FLUVAL E-Series Electronic Heater — 200 W</string>
+    <string name="catalog_material_heater_0297_name" translatable="false">FLUVAL E-Series Electronic Heater — 300 W</string>
+    <string name="catalog_material_heater_0298_name" translatable="false">HAILEA HL Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0299_name" translatable="false">HAILEA HL Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0300_name" translatable="false">HAILEA HL Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0301_name" translatable="false">HAILEA HL Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0302_name" translatable="false">HIDOM HT-8025 Quartz Heater — 25 W</string>
+    <string name="catalog_material_heater_0303_name" translatable="false">HIDOM HT-8050 Quartz Heater — 50 W</string>
+    <string name="catalog_material_heater_0304_name" translatable="false">HIDOM HT-8075 Quartz Heater — 75 W</string>
+    <string name="catalog_material_heater_0305_name" translatable="false">HIDOM HT-8100 Quartz Heater — 100 W</string>
+    <string name="catalog_material_heater_0306_name" translatable="false">HIDOM HT-8150 Quartz Heater — 150 W</string>
+    <string name="catalog_material_heater_0307_name" translatable="false">HIDOM HT-8200 Quartz Heater — 200 W</string>
+    <string name="catalog_material_heater_0308_name" translatable="false">HIDOM HT-8250 Quartz Heater — 250 W</string>
+    <string name="catalog_material_heater_0309_name" translatable="false">HIDOM HT-8300 Quartz Heater — 300 W</string>
+    <string name="catalog_material_heater_0310_name" translatable="false">HIDOM HT-8500 Quartz Heater — 500 W</string>
+    <string name="catalog_material_heater_0311_name" translatable="false">HITOP HP-608 Heater — 25 W</string>
+    <string name="catalog_material_heater_0312_name" translatable="false">HITOP HP-608 Heater — 50 W</string>
+    <string name="catalog_material_heater_0313_name" translatable="false">HITOP HP-608 Heater — 100 W</string>
+    <string name="catalog_material_heater_0314_name" translatable="false">HITOP HP-608 Heater — 200 W</string>
+    <string name="catalog_material_heater_0315_name" translatable="false">HITOP HP-608 Heater — 300 W</string>
+    <string name="catalog_material_heater_0316_name" translatable="false">HOPAR H-386 Heater — 25 W</string>
+    <string name="catalog_material_heater_0317_name" translatable="false">HOPAR H-386 Heater — 50 W</string>
+    <string name="catalog_material_heater_0318_name" translatable="false">HOPAR H-386 Heater — 75 W</string>
+    <string name="catalog_material_heater_0319_name" translatable="false">HOPAR H-386 Heater — 100 W</string>
+    <string name="catalog_material_heater_0320_name" translatable="false">HOPAR H-386 Heater — 150 W</string>
+    <string name="catalog_material_heater_0321_name" translatable="false">HOPAR H-386 Heater — 200 W</string>
+    <string name="catalog_material_heater_0322_name" translatable="false">HOPAR H-386 Heater — 300 W</string>
+    <string name="catalog_material_heater_0323_name" translatable="false">HYDOR THEO Heater — 25 W</string>
+    <string name="catalog_material_heater_0324_name" translatable="false">HYDOR THEO Heater — 50 W</string>
+    <string name="catalog_material_heater_0325_name" translatable="false">HYDOR THEO Heater — 100 W</string>
+    <string name="catalog_material_heater_0326_name" translatable="false">HYDOR THEO Heater — 150 W</string>
+    <string name="catalog_material_heater_0327_name" translatable="false">HYDOR THEO Heater — 200 W</string>
+    <string name="catalog_material_heater_0328_name" translatable="false">HYDOR THEO Heater — 300 W</string>
+    <string name="catalog_material_heater_0329_name" translatable="false">HYDOR ETH External Thermal Heater — 200 W — 12 mm</string>
+    <string name="catalog_material_heater_0330_name" translatable="false">HYDOR ETH External Thermal Heater — 200 W — 16 mm</string>
+    <string name="catalog_material_heater_0331_name" translatable="false">HYDOR ETH External Thermal Heater — 300 W — 16 mm</string>
+    <string name="catalog_material_heater_0332_name" translatable="false">HYGGER Titanium DuoSense Aquarium Heater — 50 W</string>
+    <string name="catalog_material_heater_0333_name" translatable="false">HYGGER Titanium DuoSense Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0334_name" translatable="false">HYGGER Titanium DuoSense Aquarium Heater — 150 W</string>
+    <string name="catalog_material_heater_0335_name" translatable="false">HYGGER Titanium DuoSense Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0336_name" translatable="false">HYGGER Titanium Tube Heater — 50 W</string>
+    <string name="catalog_material_heater_0337_name" translatable="false">HYGGER Titanium Tube Heater — 100 W</string>
+    <string name="catalog_material_heater_0338_name" translatable="false">HYGGER Titanium Tube Heater — 200 W</string>
+    <string name="catalog_material_heater_0339_name" translatable="false">HYGGER Titanium Tube Heater — 300 W</string>
+    <string name="catalog_material_heater_0340_name" translatable="false">HYGGER Titanium Tube Heater — 500 W</string>
+    <string name="catalog_material_heater_0341_name" translatable="false">HYGGER Controllable Aquarium Heater HG273 — 25 W</string>
+    <string name="catalog_material_heater_0342_name" translatable="false">HYGGER Controllable Aquarium Heater HG273 — 50 W</string>
+    <string name="catalog_material_heater_0343_name" translatable="false">HYGGER Controllable Aquarium Heater HG273 — 100 W</string>
+    <string name="catalog_material_heater_0344_name" translatable="false">HYGGER Controllable Aquarium Heater HG273 — 150 W</string>
+    <string name="catalog_material_heater_0345_name" translatable="false">HYGGER Controllable Aquarium Heater HG273 — 200 W</string>
+    <string name="catalog_material_heater_0346_name" translatable="false">HYGGER Controllable Aquarium Heater HG273 — 300 W</string>
+    <string name="catalog_material_heater_0347_name" translatable="false">HYGGER Smart Mini Aquarium Heater HG167 — 50 W</string>
+    <string name="catalog_material_heater_0348_name" translatable="false">HYGGER Smart Mini Aquarium Heater HG167 — 100 W</string>
+    <string name="catalog_material_heater_0349_name" translatable="false">HYGGER Smart Mini Aquarium Heater HG167 — 150 W</string>
+    <string name="catalog_material_heater_0350_name" translatable="false">HYGGER Fully Submersible Double Tubes Quartz Aquarium Heater — 500 W</string>
+    <string name="catalog_material_heater_0351_name" translatable="false">HYGGER Fully Submersible Double Tubes Quartz Aquarium Heater — 800 W</string>
+    <string name="catalog_material_heater_0352_name" translatable="false">HYGGER 5 Gallon Fish Tank Heater — 50 W</string>
+    <string name="catalog_material_heater_0353_name" translatable="false">HYGGER 5 Gallon Fish Tank Heater — 100 W</string>
+    <string name="catalog_material_heater_0354_name" translatable="false">HYGGER Quartz Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0355_name" translatable="false">HYGGER Quartz Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0356_name" translatable="false">HYGGER Quartz Aquarium Heater — 300 W</string>
+    <string name="catalog_material_heater_0357_name" translatable="false">HYGGER Quartz Aquarium Heater — 500 W</string>
+    <string name="catalog_material_heater_0358_name" translatable="false">HYGGER Quartz Aquarium Heater — 800 W</string>
+    <string name="catalog_material_heater_0359_name" translatable="false">HYGGER Hollowed-out Aquarium Heater HG163 — 25 W</string>
+    <string name="catalog_material_heater_0360_name" translatable="false">HYGGER Hollowed-out Aquarium Heater HG163 — 50 W</string>
+    <string name="catalog_material_heater_0361_name" translatable="false">HYGGER Hollowed-out Aquarium Heater HG163 — 100 W</string>
+    <string name="catalog_material_heater_0362_name" translatable="false">HYGGER Hollowed-out Aquarium Heater HG163 — 150 W</string>
+    <string name="catalog_material_heater_0363_name" translatable="false">HYGGER Hollowed-out Aquarium Heater HG163 — 300 W</string>
+    <string name="catalog_material_heater_0364_name" translatable="false">HYGGER Hollowed-out Aquarium Heater HG163 — 800 W</string>
+    <string name="catalog_material_heater_0365_name" translatable="false">HYGGER Adjustable Aquarium Heater HG152 — 150/300 W çift güç modu</string>
+    <string name="catalog_material_heater_0366_name" translatable="false">HYGGER Adjustable Aquarium Heater HG152 — 250/500 W çift güç modu</string>
+    <string name="catalog_material_heater_0367_name" translatable="false">HYGGER Adjustable Aquarium Heater HG152 — 400/800 W çift güç modu</string>
+    <string name="catalog_material_heater_0368_name" translatable="false">HYGGER Adjustable Aquarium Heater HG152 — 500/1000 W çift güç modu</string>
+    <string name="catalog_material_heater_0369_name" translatable="false">HYGGER Adjustable Aquarium Heater HG152 — 600/1200 W çift güç modu</string>
+    <string name="catalog_material_heater_0370_name" translatable="false">HYGGER Titanium Aquarium Heater HG802 — 50 W</string>
+    <string name="catalog_material_heater_0371_name" translatable="false">HYGGER Titanium Aquarium Heater HG802 — 100 W</string>
+    <string name="catalog_material_heater_0372_name" translatable="false">HYGGER Titanium Aquarium Heater HG802 — 200 W</string>
+    <string name="catalog_material_heater_0373_name" translatable="false">HYGGER Titanium Aquarium Heater HG802 — 500 W</string>
+    <string name="catalog_material_heater_0374_name" translatable="false">INNOVATIVE MARINE HELIO Mini — 50 W</string>
+    <string name="catalog_material_heater_0375_name" translatable="false">INNOVATIVE MARINE HELIO PTC Smart Heater — 100 W</string>
+    <string name="catalog_material_heater_0376_name" translatable="false">INNOVATIVE MARINE HELIO PTC Smart Heater — 200 W</string>
+    <string name="catalog_material_heater_0377_name" translatable="false">INNOVATIVE MARINE HELIO PTC Smart Heater — 350 W</string>
+    <string name="catalog_material_heater_0378_name" translatable="false">INNOVATIVE MARINE HELIO Dual Heating System — 200 W toplam (2×100 W)</string>
+    <string name="catalog_material_heater_0379_name" translatable="false">INNOVATIVE MARINE HELIO Dual Heating System — 400 W toplam (2×200 W)</string>
+    <string name="catalog_material_heater_0380_name" translatable="false">INNOVATIVE MARINE HELIO Dual Heating System — 700 W toplam (2×350 W)</string>
+    <string name="catalog_material_heater_0381_name" translatable="false">INTERPET Aquatherm Heater — 50 W</string>
+    <string name="catalog_material_heater_0382_name" translatable="false">INTERPET Aquatherm Heater — 300 W</string>
+    <string name="catalog_material_heater_0383_name" translatable="false">INTERPET Deltatherm Heater — 25 W</string>
+    <string name="catalog_material_heater_0384_name" translatable="false">INTERPET Deltatherm Heater — 50 W</string>
+    <string name="catalog_material_heater_0385_name" translatable="false">INTERPET Deltatherm Heater — 100 W</string>
+    <string name="catalog_material_heater_0386_name" translatable="false">INTERPET Deltatherm Heater — 150 W</string>
+    <string name="catalog_material_heater_0387_name" translatable="false">INTERPET Deltatherm Heater — 200 W</string>
+    <string name="catalog_material_heater_0388_name" translatable="false">INTERPET Deltatherm Heater — 300 W</string>
+    <string name="catalog_material_heater_0389_name" translatable="false">INTERPET Deltatherm Flat Heater — 7.5 W</string>
+    <string name="catalog_material_heater_0390_name" translatable="false">INTERPET Deltatherm Flat Heater — 15 W</string>
+    <string name="catalog_material_heater_0391_name" translatable="false">ISTA External Heater I-H614 — 150 W</string>
+    <string name="catalog_material_heater_0392_name" translatable="false">ISTA External Heater I-H615 — 300 W</string>
+    <string name="catalog_material_heater_0393_name" translatable="false">ISTA External Heater I-H616 — 500 W</string>
+    <string name="catalog_material_heater_0394_name" translatable="false">JBJ True Temp Titanium Heating System T3 — 150 W</string>
+    <string name="catalog_material_heater_0395_name" translatable="false">JBJ True Temp Titanium Heating System T3 — 300 W</string>
+    <string name="catalog_material_heater_0396_name" translatable="false">JBJ True Temp Titanium Heating System T3 — 500 W</string>
+    <string name="catalog_material_heater_0397_name" translatable="false">JBJ True Temp Titanium Heating System T3 — 800 W</string>
+    <string name="catalog_material_heater_0398_name" translatable="false">JBJ True Temp Titanium Heating System T3 — 1000 W</string>
+    <string name="catalog_material_heater_0399_name" translatable="false">JBL ProTemp S — 25 W</string>
+    <string name="catalog_material_heater_0400_name" translatable="false">JBL ProTemp S — 50 W</string>
+    <string name="catalog_material_heater_0401_name" translatable="false">JBL ProTemp S — 100 W</string>
+    <string name="catalog_material_heater_0402_name" translatable="false">JBL ProTemp S — 150 W</string>
+    <string name="catalog_material_heater_0403_name" translatable="false">JBL ProTemp S — 200 W</string>
+    <string name="catalog_material_heater_0404_name" translatable="false">JBL ProTemp S — 300 W</string>
+    <string name="catalog_material_heater_0405_name" translatable="false">JEBO 2010 Series Heater — 25 W</string>
+    <string name="catalog_material_heater_0406_name" translatable="false">JEBO 2010 Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0407_name" translatable="false">JEBO 2010 Series Heater — 75 W</string>
+    <string name="catalog_material_heater_0408_name" translatable="false">JEBO 2010 Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0409_name" translatable="false">JEBO 2010 Series Heater — 150 W</string>
+    <string name="catalog_material_heater_0410_name" translatable="false">JEBO 2010 Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0411_name" translatable="false">JEBO 2010 Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0412_name" translatable="false">JENECA BX-22 Metal Heater — 25 W</string>
+    <string name="catalog_material_heater_0413_name" translatable="false">JENECA BX-22 Metal Heater — 50 W</string>
+    <string name="catalog_material_heater_0414_name" translatable="false">JENECA BX-22 Metal Heater — 100 W</string>
+    <string name="catalog_material_heater_0415_name" translatable="false">JENECA BX-22 Metal Heater — 200 W</string>
+    <string name="catalog_material_heater_0416_name" translatable="false">JENECA BX-22 Metal Heater — 300 W</string>
+    <string name="catalog_material_heater_0417_name" translatable="false">JENECA BX-22 Metal Heater — 500 W</string>
+    <string name="catalog_material_heater_0418_name" translatable="false">JENECA SX-265 Heater — 200 W</string>
+    <string name="catalog_material_heater_0419_name" translatable="false">JENECA SX-265 Heater — 300 W</string>
+    <string name="catalog_material_heater_0420_name" translatable="false">JENECA SX-265 Heater — 500 W</string>
+    <string name="catalog_material_heater_0421_name" translatable="false">JENECA SX-265 Heater — 800 W</string>
+    <string name="catalog_material_heater_0422_name" translatable="false">JENECA SX-265 Heater — 1000 W</string>
+    <string name="catalog_material_heater_0423_name" translatable="false">JENECA SX-366 Digital/Titanium Heater — 1000 W</string>
+    <string name="catalog_material_heater_0424_name" translatable="false">JENECA SX-366 Digital/Titanium Heater — 1200 W</string>
+    <string name="catalog_material_heater_0425_name" translatable="false">JENECA SX-366 Digital/Titanium Heater — 1500 W</string>
+    <string name="catalog_material_heater_0426_name" translatable="false">JENECA SX-388 Digital/Titanium Heater — 1000 W</string>
+    <string name="catalog_material_heater_0427_name" translatable="false">JENECA SX-388 Digital/Titanium Heater — 1200 W</string>
+    <string name="catalog_material_heater_0428_name" translatable="false">JENECA SX-388 Digital/Titanium Heater — 1500 W</string>
+    <string name="catalog_material_heater_0429_name" translatable="false">JUWEL AquaHeat Pro — 100 W</string>
+    <string name="catalog_material_heater_0430_name" translatable="false">JUWEL AquaHeat Pro — 200 W</string>
+    <string name="catalog_material_heater_0431_name" translatable="false">JUWEL AquaHeat Pro — 300 W</string>
+    <string name="catalog_material_heater_0432_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 25 W</string>
+    <string name="catalog_material_heater_0433_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0434_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 75 W</string>
+    <string name="catalog_material_heater_0435_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0436_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 150 W</string>
+    <string name="catalog_material_heater_0437_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0438_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 250 W</string>
+    <string name="catalog_material_heater_0439_name" translatable="false">LIFEGARD AQUATICS Adjustable Quartz Glass Heater — 300 W</string>
+    <string name="catalog_material_heater_0440_name" translatable="false">LIFEGARD AQUATICS Pre-Set Quartz Glass Heater — 25 W</string>
+    <string name="catalog_material_heater_0441_name" translatable="false">LIFEGARD AQUATICS Pre-Set Quartz Glass Heater — 50 W</string>
+    <string name="catalog_material_heater_0442_name" translatable="false">LIFEGARD AQUATICS Pre-Set Quartz Glass Heater — 100 W</string>
+    <string name="catalog_material_heater_0443_name" translatable="false">LIFEGARD AQUATICS Pre-Set Quartz Glass Heater — 200 W</string>
+    <string name="catalog_material_heater_0444_name" translatable="false">MARINA Pre-Set Submersible Heater — 25 W</string>
+    <string name="catalog_material_heater_0445_name" translatable="false">MARINA Pre-Set Submersible Heater Mini — 50 W</string>
+    <string name="catalog_material_heater_0446_name" translatable="false">MARINA Submersible Heater — 50 W</string>
+    <string name="catalog_material_heater_0447_name" translatable="false">MARINA Submersible Heater — 100 W</string>
+    <string name="catalog_material_heater_0448_name" translatable="false">MARINA Submersible Heater — 150 W</string>
+    <string name="catalog_material_heater_0449_name" translatable="false">MARINA Submersible Heater — 200 W</string>
+    <string name="catalog_material_heater_0450_name" translatable="false">MARINA Submersible Heater — 300 W</string>
+    <string name="catalog_material_heater_0451_name" translatable="false">MARINELAND Precision Submersible Heater — 50 W</string>
+    <string name="catalog_material_heater_0452_name" translatable="false">MARINELAND Precision Submersible Heater — 100 W</string>
+    <string name="catalog_material_heater_0453_name" translatable="false">MARINELAND Precision Submersible Heater — 150 W</string>
+    <string name="catalog_material_heater_0454_name" translatable="false">MARINELAND Precision Submersible Heater — 200 W</string>
+    <string name="catalog_material_heater_0455_name" translatable="false">MARINELAND Precision Submersible Heater — 300 W</string>
+    <string name="catalog_material_heater_0456_name" translatable="false">NEWA Therm — 25 W</string>
+    <string name="catalog_material_heater_0457_name" translatable="false">NEWA Therm — 50 W</string>
+    <string name="catalog_material_heater_0458_name" translatable="false">NEWA Therm — 75 W</string>
+    <string name="catalog_material_heater_0459_name" translatable="false">NEWA Therm — 100 W</string>
+    <string name="catalog_material_heater_0460_name" translatable="false">NEWA Therm — 150 W</string>
+    <string name="catalog_material_heater_0461_name" translatable="false">NEWA Therm — 200 W</string>
+    <string name="catalog_material_heater_0462_name" translatable="false">NEWA Therm — 250 W</string>
+    <string name="catalog_material_heater_0463_name" translatable="false">NEWA Therm — 300 W</string>
+    <string name="catalog_material_heater_0464_name" translatable="false">NEWA Therm — 400 W</string>
+    <string name="catalog_material_heater_0465_name" translatable="false">NEWA Therm eco — 25 W</string>
+    <string name="catalog_material_heater_0466_name" translatable="false">NEWA Therm eco — 50 W</string>
+    <string name="catalog_material_heater_0467_name" translatable="false">NEWA Therm eco — 75 W</string>
+    <string name="catalog_material_heater_0468_name" translatable="false">NEWA Therm eco — 100 W</string>
+    <string name="catalog_material_heater_0469_name" translatable="false">NEWA Therm eco — 150 W</string>
+    <string name="catalog_material_heater_0470_name" translatable="false">NEWA Therm eco — 200 W</string>
+    <string name="catalog_material_heater_0471_name" translatable="false">NEWA Therm eco — 2×200 W sistem</string>
+    <string name="catalog_material_heater_0472_name" translatable="false">NEWA Therm eco — 250 W</string>
+    <string name="catalog_material_heater_0473_name" translatable="false">NEWA Therm eco — 300 W</string>
+    <string name="catalog_material_heater_0474_name" translatable="false">NEWA Therm eco — 2×300 W sistem</string>
+    <string name="catalog_material_heater_0475_name" translatable="false">NEWA Therm next — 50 W</string>
+    <string name="catalog_material_heater_0476_name" translatable="false">NEWA Therm next — 100 W</string>
+    <string name="catalog_material_heater_0477_name" translatable="false">NEWA Therm next — 150 W</string>
+    <string name="catalog_material_heater_0478_name" translatable="false">NEWA Therm next — 200 W</string>
+    <string name="catalog_material_heater_0479_name" translatable="false">NEWA Therm next — 300 W</string>
+    <string name="catalog_material_heater_0480_name" translatable="false">NEWA Therm mini K — 10 W</string>
+    <string name="catalog_material_heater_0481_name" translatable="false">NEWA Therm mini K — 20 W</string>
+    <string name="catalog_material_heater_0482_name" translatable="false">NEWA Therm mini P — 10 W</string>
+    <string name="catalog_material_heater_0483_name" translatable="false">NEWA Therm mini P — 20 W</string>
+    <string name="catalog_material_heater_0484_name" translatable="false">NEWA Therm preset 25°C — 50 W</string>
+    <string name="catalog_material_heater_0485_name" translatable="false">NEWA Therm preset 25°C — 100 W</string>
+    <string name="catalog_material_heater_0486_name" translatable="false">NEWA Therm preset 25°C — 150 W</string>
+    <string name="catalog_material_heater_0487_name" translatable="false">NEWA Therm preset 25°C — 200 W</string>
+    <string name="catalog_material_heater_0488_name" translatable="false">NICREW BH Aquarium Heater — 50 W</string>
+    <string name="catalog_material_heater_0489_name" translatable="false">NICREW BH Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0490_name" translatable="false">OASE HeatUp — 25 W</string>
+    <string name="catalog_material_heater_0491_name" translatable="false">OASE HeatUp — 50 W</string>
+    <string name="catalog_material_heater_0492_name" translatable="false">OASE HeatUp — 100 W</string>
+    <string name="catalog_material_heater_0493_name" translatable="false">OASE HeatUp — 150 W</string>
+    <string name="catalog_material_heater_0494_name" translatable="false">OASE HeatUp — 200 W</string>
+    <string name="catalog_material_heater_0495_name" translatable="false">OASE HeatUp — 250 W</string>
+    <string name="catalog_material_heater_0496_name" translatable="false">OASE HeatUp — 300 W</string>
+    <string name="catalog_material_heater_0497_name" translatable="false">OASE HeatUp — 400 W</string>
+    <string name="catalog_material_heater_0498_name" translatable="false">OASE EDEN 425 Heater — 25 W</string>
+    <string name="catalog_material_heater_0499_name" translatable="false">OASE EDEN 425 Heater — 50 W</string>
+    <string name="catalog_material_heater_0500_name" translatable="false">OASE EDEN 425 Heater — 75 W</string>
+    <string name="catalog_material_heater_0501_name" translatable="false">OASE EDEN 425 Heater — 100 W</string>
+    <string name="catalog_material_heater_0502_name" translatable="false">OASE EDEN 425 Heater — 150 W</string>
+    <string name="catalog_material_heater_0503_name" translatable="false">OASE EDEN 425 Heater — 200 W</string>
+    <string name="catalog_material_heater_0504_name" translatable="false">OASE EDEN 425 Heater — 250 W</string>
+    <string name="catalog_material_heater_0505_name" translatable="false">OASE EDEN 425 Heater — 300 W</string>
+    <string name="catalog_material_heater_0506_name" translatable="false">PENN-PLAX Cascade Heat Heater — 25 W</string>
+    <string name="catalog_material_heater_0507_name" translatable="false">PENN-PLAX Cascade Heat Heater — 50 W</string>
+    <string name="catalog_material_heater_0508_name" translatable="false">PENN-PLAX Cascade Heat Heater — 75 W</string>
+    <string name="catalog_material_heater_0509_name" translatable="false">PENN-PLAX Cascade Heat Heater — 100 W</string>
+    <string name="catalog_material_heater_0510_name" translatable="false">PENN-PLAX Cascade Heat Heater — 150 W</string>
+    <string name="catalog_material_heater_0511_name" translatable="false">PENN-PLAX Cascade Heat Heater — 200 W</string>
+    <string name="catalog_material_heater_0512_name" translatable="false">PENN-PLAX Cascade Heat Heater — 300 W</string>
+    <string name="catalog_material_heater_0513_name" translatable="false">PERIHA HE Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0514_name" translatable="false">PERIHA HE Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0515_name" translatable="false">PERIHA HE Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0516_name" translatable="false">PERIHA HE Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0517_name" translatable="false">PERIHA HE Series Heater — 500 W</string>
+    <string name="catalog_material_heater_0518_name" translatable="false">PERIHA HC Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0519_name" translatable="false">PERIHA HC Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0520_name" translatable="false">PERIHA HC Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0521_name" translatable="false">PERIHA HC Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0522_name" translatable="false">PERIHA H7-A55 Heater — 55 W</string>
+    <string name="catalog_material_heater_0523_name" translatable="false">PERIHA H7-A100 Heater — 100 W</string>
+    <string name="catalog_material_heater_0524_name" translatable="false">PERIHA H7-A200 Heater — 200 W</string>
+    <string name="catalog_material_heater_0525_name" translatable="false">PERIHA H7-A300 Heater — 300 W</string>
+    <string name="catalog_material_heater_0526_name" translatable="false">PERIHA H8 Heater — 500 W</string>
+    <string name="catalog_material_heater_0527_name" translatable="false">PETWORX Standard Heater — 25 W</string>
+    <string name="catalog_material_heater_0528_name" translatable="false">PETWORX Standard Heater — 50 W</string>
+    <string name="catalog_material_heater_0529_name" translatable="false">PETWORX Standard Heater — 100 W</string>
+    <string name="catalog_material_heater_0530_name" translatable="false">PETWORX Standard Heater — 200 W</string>
+    <string name="catalog_material_heater_0531_name" translatable="false">PETWORX Standard Heater — 300 W</string>
+    <string name="catalog_material_heater_0532_name" translatable="false">PETWORX Mini Heater — 10 W</string>
+    <string name="catalog_material_heater_0533_name" translatable="false">PETWORX Heater with Remote — 25 W</string>
+    <string name="catalog_material_heater_0534_name" translatable="false">PETWORX Heater with Remote — 50 W</string>
+    <string name="catalog_material_heater_0535_name" translatable="false">PETWORX Heater with Remote — 100 W</string>
+    <string name="catalog_material_heater_0536_name" translatable="false">PETWORX Heater with Remote — 150 W</string>
+    <string name="catalog_material_heater_0537_name" translatable="false">PRO TECH FISH Aquarium Heater — 25 W</string>
+    <string name="catalog_material_heater_0538_name" translatable="false">PRO TECH FISH Aquarium Heater — 50 W</string>
+    <string name="catalog_material_heater_0539_name" translatable="false">PRO TECH FISH Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0540_name" translatable="false">PRO TECH FISH Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0541_name" translatable="false">PRO TECH FISH Aquarium Heater — 300 W</string>
+    <string name="catalog_material_heater_0542_name" translatable="false">PRODAC Magictherm Heater — 25 W</string>
+    <string name="catalog_material_heater_0543_name" translatable="false">PRODAC Magictherm Heater — 50 W</string>
+    <string name="catalog_material_heater_0544_name" translatable="false">PRODAC Magictherm Heater — 100 W</string>
+    <string name="catalog_material_heater_0545_name" translatable="false">PRODAC Magictherm Heater — 150 W</string>
+    <string name="catalog_material_heater_0546_name" translatable="false">PRODAC Magictherm Heater — 200 W</string>
+    <string name="catalog_material_heater_0547_name" translatable="false">PRODAC Magictherm Heater — 300 W</string>
+    <string name="catalog_material_heater_0548_name" translatable="false">RESUN Sunlike Heater — 25 W</string>
+    <string name="catalog_material_heater_0549_name" translatable="false">RESUN Sunlike Heater — 50 W</string>
+    <string name="catalog_material_heater_0550_name" translatable="false">RESUN Sunlike Heater — 75 W</string>
+    <string name="catalog_material_heater_0551_name" translatable="false">RESUN Sunlike Heater — 100 W</string>
+    <string name="catalog_material_heater_0552_name" translatable="false">RESUN Sunlike Heater — 150 W</string>
+    <string name="catalog_material_heater_0553_name" translatable="false">RESUN Sunlike Heater — 200 W</string>
+    <string name="catalog_material_heater_0554_name" translatable="false">RESUN Sunlike Heater — 250 W</string>
+    <string name="catalog_material_heater_0555_name" translatable="false">RESUN Sunlike Heater — 300 W</string>
+    <string name="catalog_material_heater_0556_name" translatable="false">RESUN Nano Heater — 25 W</string>
+    <string name="catalog_material_heater_0557_name" translatable="false">RIBAO CN-358 Changing/Chaning Steel Heater — 100 W</string>
+    <string name="catalog_material_heater_0558_name" translatable="false">RIBAO CN-358 Changing/Chaning Steel Heater — 300 W</string>
+    <string name="catalog_material_heater_0559_name" translatable="false">RIBAO CN-358 Changing/Chaning Steel Heater — 500 W</string>
+    <string name="catalog_material_heater_0560_name" translatable="false">RS ELECTRICAL RS-134 Plastic Guarded Heater — 50 W</string>
+    <string name="catalog_material_heater_0561_name" translatable="false">RS ELECTRICAL RS-135 Heater — 200 W</string>
+    <string name="catalog_material_heater_0562_name" translatable="false">RS ELECTRICAL RS-136 Heater — 300 W</string>
+    <string name="catalog_material_heater_0563_name" translatable="false">RS ELECTRICAL RS-137 Heater — 500 W</string>
+    <string name="catalog_material_heater_0564_name" translatable="false">RS ELECTRICAL RS-399 Steel Heater — 100 W</string>
+    <string name="catalog_material_heater_0565_name" translatable="false">RS ELECTRICAL RS-399 Steel Heater — 200 W</string>
+    <string name="catalog_material_heater_0566_name" translatable="false">RS ELECTRICAL RS-758 Heater — 50 W</string>
+    <string name="catalog_material_heater_0567_name" translatable="false">RS ELECTRICAL RS-758 Heater — 100 W</string>
+    <string name="catalog_material_heater_0568_name" translatable="false">RS ELECTRICAL RS-778 Heater — 200 W</string>
+    <string name="catalog_material_heater_0569_name" translatable="false">RS ELECTRICAL RS-778 Heater — 300 W</string>
+    <string name="catalog_material_heater_0570_name" translatable="false">RS ELECTRICAL Steel Heater — 25 W</string>
+    <string name="catalog_material_heater_0571_name" translatable="false">RS ELECTRICAL Steel Heater — 50 W</string>
+    <string name="catalog_material_heater_0572_name" translatable="false">SCHEGO Titanium Heater — 50 W</string>
+    <string name="catalog_material_heater_0573_name" translatable="false">SCHEGO Titanium Heater — 75 W</string>
+    <string name="catalog_material_heater_0574_name" translatable="false">SCHEGO Titanium Heater — 100 W</string>
+    <string name="catalog_material_heater_0575_name" translatable="false">SCHEGO Titanium Heater — 150 W</string>
+    <string name="catalog_material_heater_0576_name" translatable="false">SCHEGO Titanium Heater — 200 W</string>
+    <string name="catalog_material_heater_0577_name" translatable="false">SCHEGO Titanium Heater — 250 W</string>
+    <string name="catalog_material_heater_0578_name" translatable="false">SCHEGO Titanium Heater — 300 W</string>
+    <string name="catalog_material_heater_0579_name" translatable="false">SCHEGO Titanium Heater — 600 W</string>
+    <string name="catalog_material_heater_0580_name" translatable="false">SEA STAR HX-906 Heater — 50 W</string>
+    <string name="catalog_material_heater_0581_name" translatable="false">SEA STAR HX-906 Heater — 150 W</string>
+    <string name="catalog_material_heater_0582_name" translatable="false">SEA STAR HX-936 Heater — 100 W</string>
+    <string name="catalog_material_heater_0583_name" translatable="false">SERA Aquarium Heater Thermostat — 25 W</string>
+    <string name="catalog_material_heater_0584_name" translatable="false">SERA Aquarium Heater Thermostat — 50 W</string>
+    <string name="catalog_material_heater_0585_name" translatable="false">SERA Aquarium Heater Thermostat — 75 W</string>
+    <string name="catalog_material_heater_0586_name" translatable="false">SERA Aquarium Heater Thermostat — 100 W</string>
+    <string name="catalog_material_heater_0587_name" translatable="false">SERA Aquarium Heater Thermostat — 150 W</string>
+    <string name="catalog_material_heater_0588_name" translatable="false">SERA Aquarium Heater Thermostat — 200 W</string>
+    <string name="catalog_material_heater_0589_name" translatable="false">SERA Aquarium Heater Thermostat — 300 W</string>
+    <string name="catalog_material_heater_0590_name" translatable="false">SERA Delta Heater — 100 W</string>
+    <string name="catalog_material_heater_0591_name" translatable="false">SERA Delta Heater — 150 W</string>
+    <string name="catalog_material_heater_0592_name" translatable="false">SERA Delta Heater — 200 W</string>
+    <string name="catalog_material_heater_0593_name" translatable="false">SERA Delta Heater — 300 W</string>
+    <string name="catalog_material_heater_0594_name" translatable="false">SICCE Scuba Contactless — 50 W</string>
+    <string name="catalog_material_heater_0595_name" translatable="false">SICCE Scuba Contactless — 100 W</string>
+    <string name="catalog_material_heater_0596_name" translatable="false">SICCE Scuba Contactless — 150 W</string>
+    <string name="catalog_material_heater_0597_name" translatable="false">SICCE Scuba Contactless — 200 W</string>
+    <string name="catalog_material_heater_0598_name" translatable="false">SICCE Scuba Contactless — 250 W</string>
+    <string name="catalog_material_heater_0599_name" translatable="false">SICCE Scuba Contactless — 300 W</string>
+    <string name="catalog_material_heater_0600_name" translatable="false">SICCE Scuba Contactless — 400 W</string>
+    <string name="catalog_material_heater_0601_name" translatable="false">SICCE Scuba Preset — 50 W</string>
+    <string name="catalog_material_heater_0602_name" translatable="false">SICCE Scuba Preset — 100 W</string>
+    <string name="catalog_material_heater_0603_name" translatable="false">SICCE Scuba Preset — 150 W</string>
+    <string name="catalog_material_heater_0604_name" translatable="false">SICCE Scuba Preset — 200 W</string>
+    <string name="catalog_material_heater_0605_name" translatable="false">SICCE Scuba Preset — 250 W</string>
+    <string name="catalog_material_heater_0606_name" translatable="false">SICCE Scuba Preset — 300 W</string>
+    <string name="catalog_material_heater_0607_name" translatable="false">SICCE Jolly — 10 W</string>
+    <string name="catalog_material_heater_0608_name" translatable="false">SICCE Jolly — 20 W</string>
+    <string name="catalog_material_heater_0609_name" translatable="false">SICCE Jolly Preset 6 — 6 W</string>
+    <string name="catalog_material_heater_0610_name" translatable="false">SICCE Jolly Preset 12 — 12 W</string>
+    <string name="catalog_material_heater_0611_name" translatable="false">SL-AQUA SQH Heater — 25 W</string>
+    <string name="catalog_material_heater_0612_name" translatable="false">SL-AQUA SQH Heater — 50 W</string>
+    <string name="catalog_material_heater_0613_name" translatable="false">SL-AQUA SQH Heater — 100 W</string>
+    <string name="catalog_material_heater_0614_name" translatable="false">SL-AQUA SQH Heater — 200 W</string>
+    <string name="catalog_material_heater_0615_name" translatable="false">SL-AQUA SQH Heater — 300 W</string>
+    <string name="catalog_material_heater_0616_name" translatable="false">SMART Aquarium Heater — 25 W</string>
+    <string name="catalog_material_heater_0617_name" translatable="false">SMART Aquarium Heater — 50 W</string>
+    <string name="catalog_material_heater_0618_name" translatable="false">SMART Aquarium Heater — 100 W</string>
+    <string name="catalog_material_heater_0619_name" translatable="false">SMART Aquarium Heater — 200 W</string>
+    <string name="catalog_material_heater_0620_name" translatable="false">SMART Aquarium Heater — 300 W</string>
+    <string name="catalog_material_heater_0621_name" translatable="false">SOBO HQ Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0622_name" translatable="false">SOBO HQ Series Heater — 500 W</string>
+    <string name="catalog_material_heater_0623_name" translatable="false">SOBO HD-S Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0624_name" translatable="false">SOBO HD-S Series Heater — 500 W</string>
+    <string name="catalog_material_heater_0625_name" translatable="false">SOBO HS Series Heater — 50 W</string>
+    <string name="catalog_material_heater_0626_name" translatable="false">SOBO HS Series Heater — 100 W</string>
+    <string name="catalog_material_heater_0627_name" translatable="false">SOBO HS Series Heater — 200 W</string>
+    <string name="catalog_material_heater_0628_name" translatable="false">SOBO HS Series Heater — 300 W</string>
+    <string name="catalog_material_heater_0629_name" translatable="false">SOBO HJ Stainless Steel Heater — 100 W</string>
+    <string name="catalog_material_heater_0630_name" translatable="false">SOBO HJ Stainless Steel Heater — 200 W</string>
+    <string name="catalog_material_heater_0631_name" translatable="false">SOBO HJ Stainless Steel Heater — 300 W</string>
+    <string name="catalog_material_heater_0632_name" translatable="false">SOBO HJ Stainless Steel Heater — 500 W</string>
+    <string name="catalog_material_heater_0633_name" translatable="false">SOBO HC Stainless Steel Heater — 50 W</string>
+    <string name="catalog_material_heater_0634_name" translatable="false">SOBO HC Stainless Steel Heater — 100 W</string>
+    <string name="catalog_material_heater_0635_name" translatable="false">SOBO HC Stainless Steel Heater — 200 W</string>
+    <string name="catalog_material_heater_0636_name" translatable="false">SOBO HC Stainless Steel Heater — 300 W</string>
+    <string name="catalog_material_heater_0637_name" translatable="false">SOBO HC Stainless Steel Heater — 500 W</string>
+    <string name="catalog_material_heater_0638_name" translatable="false">SUNSUN JRB-210 Heater — 100 W</string>
+    <string name="catalog_material_heater_0639_name" translatable="false">SUNSUN JRB-220 Heater — 200 W</string>
+    <string name="catalog_material_heater_0640_name" translatable="false">SUNSUN JRB-230 Heater — 300 W</string>
+    <string name="catalog_material_heater_0641_name" translatable="false">SUNSUN JRB-250 Heater — 500 W</string>
+    <string name="catalog_material_heater_0642_name" translatable="false">SUNSUN YRB-065 Preset Heater — 65 W</string>
+    <string name="catalog_material_heater_0643_name" translatable="false">SUNSUN YRB-810 Heater — 100 W</string>
+    <string name="catalog_material_heater_0644_name" translatable="false">SUNSUN YRB-820 Heater — 200 W</string>
+    <string name="catalog_material_heater_0645_name" translatable="false">SUNSUN YRB-830 Heater — 300 W</string>
+    <string name="catalog_material_heater_0646_name" translatable="false">SUNSUN YRB-850 Heater — 500 W</string>
+    <string name="catalog_material_heater_0647_name" translatable="false">SUPERFISH Start Heater — 50 W</string>
+    <string name="catalog_material_heater_0648_name" translatable="false">SUPERFISH Start Heater — 100 W</string>
+    <string name="catalog_material_heater_0649_name" translatable="false">SUPERFISH Start Heater — 200 W</string>
+    <string name="catalog_material_heater_0650_name" translatable="false">SUPERFISH Start Heater — 300 W</string>
+    <string name="catalog_material_heater_0651_name" translatable="false">SUPERFISH SmartHeater — 100 W</string>
+    <string name="catalog_material_heater_0652_name" translatable="false">SUPERFISH SmartHeater — 200 W</string>
+    <string name="catalog_material_heater_0653_name" translatable="false">SUPERFISH SmartHeater — 300 W</string>
+    <string name="catalog_material_heater_0654_name" translatable="false">SUPERFISH SmartHeater — 500 W</string>
+    <string name="catalog_material_heater_0655_name" translatable="false">SUPERFISH Smart Mini Heater — 55 W</string>
+    <string name="catalog_material_heater_0656_name" translatable="false">SUPERFISH Pro Heater — 50 W</string>
+    <string name="catalog_material_heater_0657_name" translatable="false">SUPERFISH Pro Heater — 100 W</string>
+    <string name="catalog_material_heater_0658_name" translatable="false">SUPERFISH Pro Heater — 200 W</string>
+    <string name="catalog_material_heater_0659_name" translatable="false">SUPERFISH Pro Heater — 300 W</string>
+    <string name="catalog_material_heater_0660_name" translatable="false">SUPERFISH Eco Heater — 25 W</string>
+    <string name="catalog_material_heater_0661_name" translatable="false">SUPERFISH Eco Heater — 50 W</string>
+    <string name="catalog_material_heater_0662_name" translatable="false">SUPERFISH Eco Heater — 100 W</string>
+    <string name="catalog_material_heater_0663_name" translatable="false">TETRA HT25 Electronic Heater — 25 W</string>
+    <string name="catalog_material_heater_0664_name" translatable="false">TETRA HT50 Electronic Heater — 50 W</string>
+    <string name="catalog_material_heater_0665_name" translatable="false">TETRA HT75 Electronic Heater — 75 W</string>
+    <string name="catalog_material_heater_0666_name" translatable="false">TETRA HT100 Electronic Heater — 100 W</string>
+    <string name="catalog_material_heater_0667_name" translatable="false">TETRA HT150 Electronic Heater — 150 W</string>
+    <string name="catalog_material_heater_0668_name" translatable="false">TETRA HT200 Electronic Heater — 200 W</string>
+    <string name="catalog_material_heater_0669_name" translatable="false">TETRA HT300 Electronic Heater — 300 W</string>
+    <string name="catalog_material_heater_0670_name" translatable="false">UP AQUA D-990 3-Stage Fixed Temperature Heater — 25 W</string>
+    <string name="catalog_material_heater_0671_name" translatable="false">UP AQUA D-990 3-Stage Fixed Temperature Heater — 50 W</string>
+    <string name="catalog_material_heater_0672_name" translatable="false">UP AQUA D-990 3-Stage Fixed Temperature Heater — 100 W</string>
+    <string name="catalog_material_heater_0673_name" translatable="false">UP AQUA D-990 3-Stage Fixed Temperature Heater — 200 W</string>
+    <string name="catalog_material_heater_0674_name" translatable="false">UP AQUA D-990 3-Stage Fixed Temperature Heater — 300 W</string>
+    <string name="catalog_material_heater_0675_name" translatable="false">UP AQUA D-990 3-Stage Fixed Temperature Heater — 500 W</string>
+    <string name="catalog_material_heater_0676_name" translatable="false">UP AQUA D-995 Electronic Heater — 100 W</string>
+    <string name="catalog_material_heater_0677_name" translatable="false">UP AQUA D-995 Electronic Heater — 200 W</string>
+    <string name="catalog_material_heater_0678_name" translatable="false">UP AQUA D-995 Electronic Heater — 300 W</string>
+    <string name="catalog_material_heater_0679_name" translatable="false">VIAAQUA Titanium Heater — 50 W</string>
+    <string name="catalog_material_heater_0680_name" translatable="false">VIAAQUA Titanium Heater — 100 W</string>
+    <string name="catalog_material_heater_0681_name" translatable="false">VIAAQUA Titanium Heater — 200 W</string>
+    <string name="catalog_material_heater_0682_name" translatable="false">VIAAQUA Titanium Heater — 300 W</string>
+    <string name="catalog_material_heater_0683_name" translatable="false">VIAAQUA Quartz Heater — 50 W</string>
+    <string name="catalog_material_heater_0684_name" translatable="false">VIAAQUA Quartz Heater — 100 W</string>
+    <string name="catalog_material_heater_0685_name" translatable="false">VIAAQUA Quartz Heater — 200 W</string>
+    <string name="catalog_material_heater_0686_name" translatable="false">VIAAQUA Quartz Heater — 300 W</string>
+    <string name="catalog_material_heater_0687_name" translatable="false">XILONG AT-700 Heater — 25 W</string>
+    <string name="catalog_material_heater_0688_name" translatable="false">XILONG AT-700 Heater — 50 W</string>
+    <string name="catalog_material_heater_0689_name" translatable="false">XILONG AT-700 Heater — 100 W</string>
+    <string name="catalog_material_heater_0690_name" translatable="false">XILONG AT-700 Heater — 200 W</string>
+    <string name="catalog_material_heater_0691_name" translatable="false">XILONG AT-700 Heater — 300 W</string>
+    <string name="catalog_material_heater_0692_name" translatable="false">XILONG XL-282 Heater — 50 W</string>
+    <string name="catalog_material_heater_0693_name" translatable="false">XILONG XL-282 Heater — 100 W</string>
+    <string name="catalog_material_heater_0694_name" translatable="false">XILONG XL-282 Heater — 200 W</string>
+    <string name="catalog_material_heater_0695_name" translatable="false">XILONG XL-282 Heater — 300 W</string>
+    <string name="catalog_material_heater_0696_name" translatable="false">XILONG XL-282 Heater — 500 W</string>
+    <string name="catalog_material_heater_0697_name" translatable="false">XILONG XL-707 Heater — 100 W</string>
+    <string name="catalog_material_heater_0698_name" translatable="false">XILONG XL-999 Stainless Steel Heater — 200 W</string>
+    <string name="catalog_material_heater_0699_name" translatable="false">XILONG XL-999 Stainless Steel Heater — 300 W</string>
+    <string name="catalog_material_heater_0700_name" translatable="false">XILONG XL-999 Stainless Steel Heater — 500 W</string>
+    <string name="catalog_material_heater_0701_name" translatable="false">ZOO MED Programmable Aquarium Heater AH-25 — 25 W</string>
+    <string name="catalog_material_heater_0702_name" translatable="false">ZOO MED Programmable Aquarium Heater AH-50 — 50 W</string>
+    <string name="catalog_material_heater_0703_name" translatable="false">ZOO MED Programmable Aquarium Heater AH-100 — 100 W</string>
+    <string name="catalog_material_heater_0704_name" translatable="false">ZOO MED Programmable Aquarium Heater AH-150 — 150 W</string>
+    <string name="catalog_material_heater_0705_name" translatable="false">ZOO MED Programmable Aquarium Heater AH-300 — 300 W</string>
+
+    <!-- Heater search aliases. Localized aliases live in values-tr. -->
+    <string name="catalog_heater_keyword_heater">heater</string>
+    <string name="catalog_heater_keyword_aquarium_heater">aquarium heater</string>
+    <string name="catalog_heater_keyword_submersible">submersible</string>
+    <string name="catalog_heater_keyword_in_tank">in-tank</string>
+    <string name="catalog_heater_keyword_inline">inline</string>
+    <string name="catalog_heater_keyword_external">external</string>
+    <string name="catalog_heater_keyword_titanium">titanium</string>
+    <string name="catalog_heater_keyword_preset">preset</string>
+    <string name="catalog_heater_keyword_digital">digital</string>
+    <string name="catalog_heater_keyword_electronic">electronic</string>
+    <string name="catalog_heater_keyword_wifi" translatable="false">wi-fi</string>
+    <string name="catalog_heater_keyword_controller">controller</string>
+    <string name="catalog_heater_keyword_remote">remote</string>
+    <string name="catalog_heater_keyword_system">system</string>
+</resources>

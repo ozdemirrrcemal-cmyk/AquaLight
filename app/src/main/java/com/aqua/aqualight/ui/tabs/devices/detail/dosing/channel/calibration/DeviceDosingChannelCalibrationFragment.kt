@@ -18,6 +18,8 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toCommercialDosingError
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toSnackType
 import kotlinx.coroutines.launch
 
 /** Calibration destination for one centrally identified Dosing channel. */
@@ -102,9 +104,10 @@ class DeviceDosingChannelCalibrationFragment :
     }
 
     private fun showCalibrationFailure(error: DeviceDosingCalibrationError) {
+        val commercialError = error.toOperationalFailureOrNull()?.toCommercialDosingError()
         (activity as? BaseActivity)?.showSnackBar(
-            message = getString(error.messageRes),
-            type = error.snackType()
+            message = getString(commercialError?.messageRes ?: error.validationMessageRes),
+            type = commercialError?.severity?.toSnackType() ?: BaseActivity.SnackType.WARNING
         )
     }
 
@@ -121,19 +124,4 @@ class DeviceDosingChannelCalibrationFragment :
     private companion object {
         const val STATE_DISPLAY_NAME_DRAFT = "dosingCalibration.displayNameDraft"
     }
-}
-
-private fun DeviceDosingCalibrationError.snackType(): BaseActivity.SnackType = when (this) {
-    DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED,
-    DeviceDosingCalibrationError.DISPLAY_NAME_CONTROL_CHARACTER,
-    DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG,
-    DeviceDosingCalibrationError.INVALID_MEASUREMENT,
-    DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
-    DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY,
-    DeviceDosingCalibrationError.CALIBRATION_STATE_MISMATCH -> BaseActivity.SnackType.WARNING
-    DeviceDosingCalibrationError.CONNECTION,
-    DeviceDosingCalibrationError.STORAGE,
-    DeviceDosingCalibrationError.HARDWARE,
-    DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED,
-    DeviceDosingCalibrationError.OPERATION_FAILED -> BaseActivity.SnackType.ERROR
 }

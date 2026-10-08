@@ -12,8 +12,7 @@ import java.util.Locale
  */
 class DeviceFirmwareBackgroundAvailabilityProbe(
     private val manifestSource: DeviceFirmwareManifestHttpSource =
-        DeviceFirmwareManifestHttpSource(),
-    private val planner: DeviceFirmwareUpdatePlanner = DeviceFirmwareUpdatePlanner()
+        DeviceFirmwareManifestHttpSource()
 ) {
 
     suspend fun loadManifest(manifestUrl: String): Result<DeviceFirmwareManifest> {
@@ -27,19 +26,8 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
         validateDurableSnapshot(snapshot)
         validateManifest(manifest)
 
-        val compatibleArtifacts = planner.compatibleArtifacts(snapshot, manifest)
-        require(compatibleArtifacts.size <= 1) {
-            "Ambiguous OTA manifest: ${compatibleArtifacts.size} artifacts match durable metadata."
-        }
-
         val currentVersion = snapshot.firmwareVersion
-        val artifact = compatibleArtifacts.singleOrNull()
-            ?: return@runCatching DeviceFirmwareAvailabilityHint.UpToDate(
-                deviceUid = snapshot.deviceUid.value,
-                deviceName = snapshot.title,
-                currentVersion = currentVersion,
-                targetVersion = currentVersion
-            )
+        val artifact = manifest.artifacts.single()
         validateArtifact(snapshot, manifest, artifact)
         val targetVersion = artifact.firmware.version
 

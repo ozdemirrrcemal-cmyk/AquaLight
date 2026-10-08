@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.repository
 
+import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceProduct
@@ -25,7 +26,7 @@ import org.junit.Test
 class DeviceControlProofFailureTest {
 
     @Test
-    fun `failed proof publishes offline and replaces the stale device session`() = runTest {
+    fun `failed proof without discovery evidence resolves offline and replaces stale session`() = runTest {
         val transports = CopyOnWriteArrayList<FakeTransport>()
         val runtime = DeviceRuntimeRepository(
             wsClientFactory = {
@@ -51,6 +52,70 @@ class DeviceControlProofFailureTest {
         assertEquals(2, transports.size)
         assertEquals(1, transports.first().closeCount.get())
         assertEquals(1, transports.last().connectCount.get())
+
+        repository.shutdown()
+    }
+
+    @Test
+    fun `failed proof with fresh discovery evidence resolves online LAN`() = runTest {
+        val transports = CopyOnWriteArrayList<FakeTransport>()
+        val runtime = DeviceRuntimeRepository(
+            wsClientFactory = {
+                FakeTransport().also(transports::add)
+            },
+            dispatcher = Dispatchers.Unconfined
+        )
+        val repository = DevicesRepository(
+            runtimeRepository = runtime,
+            elapsedRealtimeMillis = { 10_000L }
+        )
+        val snapshot = DeviceSnapshot(
+            identity = DeviceIdentity(uid = DeviceUid("device-control-failure-fresh")),
+            product = DeviceProduct(),
+            endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.92", wsPort = 80),
+            connectionState = DeviceConnectionState(lastUdpSeenElapsedMillis = 10_000L)
+        )
+        repository.registerSnapshot(snapshot)
+        transports.single().markAuthenticated(snapshot.deviceUid)
+
+        repository.recordControlFailure(snapshot.deviceUid)
+
+        assertEquals(
+            DeviceOnlineState.ONLINE_LAN,
+            repository.currentDevice(snapshot.deviceUid)?.connectionState?.onlineState
+        )
+
+        repository.shutdown()
+    }
+
+    @Test
+    fun `failed proof with stale discovery evidence resolves stale`() = runTest {
+        val transports = CopyOnWriteArrayList<FakeTransport>()
+        val runtime = DeviceRuntimeRepository(
+            wsClientFactory = {
+                FakeTransport().also(transports::add)
+            },
+            dispatcher = Dispatchers.Unconfined
+        )
+        val repository = DevicesRepository(
+            runtimeRepository = runtime,
+            elapsedRealtimeMillis = { 30_000L }
+        )
+        val snapshot = DeviceSnapshot(
+            identity = DeviceIdentity(uid = DeviceUid("device-control-failure-stale")),
+            product = DeviceProduct(),
+            endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.93", wsPort = 80),
+            connectionState = DeviceConnectionState(lastUdpSeenElapsedMillis = 5_000L)
+        )
+        repository.registerSnapshot(snapshot)
+        transports.single().markAuthenticated(snapshot.deviceUid)
+
+        repository.recordControlFailure(snapshot.deviceUid)
+
+        assertEquals(
+            DeviceOnlineState.STALE,
+            repository.currentDevice(snapshot.deviceUid)?.connectionState?.onlineState
+        )
 
         repository.shutdown()
     }

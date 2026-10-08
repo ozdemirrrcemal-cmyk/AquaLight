@@ -144,7 +144,7 @@ internal object DeviceLightMutationParser {
             remainingMs = data.requireLightLong(
                 "remainingMs",
                 0,
-                DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS
+                DeviceLightRuntimeContract.Limit.MAX_PREVIEW_REMAINING_MS
             ),
             event = requireStatusEvent(data)
         )
@@ -161,16 +161,32 @@ internal object DeviceLightMutationParser {
 
     internal object Graph {
         fun parseGraph(data: JSONObject, product: DeviceLightProduct): DeviceLightGraph {
-        data.requireLightKeys(GRAPH_KEYS, "light.graph.get.data")
-        val pointData = data.requireLightArray("points")
-        val points = List(pointData.length()) { index ->
-            parseGraphPoint(pointData.requireLightArray(index), product)
+            data.requireLightKeys(GRAPH_KEYS, "light.graph.get.data")
+            val pointData = data.requireLightArray("points")
+            val points = List(pointData.length()) { index ->
+                parseGraphPoint(pointData.requireLightArray(index), product)
+            }
+            val spanData = data.requireLightArray("autoSpans")
+            val spans = List(spanData.length()) { index ->
+                parseGraphSpan(spanData.requireLightArray(index))
+            }
+            val planSpanData = data.requireLightArray("planSpans")
+            val planSpans = List(planSpanData.length()) { index ->
+                parsePlanGraphSpan(planSpanData.requireLightArray(index))
+            }
+            val result = buildGraph(data, points, spans, planSpans)
+            result.requireCoherentStructure()
+            result.requireModeSemantics()
+            result.requireReasonSemantics()
+            return result
         }
-        val spanData = data.requireLightArray("autoSpans")
-        val spans = List(spanData.length()) { index ->
-            parseGraphSpan(spanData.requireLightArray(index))
-        }
-        val result = DeviceLightGraph(
+
+        private fun buildGraph(
+            data: JSONObject,
+            points: List<DeviceLightGraphPoint>,
+            spans: List<DeviceLightGraphSpan>,
+            planSpans: List<DeviceLightManagedPlanGraphSpan>
+        ) = DeviceLightGraph(
             mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
             available = data.requireLightBoolean("available"),
             reason = DeviceLightGraphReason.fromWireExact(data.requireLightText("reason")),
@@ -195,52 +211,160 @@ internal object DeviceLightMutationParser {
             channelScale = data.requireLightInt("channelScale"),
             hasScheduleToday = data.requireLightBoolean("hasScheduleToday"),
             points = points,
-            autoSpans = spans
+            autoSpans = spans,
+            planSpans = planSpans
         )
-        require(result.channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
-        require(
-            (result.schedulerGeneration == null && result.localDate == null && result.nowTimeMs == null) ||
-                (result.schedulerGeneration != null && result.localDate != null && result.nowTimeMs != null)
-        )
-        require(result.hasScheduleToday == points.isNotEmpty())
-        require(result.mode == DeviceLightMode.AUTO || spans.isEmpty())
-        return result
-    }
 
         private fun parseGraphPoint(
-        tuple: JSONArray,
-        product: DeviceLightProduct
-    ): DeviceLightGraphPoint {
-        require(tuple.length() == product.channelCount + 1)
-        return DeviceLightGraphPoint(
-            timeMs = tuple.requireLightLong(0, 0, DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY),
-            channelPermille = List(product.channelCount) { index ->
-                tuple.requireLightInt(
-                    index + 1,
-                    DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
-                    DeviceLightRuntimeContract.Limit.PERMILLE_MAX
-                )
+            tuple: JSONArray,
+            product: DeviceLightProduct
+        ): DeviceLightGraphPoint {
+            require(tuple.length() == product.channelCount + 1)
+            return DeviceLightGraphPoint(
+                timeMs = tuple.requireLightLong(
+                    0,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                channelPermille = List(product.channelCount) { index ->
+                    tuple.requireLightInt(
+                        index + 1,
+                        DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                        DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+                    )
+                }
+            )
+        }
+
+        private fun DeviceLightGraph.requireModeSemantics() {
+            when (mode) {
+                DeviceLightMode.MANUAL -> requireManualSemantics()
+                DeviceLightMode.AUTO -> {
+                    require(
+                        basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE ||
+                            basis == DeviceLightGraphBasis.MANAGED_PLAN
+                    )
+                    require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+                    if (basis == DeviceLightGraphBasis.MANAGED_PLAN) {
+                        require(autoSpans.isEmpty())
+                    } else {
+                        require(planSpans.isEmpty())
+                    }
+                }
+                DeviceLightMode.CUSTOM -> {
+                    require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
+                    require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+                    require(planSpans.isEmpty())
+                }
             }
-        )
-    }
+        }
+
+        private fun DeviceLightGraph.requireReasonSemantics() {
+            when (reason) {
+                DeviceLightGraphReason.OK -> require(available && hasScheduleToday)
+                DeviceLightGraphReason.RTC_NOT_READY -> requireRtcUnavailableSemantics()
+                DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE -> Unit
+                DeviceLightGraphReason.NO_ENABLED_AUTO_PROGRAM_TODAY -> {
+                    require(mode == DeviceLightMode.AUTO)
+                    require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
+                    require(available && !hasScheduleToday)
+                }
+                DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY -> {
+                    require(mode == DeviceLightMode.AUTO)
+                    require(basis == DeviceLightGraphBasis.MANAGED_PLAN)
+                    require(available && !hasScheduleToday)
+                }
+                DeviceLightGraphReason.CUSTOM_NOT_INSTALLED,
+                DeviceLightGraphReason.CUSTOM_NOT_SCHEDULED_TODAY -> {
+                    require(mode == DeviceLightMode.CUSTOM)
+                    require(available && !hasScheduleToday)
+                }
+            }
+        }
+
+        private fun DeviceLightGraph.requireCoherentStructure() {
+            require(channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
+            val hasNoScheduler = schedulerGeneration == null && localDate == null &&
+                nowTimeMs == null
+            val hasCompleteScheduler = schedulerGeneration != null && localDate != null &&
+                nowTimeMs != null
+            require(hasNoScheduler || hasCompleteScheduler)
+            require(points.zipWithNext().all { (first, second) -> first.timeMs <= second.timeMs })
+            require(hasScheduleToday == points.isNotEmpty())
+            require(mode == DeviceLightMode.AUTO || autoSpans.isEmpty())
+            require(mode == DeviceLightMode.AUTO || planSpans.isEmpty())
+        }
+
+        private fun DeviceLightGraph.requireManualSemantics() {
+            require(available)
+            require(reason == DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+            require(sourceRevision == 0L)
+            require(basis == DeviceLightGraphBasis.NONE)
+            require(!hasScheduleToday)
+            require(points.isEmpty())
+            require(autoSpans.isEmpty())
+            require(planSpans.isEmpty())
+        }
+
+        private fun DeviceLightGraph.requireRtcUnavailableSemantics() {
+            require(!available)
+            require(schedulerGeneration == null)
+            require(localDate == null)
+            require(nowTimeMs == null)
+            require(!hasScheduleToday)
+        }
+
+        private fun parsePlanGraphSpan(tuple: JSONArray): DeviceLightManagedPlanGraphSpan {
+            require(
+                tuple.length() ==
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_TUPLE_SIZE
+            )
+            val planId = tuple.requireLightText(
+                DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PLAN_ID_INDEX
+            ).also(::requireLightManagedPlanId)
+            return DeviceLightManagedPlanGraphSpan(
+                startTimeMsWithinToday = tuple.requireLightLong(
+                    0,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                endTimeMsWithinToday = tuple.requireLightLong(
+                    1,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                planId = planId,
+                phaseIndex = tuple.requireLightInt(
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PHASE_INDEX,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+                )
+            ).also { span ->
+                require(span.startTimeMsWithinToday < span.endTimeMsWithinToday)
+            }
+        }
 
         private fun parseGraphSpan(tuple: JSONArray): DeviceLightGraphSpan {
-        require(tuple.length() == DeviceLightRuntimeContract.Limit.GRAPH_SPAN_TUPLE_SIZE)
-        val id = tuple.requireLightText(DeviceLightRuntimeContract.Limit.GRAPH_SPAN_PROGRAM_ID_INDEX)
-        require(PROGRAM_ID.matches(id))
-        return DeviceLightGraphSpan(
-            startTimeMsWithinToday = tuple.requireLightLong(
-                0,
-                0,
-                DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
-            ),
-            endTimeMsWithinToday = tuple.requireLightLong(
-                1,
-                0,
-                DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
-            ),
-            programId = id
-        )
+            require(tuple.length() == DeviceLightRuntimeContract.Limit.GRAPH_SPAN_TUPLE_SIZE)
+            val id = tuple.requireLightText(
+                DeviceLightRuntimeContract.Limit.GRAPH_SPAN_PROGRAM_ID_INDEX
+            )
+            require(PROGRAM_ID.matches(id))
+            return DeviceLightGraphSpan(
+                startTimeMsWithinToday = tuple.requireLightLong(
+                    0,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                endTimeMsWithinToday = tuple.requireLightLong(
+                    1,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                programId = id
+            ).also { span ->
+                require(span.startTimeMsWithinToday < span.endTimeMsWithinToday)
+            }
         }
     }
 
@@ -283,7 +407,7 @@ internal object DeviceLightMutationParser {
     private val GRAPH_KEYS = setOf(
         "mode", "available", "reason", "sourceRevision", "schedulerGeneration", "localDate",
         "currentWeekdayMask", "nowTimeMs", "basis", "channelScale", "hasScheduleToday",
-        "points", "autoSpans"
+        "points", "autoSpans", "planSpans"
     )
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
 }

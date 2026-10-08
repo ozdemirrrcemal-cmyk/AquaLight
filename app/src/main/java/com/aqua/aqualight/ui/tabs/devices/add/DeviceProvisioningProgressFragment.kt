@@ -132,8 +132,9 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                             val baseActivity = activity as? BaseActivity
                             val navController = findNavController()
                             navController.popBackStack(R.id.devicesFragment, false)
-                            baseActivity?.showDeviceOfflineDialog(
+                            baseActivity?.showDeviceUnavailableDialog(
                                 deviceTitle = event.title,
+                                titleRes = event.titleRes,
                                 messageRes = event.messageRes
                             )
                         }

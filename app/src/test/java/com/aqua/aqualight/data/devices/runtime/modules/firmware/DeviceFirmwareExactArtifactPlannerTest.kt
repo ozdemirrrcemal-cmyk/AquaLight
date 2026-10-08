@@ -62,36 +62,33 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `zero identity-compatible artifacts resolve as no published update`() {
+    fun `identity incompatible signed artifact fails closed`() {
         val exact = artifact()
         val other = exact.copy(
             compatibility = exact.compatibility.copy(model = "dose_pro_4")
         )
 
-        val availability = planner.evaluateUpdate(
+        val failure = planner.evaluateUpdate(
             snapshot(),
             manifest(artifacts = listOf(other))
-        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
+        ).exceptionOrNull()
 
-        assertEquals("1.0.0", availability.currentVersion)
-        assertEquals("1.0.0", availability.latestVersion)
-        assertTrue(!availability.releaseContent.isPresent)
+        assertTrue(failure is IllegalArgumentException)
     }
 
     @Test
-    fun `nonmatching environment resolves as no published update`() {
+    fun `nonmatching environment fails closed`() {
         val wrongEnv = dosePro4Artifact()
 
-        val availability = planner.evaluateUpdate(
+        val failure = planner.evaluateUpdate(
             snapshot(),
             manifest(
                 tag = "dosing_dose_pro_4-v2.0.0",
                 artifacts = listOf(wrongEnv)
             )
-        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
+        ).exceptionOrNull()
 
-        assertEquals("1.0.0", availability.currentVersion)
-        assertEquals("1.0.0", availability.latestVersion)
+        assertTrue(failure?.message.orEmpty().contains("environment does not match"))
     }
 
     @Test

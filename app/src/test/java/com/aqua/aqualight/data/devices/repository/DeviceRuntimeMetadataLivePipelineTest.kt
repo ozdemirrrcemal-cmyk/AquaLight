@@ -77,9 +77,11 @@ class DeviceRuntimeMetadataLivePipelineTest {
         assertFalse(projected.modules.contains("timerApi"))
         assertFalse(projected.modules.contains("timerEngine"))
         assertTrue(projected.modules.contains("dosing"))
+        assertEquals("cached build 42", projected.firmwareBuild)
 
         val root = projected.toDeviceRootSnapshot()
         assertEquals(DeviceRootCatalogState.VALID, root.catalogState)
+        assertEquals("6.0.0", root.firmwareLabel)
         assertTrue(DeviceRootRoute.DOSING_CHANNELS in root.allowedRoutes)
         assertTrue(DeviceRootRoute.DOSING_CALIBRATION in root.allowedRoutes)
         assertTrue(DeviceRootRoute.DOSING_SCHEDULES in root.allowedRoutes)
@@ -149,7 +151,9 @@ class DeviceRuntimeMetadataLivePipelineTest {
     private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
         identity = DeviceIdentity(uid = DEVICE_UID, customName = CUSTOM_NAME),
         product = DeviceProduct(),
-        endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20", wsPort = 80)
+        endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20", wsPort = 80),
+        firmwareVersion = "5.0.0",
+        firmwareBuild = "cached build 42"
     )
 
     private fun response(

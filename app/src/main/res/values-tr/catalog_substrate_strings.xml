@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Localized substrate search aliases. -->
+    <string name="catalog_keyword_soil">toprak</string>
+    <string name="catalog_keyword_aquasoil">akvaryum toprağı</string>
+    <string name="catalog_keyword_additive">katkı</string>
+    <string name="catalog_keyword_base_layer">taban katmanı</string>
+</resources>

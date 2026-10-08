@@ -3,10 +3,10 @@
 ## Otorite ve kapsam
 
 - Firmware repository: `ozdemirrrcemal-cmyk/AquaLight-Firmware`
-- Firmware branch: `main`
-- Firmware commit: `7df97ce807ebb1e90ff63cc36206d6ce479a62fc`
-- Firmware tree: `5df1ba11e2d0d5c65e3c6fbb1e4aba5d47bd6c69`
-- Android branch: `agent/timer-ui-control-surface`
+- Firmware branch: `feature/smart-light-automation-plan-v2`
+- Firmware commit: `9b4fbc00d09f71d9a0c8958a71650aee3cc94840`
+- Firmware tree: `b9434d71e6ecdfe0cc71689a374a7a4ae554a143`
+- Android branch: `feat/smart-light-automation-plan-v2-parity` (base: `feat/custom-program-device-apply`)
 - Schema: `aqualight.light.v1`, storage version `1`
 - Kapsam: firmware, Android veri katmanı ve Light cihaz menüsünün authoritative
   giriş kapısı. Dashboard'ın görsel bağlaması bu değişikliğin kapsamı dışındadır.
@@ -66,10 +66,10 @@ ekranda kullanılacak sıra her zaman firmware `channels[].order` değeridir.
 |---|---:|---:|
 | `productKey` | `LIGHT_WRGB_PRO_ELITE` | `LIGHT_RGB_PRO_SLIM` |
 | Kanal | red, green, blue, white | red, green, blue |
-| Ortak Light V1 komutları | 14 | 14 |
+| Ortak Light V1 komutları | 18 | 18 |
 | Acclimation komutları | 3 | 0 |
 | Thermal/temperature-protection komutları | 4 | 0 |
-| Toplam Light komutu | 21 | 14 |
+| Toplam Light komutu | 25 | 18 |
 | Acclimation | var | yok |
 | Fan / sıcaklık sensörü / thermal | var | yok |
 | Estimated Power / Estimated Color | var | yok |
@@ -88,8 +88,12 @@ ekranda kullanılacak sıra her zaman firmware `channels[].order` değeridir.
 | `light.auto.program.update` | `expectedRevision,programId,weekdaysMask,startTimeMs,endTimeMs,rampDurationMs,scene` | ✓ | ✓ |
 | `light.auto.program.enabled.set` | `expectedRevision,programId,enabled` | ✓ | ✓ |
 | `light.auto.program.delete` | `expectedRevision,programId` | ✓ | ✓ |
+| `light.auto.plan.get` | `{}` | ✓ | ✓ |
+| `light.auto.plan.apply` | `expectedRevision,expectedStorageGeneration,planId,initialStartPercent,phases` | ✓ | ✓ |
+| `light.auto.plan.delete` | `expectedRevision,expectedStorageGeneration,planId` | ✓ | ✓ |
 | `light.custom.get` | `{}` | ✓ | ✓ |
 | `light.custom.install` | `expectedRevision,weekdaysMask,points` | ✓ | ✓ |
+| `light.custom.clear` | `expectedRevision` | ✓ | ✓ |
 | `light.graph.get` | `{}` | ✓ | ✓ |
 | `light.preview.set` | `scene,durationMs?` veya `virtualTimeMs,durationMs?` | ✓ | ✓ |
 | `light.preview.clear` | `{}` | ✓ | ✓ |
@@ -108,11 +112,17 @@ yanlış tipli veya yanlış ürün genişliğindeki alanları fail-closed redde
 
 ## Status ve hata sözleşmesi
 
-`light.status.get.data` her iki üründe aynı 23 root alanını taşır:
+`light.status.get.data` her iki üründe aynı 24 root alanını taşır:
 
-`schema,storageVersion,productKey,channelScale,channels,features,mode,outputActive,`
-`outputReason,requested,effective,scales,electricalDesign,power,color,preview,manual,`
-`policy,scheduler,auto,custom,acclimation,runtime`.
+`schema,storageVersion,storageGeneration,productKey,channelScale,channels,features,mode,`
+`outputActive,outputReason,requested,effective,scales,electricalDesign,power,color,preview,`
+`manual,policy,scheduler,auto,custom,acclimation,runtime`.
+
+AUTO summary artık `scheduleSource,planRevision,planInstalled,planId,activePlanPhaseIndex,`
+`planRuntimeState,planTransitionPermille,nextPlanTransitionEpochDay` alanlarını da exact
+olarak taşır. Managed plan yüklüyken AUTO scheduling authority `MANAGED_PLAN` olur;
+user-authored AUTO program kayıtları korunur. Bu genişleme yeni bir V2 oluşturmaz:
+schema `aqualight.light.v1`, storage version `1` olarak kalır.
 
 RGB'de opsiyonel yüzeyler silinmez: aynı status şekli korunur; ilgili
 `available/supported` alanları `false`, değerler sözleşmenin öngördüğü şekilde
@@ -123,9 +133,20 @@ Firmware error envelope Android'de kayıpsız alan modeliyle tutulur:
 `statusCode,code,field,message,data`. Light V1 structured `data.reason` kümesi:
 
 - `STALE_REVISION`
+- `STALE_STORAGE_GENERATION`
 - `AUTO_CAPACITY_REACHED`
 - `AUTO_PROGRAM_OVERLAP`
 - `AUTO_PROGRAM_NOT_FOUND`
+- `AUTO_PLAN_ID_INVALID`
+- `AUTO_PLAN_PHASE_COUNT`
+- `AUTO_PLAN_INITIAL_START_PERCENT`
+- `AUTO_PLAN_DATE_RANGE`
+- `AUTO_PLAN_PHASE_GAP`
+- `AUTO_PLAN_OVERNIGHT_UNSUPPORTED`
+- `AUTO_PLAN_TRANSITION`
+- `AUTO_PLAN_NOT_FOUND`
+- `AUTO_PLAN_SELECTED`
+- `AUTO_PLAN_INTERNAL_ERROR`
 - `INVALID_WEEKDAYS_MASK`
 - `INVALID_TIME_VALUE`
 - `INVALID_RAMP_VALUE`
@@ -145,6 +166,7 @@ Reason'a bağlı ek alanlar strict olarak doğrulanır:
 | Reason | Ek `data` alanları |
 |---|---|
 | `STALE_REVISION`, `AUTO_PROGRAM_NOT_FOUND` | `actualRevision` |
+| `STALE_STORAGE_GENERATION` | `actualStorageGeneration` |
 | `AUTO_CAPACITY_REACHED` | `actualRevision,capacity,programCount` |
 | `AUTO_PROGRAM_OVERLAP` | `actualRevision,conflict,additionalConflictCount` |
 | `OUTPUT_TRANSACTION_FAILED`, `STORAGE_COMMIT_FAILED` | `rollbackOutputHealthy` |
@@ -160,11 +182,11 @@ korunur; bu komutlar structured Light V1 reason üretmez.
 
 | Fixture | SHA-256 | Firmware blob |
 |---|---|---|
-| `aql_ws_v1_golden.json` | `4d9f2b406800656dc19f08350fd0a3badac659d6fe230d9e3df66f92f728845d` | `e7dc2d3d5567f4246f818659dc2ae0a779021d58` |
-| `aql_light_contract_v1.json` | `1260eb5c50852bcd6652cea648e38d06ec06c88422ce1bd169103fc65a52edb0` | `1b6fd1285af4caee02a72dadc572c2113d5c0192` |
-| `aql_light_rgb_pro_slim_contract_v1.json` | `c56863cc016ca6f5ca75ed56e58ae2e65c8f7d4432d639a31fdb9ebe7849466a` | `f136b629dde5e2905ac7399ce28a306e9261db34` |
-| `aql_light_manual_control_v1.json` | `84d9d61fc9ea233c72d4ae51a5c3ed9bc0b57b1ecac4f60359731a7161904869` | `7d06c67aa4db70bb53b83ff0def2feb11b896781` |
-| `aql_light_graph_contract_v1.json` | `49aa0c4e2e543e9e74421b94ad9b0906e460366c0edd11d6b380c0ca5ab5bcf5` | `375064486ab3236b09bae8f1e7508a1eb204581f` |
+| `aql_ws_v1_golden.json` | `71e537ecd0be42833c3daa32d8abf2b8f053895c55e0cf6cfea75378ee378b74` | `568832d8999bc6208cec2cedc7dab33c1fb8adf2` |
+| `aql_light_contract_v1.json` | `836fe5cd41a2d777db7c559dc7599cbd88a63fc9e51ce0b291c3cbb27b7b6b82` | `2f454296d12c4225d23cfb775e84295a4b935f7f` |
+| `aql_light_rgb_pro_slim_contract_v1.json` | `b067ccd11749e26b862ce99df1ccd63e91ce04ddcaf580f53bb2d1fe84fe7e96` | `e2d878b503681507f89660ad68713b464d84f9f9` |
+| `aql_light_manual_control_v1.json` | `2f523a82eed615543bf1a3d645069627a41a45b1a62f2d1e9910914c19a4afd9` | `ded90c6fe8b2b014c8d75356dbf99f1b3d7112fb` |
+| `aql_light_graph_contract_v1.json` | `2ea04e333b95f01b8a27c2c80969b2fa121754821e2f9bef377cca19daaae2f7` | `686bce0c41df8749887cd7ff2b4c0fd1ffe3ed3b` |
 | `aql_light_thermal_contract_v1.json` | `1eba62b3b80101e5f799c35c2e1af4d69e1961cf331e5d6f139b5a3aab30a3cf` | `7a6cebbddeab45802bc60ce8201b410d8c2ef851` |
 
 Bu dosyalar Android repository'sine firmware'den byte-identical kopyalanır ve

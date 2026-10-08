@@ -1,13 +1,11 @@
 package com.aqua.aqualight.data.care.smartcare
 
 import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 import kotlin.math.round
 
 data class SmartCareTankProfile(
@@ -17,6 +15,9 @@ data class SmartCareTankProfile(
   val setupWeek: Int?,
   val grossVolumeL: Double,
   val estimatedWaterVolumeL: Double,
+  val isFreshwater: Boolean,
+  val isMarine: Boolean,
+  val isNatureAquarium: Boolean,
   val hasPlants: Boolean,
   val plantCount: Int,
   val hasLivestock: Boolean,
@@ -34,165 +35,69 @@ data class SmartCareTankProfile(
   val conditions: Set<SmartCareCondition>
 )
 
+private data class SmartCareProfileInputs(
+  val tank: SavedAquariumTank,
+  val setupDay: Int?,
+  val setupWeek: Int?,
+  val grossVolumeL: Double,
+  val characteristics: SmartCareTankCharacteristics,
+  val isStartupPeriod: Boolean,
+  val isMatureTank: Boolean
+)
+
 object SmartCareProfileBuilder {
 
   fun build(
     tank: SavedAquariumTank,
     nowMillis: Long = System.currentTimeMillis()
   ): SmartCareTankProfile {
-    val setupDay = calculateSetupDay(
-      setupDateEpochDay = tank.setupDateEpochDay,
-      nowMillis = nowMillis
-    )
-
-    val setupWeek = setupDay?.let { day ->
-      ((day - 1) / 7) + 1
-    }
-
-    val grossVolumeL = calculateGrossVolumeL(tank)
-    val estimatedWaterVolumeL =
-      SmartFertilizerDoseCalculator.estimateWaterVolumeL(grossVolumeL)
-
-    val hasPlants = tank.plants.isNotEmpty()
-    val plantCount = tank.plants.size
-
-    val hasLivestock = tank.livestock.isNotEmpty()
-    val hasShrimp = hasLivestockKeyword(
+    val setupDay = calculateSetupDay(tank.setupDateEpochDay, nowMillis)
+    val inputs = SmartCareProfileInputs(
       tank = tank,
-      keywords = arrayOf(
-        "shrimp",
-        "karides",
-        "neocaridina",
-        "caridina",
-        "amano"
-      )
+      setupDay = setupDay,
+      setupWeek = setupDay?.let { day -> ((day - 1) / 7) + 1 },
+      grossVolumeL = calculateGrossVolumeL(tank),
+      characteristics = SmartCareTankClassifier.classify(tank),
+      isStartupPeriod = setupDay != null && setupDay in 1..90,
+      isMatureTank = setupDay != null && setupDay > 90
     )
+    return createProfile(inputs)
+  }
 
-    val hasFish = hasLivestock && !hasShrimp || hasLivestockKeyword(
-      tank = tank,
-      keywords = arrayOf(
-        "fish",
-        "balık",
-        "tetra",
-        "guppy",
-        "betta",
-        "rasbora",
-        "cory",
-        "corydoras",
-        "danio",
-        "molly",
-        "platy"
-      )
-    )
-
-    val hasCo2 = hasMaterialKeyword(
-      materials = tank.materials,
-      keywords = arrayOf(
-        "co2",
-        "co₂",
-        "carbon dioxide"
-      )
-    )
-
-    val hasFertilizer = hasMaterialKeyword(
-      materials = tank.materials,
-      keywords = arrayOf(
-        "fertilizer",
-        "fertiliser",
-        "fert",
-        "gübre",
-        "nutrition",
-        "brighty",
-        "apt",
-        "flourish",
-        "plant care"
-      )
-    )
-
-    val hasActiveSoil = hasMaterialKeyword(
-      materials = tank.materials,
-      keywords = arrayOf(
-        "active soil",
-        "aqua soil",
-        "aquasoil",
-        "soil",
-        "amazonia",
-        "controsoil",
-        "stratum",
-        "plant substrate"
-      )
-    )
-
-    val hasFilter = hasMaterialKeyword(
-      materials = tank.materials,
-      keywords = arrayOf(
-        "filter",
-        "filtre",
-        "canister",
-        "sponge filter",
-        "hang on",
-        "hOB",
-        "internal filter"
-      )
-    )
-
-    val hasLight = hasMaterialKeyword(
-      materials = tank.materials,
-      keywords = arrayOf(
-        "light",
-        "lighting",
-        "led",
-        "chihiros",
-        "twinstar",
-        "lamba",
-        "aydınlatma"
-      )
-    )
-
-    val isStartupPeriod = setupDay != null && setupDay in 1..90
-    val isMatureTank = setupDay != null && setupDay > 90
-
-    val isHighTech = hasPlants && hasCo2 && hasLight
-    val isLowTech = hasPlants && !hasCo2
-
-    val conditions = buildConditions(
-      hasPlants = hasPlants,
-      hasCo2 = hasCo2,
-      hasActiveSoil = hasActiveSoil,
-      hasFertilizer = hasFertilizer,
-      hasLivestock = hasLivestock,
-      hasShrimp = hasShrimp,
-      hasFish = hasFish,
-      hasLight = hasLight,
-      hasFilter = hasFilter,
-      isStartupPeriod = isStartupPeriod,
-      isMatureTank = isMatureTank,
-      isHighTech = isHighTech,
-      isLowTech = isLowTech
-    )
-
+  private fun createProfile(inputs: SmartCareProfileInputs): SmartCareTankProfile {
+    val tank = inputs.tank
+    val traits = inputs.characteristics
     return SmartCareTankProfile(
       tankId = tank.id,
       tankName = tank.name.ifBlank { "Aquarium" },
-      setupDay = setupDay,
-      setupWeek = setupWeek,
-      grossVolumeL = grossVolumeL,
-      estimatedWaterVolumeL = estimatedWaterVolumeL,
-      hasPlants = hasPlants,
-      plantCount = plantCount,
-      hasLivestock = hasLivestock,
-      hasFish = hasFish,
-      hasShrimp = hasShrimp,
-      hasCo2 = hasCo2,
-      hasFertilizer = hasFertilizer,
-      hasActiveSoil = hasActiveSoil,
-      hasFilter = hasFilter,
-      hasLight = hasLight,
-      isStartupPeriod = isStartupPeriod,
-      isMatureTank = isMatureTank,
-      isHighTech = isHighTech,
-      isLowTech = isLowTech,
-      conditions = conditions
+      setupDay = inputs.setupDay,
+      setupWeek = inputs.setupWeek,
+      grossVolumeL = inputs.grossVolumeL,
+      estimatedWaterVolumeL = SmartFertilizerDoseCalculator.estimateWaterVolumeL(
+        inputs.grossVolumeL
+      ),
+      isFreshwater = traits.isFreshwater,
+      isMarine = traits.isMarine,
+      isNatureAquarium = traits.isNatureAquarium,
+      hasPlants = traits.hasPlants,
+      plantCount = traits.plantCount,
+      hasLivestock = traits.hasLivestock,
+      hasFish = traits.hasFish,
+      hasShrimp = traits.hasShrimp,
+      hasCo2 = traits.hasCo2,
+      hasFertilizer = traits.hasFertilizer,
+      hasActiveSoil = traits.hasActiveSoil,
+      hasFilter = traits.hasFilter,
+      hasLight = traits.hasLight,
+      isStartupPeriod = inputs.isStartupPeriod,
+      isMatureTank = inputs.isMatureTank,
+      isHighTech = traits.isHighTech,
+      isLowTech = traits.isLowTech,
+      conditions = buildConditions(
+        traits,
+        inputs.isStartupPeriod,
+        inputs.isMatureTank
+      )
     )
   }
 
@@ -200,156 +105,76 @@ object SmartCareProfileBuilder {
     setupDateEpochDay: Long?,
     nowMillis: Long
   ): Int? {
-    if (setupDateEpochDay == null) {
-      return null
-    }
-
+    if (setupDateEpochDay == null) return null
     val setupDate = LocalDate.ofEpochDay(setupDateEpochDay)
     val nowDate = Instant.ofEpochMilli(nowMillis)
       .atZone(ZoneId.systemDefault())
       .toLocalDate()
-    val elapsedDays = ChronoUnit.DAYS.between(setupDate, nowDate)
-
-    return elapsedDays.coerceAtLeast(0L).toInt() + 1
+    return ChronoUnit.DAYS.between(setupDate, nowDate)
+      .coerceAtLeast(0L)
+      .toInt() + 1
   }
 
-  private fun calculateGrossVolumeL(
-    tank: SavedAquariumTank
-  ): Double {
+  private fun calculateGrossVolumeL(tank: SavedAquariumTank): Double {
     val volume = AquariumVolumeCalculator.grossLiters(
       widthCm = tank.widthCm,
       lengthCm = tank.lengthCm,
       heightCm = tank.heightCm
     )
-
     return round(volume * 10.0) / 10.0
   }
 
   private fun buildConditions(
-    hasPlants: Boolean,
-    hasCo2: Boolean,
-    hasActiveSoil: Boolean,
-    hasFertilizer: Boolean,
-    hasLivestock: Boolean,
-    hasShrimp: Boolean,
-    hasFish: Boolean,
-    hasLight: Boolean,
-    hasFilter: Boolean,
+    traits: SmartCareTankCharacteristics,
     isStartupPeriod: Boolean,
-    isMatureTank: Boolean,
-    isHighTech: Boolean,
-    isLowTech: Boolean
+    isMatureTank: Boolean
   ): Set<SmartCareCondition> {
     val conditions = mutableSetOf<SmartCareCondition>()
-
-    if (hasPlants) {
-      conditions.add(SmartCareCondition.PLANTED)
-    } else {
-      conditions.add(SmartCareCondition.NO_PLANTS)
-    }
-
-    if (hasCo2) {
-      conditions.add(SmartCareCondition.HAS_CO2)
-    } else {
-      conditions.add(SmartCareCondition.NO_CO2)
-    }
-
-    if (hasActiveSoil) {
-      conditions.add(SmartCareCondition.HAS_ACTIVE_SOIL)
-    } else {
-      conditions.add(SmartCareCondition.NO_ACTIVE_SOIL)
-    }
-
-    if (hasFertilizer) {
-      conditions.add(SmartCareCondition.HAS_FERTILIZER)
-    } else {
-      conditions.add(SmartCareCondition.FERTILIZER_UNKNOWN)
-    }
-
-    if (hasLivestock) {
-      conditions.add(SmartCareCondition.HAS_LIVESTOCK)
-    } else {
-      conditions.add(SmartCareCondition.NO_LIVESTOCK)
-    }
-
-    if (hasShrimp) {
-      conditions.add(SmartCareCondition.HAS_SHRIMP)
-    }
-
-    if (hasFish) {
-      conditions.add(SmartCareCondition.HAS_FISH)
-    }
-
-    if (hasLight) {
-      conditions.add(SmartCareCondition.HAS_LIGHT)
-    }
-
-    if (hasFilter) {
-      conditions.add(SmartCareCondition.HAS_FILTER)
-    }
-
-    if (isHighTech) {
-      conditions.add(SmartCareCondition.HIGH_TECH)
-    }
-
-    if (isLowTech) {
-      conditions.add(SmartCareCondition.LOW_TECH)
-    }
-
-    if (isStartupPeriod) {
-      conditions.add(SmartCareCondition.STARTUP_PERIOD)
-    }
-
-    if (isMatureTank) {
-      conditions.add(SmartCareCondition.MATURE_TANK)
-    }
-
+    addTankTypeConditions(conditions, traits)
+    addEquipmentAndLivestockConditions(conditions, traits)
+    addLifecycleConditions(conditions, traits, isStartupPeriod, isMatureTank)
     return conditions
   }
 
-  private fun hasMaterialKeyword(
-    materials: List<SavedAquariumMaterial>,
-    keywords: Array<String>
-  ): Boolean {
-    return materials.any { material ->
-      containsAnyKeyword(
-        value = "${material.categoryKey} ${material.name}",
-        keywords = keywords
-      )
-    }
+  private fun addTankTypeConditions(
+    conditions: MutableSet<SmartCareCondition>,
+    traits: SmartCareTankCharacteristics
+  ) {
+    if (traits.isFreshwater) conditions.add(SmartCareCondition.FRESHWATER)
+    if (traits.isMarine) conditions.add(SmartCareCondition.MARINE)
+    if (traits.isNatureAquarium) conditions.add(SmartCareCondition.NATURE_AQUARIUM)
   }
 
-  private fun hasLivestockKeyword(
-    tank: SavedAquariumTank,
-    keywords: Array<String>
-  ): Boolean {
-    return tank.livestock.any { livestock ->
-      containsAnyKeyword(
-        value = livestock.toString(),
-        keywords = keywords
-      )
-    }
+  private fun addEquipmentAndLivestockConditions(
+    conditions: MutableSet<SmartCareCondition>,
+    traits: SmartCareTankCharacteristics
+  ) {
+    conditions.add(if (traits.hasPlants) SmartCareCondition.PLANTED else SmartCareCondition.NO_PLANTS)
+    conditions.add(if (traits.hasCo2) SmartCareCondition.HAS_CO2 else SmartCareCondition.NO_CO2)
+    conditions.add(
+      if (traits.hasActiveSoil) SmartCareCondition.HAS_ACTIVE_SOIL else SmartCareCondition.NO_ACTIVE_SOIL
+    )
+    conditions.add(
+      if (traits.hasFertilizer) SmartCareCondition.HAS_FERTILIZER else SmartCareCondition.FERTILIZER_UNKNOWN
+    )
+    conditions.add(
+      if (traits.hasLivestock) SmartCareCondition.HAS_LIVESTOCK else SmartCareCondition.NO_LIVESTOCK
+    )
+    if (traits.hasShrimp) conditions.add(SmartCareCondition.HAS_SHRIMP)
+    if (traits.hasFish) conditions.add(SmartCareCondition.HAS_FISH)
+    if (traits.hasLight) conditions.add(SmartCareCondition.HAS_LIGHT)
+    if (traits.hasFilter) conditions.add(SmartCareCondition.HAS_FILTER)
   }
 
-  private fun containsAnyKeyword(
-    value: String,
-    keywords: Array<String>
-  ): Boolean {
-    val normalizedValue = normalize(value)
-
-    return keywords.any { keyword ->
-      normalizedValue.contains(
-        normalize(keyword)
-      )
-    }
-  }
-
-  private fun normalize(
-    value: String
-  ): String {
-    return value
-      .lowercase(Locale.ROOT)
-      .replace("₂", "2")
-      .replace("ı", "i")
+  private fun addLifecycleConditions(
+    conditions: MutableSet<SmartCareCondition>,
+    traits: SmartCareTankCharacteristics,
+    isStartupPeriod: Boolean,
+    isMatureTank: Boolean
+  ) {
+    if (traits.isHighTech) conditions.add(SmartCareCondition.HIGH_TECH)
+    if (traits.isLowTech) conditions.add(SmartCareCondition.LOW_TECH)
+    if (isStartupPeriod) conditions.add(SmartCareCondition.STARTUP_PERIOD)
+    if (isMatureTank) conditions.add(SmartCareCondition.MATURE_TANK)
   }
 }

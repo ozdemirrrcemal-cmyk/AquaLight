@@ -19,7 +19,7 @@ import org.junit.Test
 class DeviceFirmwareUpdateRepositoryAvailabilityTest {
 
     @Test
-    fun `unpublished product channel resolves to installed version as no update`() = runTest {
+    fun `unpublished product channel remains a neutral distinct availability`() = runTest {
         var requestedUrl = ""
         val repository = repositoryWith(
             DeviceFirmwareManifestNotPublishedException(statusCode = 404),
@@ -29,11 +29,9 @@ class DeviceFirmwareUpdateRepositoryAvailabilityTest {
         val availability = repository.fetchAndEvaluateUpdate(
             snapshot = dosePro4Snapshot(),
             manifestUrl = MANIFEST_URL
-        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
+        ).getOrThrow() as DeviceFirmwareAvailability.ReleaseNotPublished
 
         assertEquals("1.0.0", availability.currentVersion)
-        assertEquals("1.0.0", availability.latestVersion)
-        assertTrue(!availability.releaseContent.isPresent)
         assertEquals(
             "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
                 "AquaLight-OTA-Releases/main/channels/stable/" +

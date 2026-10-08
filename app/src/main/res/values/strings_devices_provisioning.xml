@@ -12,6 +12,7 @@
     <string name="device_add_title">Add Device</string>
 <string name="device_add_scan_button">Scan</string>
     <string name="device_add_scan_button_scanning">Scanning...</string>
+    <string name="device_add_scan_button_verifying">Verifying...</string>
     <string name="device_add_scan_badge_ready">Ready</string>
     <string name="device_add_scan_badge_scanning">Scanning</string>
     <string name="device_add_scan_badge_permission">Permission</string>
@@ -19,6 +20,8 @@
     <string name="device_add_scan_badge_unavailable">Unavailable</string>
     <string name="device_add_scan_badge_error">Error</string>
     <string name="device_add_scan_badge_nearby">Nearby</string>
+    <string name="device_add_scan_badge_verifying">Verifying</string>
+    <string name="device_add_scan_badge_secure_qr">Secure QR</string>
     <string name="device_add_ready_title">Add AquaLight securely</string>
     <string name="device_add_ready_message">Use QR for first setup. For an already paired device, hold SETUP/RESET for 5 seconds, release it, then scan nearby devices.</string>
 <string name="device_add_scanning_secure_title">Scanning secure setup window</string>
@@ -32,7 +35,7 @@
     <string name="device_add_scanning_empty_message">Searching for AquaLight devices in setup mode.</string>
     <string name="device_add_result_title_single">%1$d device found</string>
     <string name="device_add_result_title_multi">%1$d devices found</string>
-<string name="device_add_result_secure_message">Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.</string>
+<string name="device_add_result_secure_message">Select your device to continue. AquaLight verifies that it is secure and compatible before sending your Wi‑Fi details.</string>
 <string name="device_add_no_nearby_title">No nearby devices</string>
     <string name="device_add_no_nearby_message">Put the device in setup mode, keep it close to your phone, then press Scan again. QR setup is available from the top-right icon.</string>
     <string name="device_add_no_setup_window_title">No setup window found</string>
@@ -47,6 +50,18 @@
     <string name="device_add_scan_failed_message">A problem occurred while starting Bluetooth scanning.</string>
     <string name="device_add_scan_failed_empty_title">Scan failed</string>
     <string name="device_add_scan_failed_fallback">BLE scan failed. Try again.</string>
+    <string name="device_add_scan_busy_message">Bluetooth scanning was started too often. Wait a few seconds, then try again.</string>
+    <string name="device_add_scan_service_message">The phone’s Bluetooth service is not ready. Turn Bluetooth off and on, then try again.</string>
+    <string name="device_add_verifying_title">Verifying the device</string>
+    <string name="device_add_verifying_message">AquaLight is securely checking the device before Wi‑Fi details are requested.</string>
+    <string name="device_add_qr_required_title">Secure QR required</string>
+    <string name="device_add_qr_required_message">This device is in first-time setup. Scan the QR label to continue securely.</string>
+    <string name="device_add_reset_required_title">Setup mode is not ready</string>
+    <string name="device_add_reset_required_message">Hold SETUP/RESET for 5 seconds, release it, then scan again. The device does not need to be power-cycled.</string>
+    <string name="device_add_verification_failed_title">Device verification was interrupted</string>
+    <string name="device_add_verification_failed_message">Keep the device nearby and in setup mode, wait a moment, then scan again.</string>
+    <string name="device_add_incompatible_title">Device update required</string>
+    <string name="device_add_incompatible_message">This device’s firmware is not compatible with secure setup in this app. Update the device firmware and try again.</string>
     <string name="device_add_missing_ble_address">BLE address is missing. Scan again.</string>
     <string name="device_add_setup_mode_label">Setup mode</string>
     <string name="device_add_rssi_format">RSSI %1$d dBm</string>
@@ -97,7 +112,7 @@
     <string name="device_provisioning_saving">Saving...</string>
     <string name="device_provisioning_opening">Opening...</string>
     <string name="device_provisioning_finding">Finding...</string>
-    <string name="device_provisioning_running">Provisioning...</string>
+    <string name="device_provisioning_running">Provisioning…</string>
     <string name="device_provisioning_serial_format">Serial: %1$s</string>
     <string name="device_provisioning_ble_format">BLE: %1$s</string>
     <string name="device_provisioning_wifi_format">Wi-Fi: %1$s</string>
@@ -176,6 +191,8 @@
     <string name="device_provisioning_status_wifi_router_rejected_message">The router rejected the connection. Check the password, security mode, and 2.4 GHz compatibility.</string>
     <string name="device_provisioning_status_wifi_timeout_message">The router did not respond in time. Move the device closer and try again.</string>
     <string name="device_provisioning_status_wifi_save_failed_message">Wi‑Fi connected, but the device could not save the network settings. Try again.</string>
+    <string name="device_provisioning_status_confirmation_timeout_message">The device connected to Wi‑Fi, but secure setup confirmation did not finish in time. Put the device in setup mode and try again.</string>
+    <string name="device_provisioning_status_finalize_rejected_message">The device could not securely confirm setup. Put the device in setup mode and start setup again.</string>
     <string name="device_provisioning_status_claim_rejected_title">Device verification failed</string>
     <string name="device_provisioning_status_claim_rejected_message">The device rejected this setup request. Use QR setup or hold the setup button for 5 seconds and try again.</string>
     <string name="device_provisioning_status_timeout_title">Setup timed out</string>
@@ -192,5 +209,12 @@
     <string name="device_provisioning_error_wifi_failed">Wi-Fi connection failed. Make sure the network is 2.4 GHz and the password is correct.</string>
     <string name="device_provisioning_error_unexpected">An unexpected setup problem occurred. Try again.</string>
     <string name="device_provisioning_error_secure_session_ended">The secure Bluetooth setup session ended. Put the device in setup mode and start setup again.</string>
+    <string name="device_provisioning_error_connection_timeout">The Bluetooth connection took too long. Keep the device nearby and in setup mode, then try again.</string>
+    <string name="device_provisioning_error_connection_failed">The secure Bluetooth connection could not be established. Keep the device nearby and in setup mode, then try again.</string>
+    <string name="device_provisioning_error_service_unavailable">The device’s secure setup service is not ready or its firmware is incompatible. Put the device in setup mode, update it if needed, then try again.</string>
+    <string name="device_provisioning_error_scan_busy">Bluetooth scanning was started too often. Wait a few seconds, then start setup again.</string>
+    <string name="device_provisioning_error_bluetooth_unavailable">The phone’s Bluetooth service is not ready. Turn Bluetooth off and on, then start setup again.</string>
+    <string name="device_provisioning_error_device_mismatch">The connected device does not match the selected device or QR label. Return and select the correct device.</string>
+    <string name="device_provisioning_error_setup_mode">The device is not in the required secure setup mode. Use its QR label for first setup, or hold SETUP/RESET for 5 seconds before manual setup.</string>
     <string name="device_provisioning_error_runtime_confirmation">The device received the Wi-Fi details, but AquaLight could not securely confirm its runtime identity. Restore the phone connection and start setup again.</string>
 </resources>

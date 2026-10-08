@@ -2,7 +2,7 @@
 <resources>
     <!-- Ayarlar / veri yönetimi -->
     <string name="data_management_backup_title">Yedek oluştur</string>
-    <string name="data_management_backup_subtitle">Akvaryumlarınızı, bakım kayıtlarınızı ve uygun cihaz ilişkilerini AquaLight yedeğine kaydedin.</string>
+    <string name="data_management_backup_subtitle">Akvaryumları, bakım kayıtlarını ve uygun cihaz ilişkilerini yedekleyin. Yedek başına en fazla 4.000 fotoğraf ve toplam 64 MB desteklenir.</string>
     <string name="data_management_backup_card_description">Akvaryum verilerinizin AquaLight yedeğini oluşturun.</string>
     <string name="data_management_restore_title">Yedekten geri yükle</string>
     <string name="data_management_restore_subtitle">Bir AquaLight yedeğini inceleyin ve mevcut akvaryumlarınızı silmeden verilerini ekleyin.</string>

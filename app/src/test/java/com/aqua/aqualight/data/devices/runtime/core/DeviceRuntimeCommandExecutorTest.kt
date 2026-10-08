@@ -121,7 +121,7 @@ class DeviceRuntimeCommandExecutorTest {
         assertEquals("value", error.field)
         assertEquals(
             setOf("reason", "actualRevision"),
-            JSONObject(error.structuredDataJson).keySet()
+            JSONObject(error.structuredDataJson).keys().asSequence().toSet()
         )
         assertEquals(
             "STALE_REVISION",

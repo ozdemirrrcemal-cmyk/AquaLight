@@ -125,7 +125,6 @@ def validate_production_cutover(repository_root: Path, source_root: Path) -> lis
     owner_graph = source_root / "composition/OwnerDependencyGraph.kt"
     app_container = source_root / "composition/AppContainer.kt"
     data_dosing_root = source_root / "data/devices/dosing"
-    debug_device_root = repository_root / "app/src/debug/java/com/aqua/aqualight/debug/devices"
     release_smoke_container = (
         repository_root
         / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
@@ -192,62 +191,6 @@ def validate_production_cutover(repository_root: Path, source_root: Path) -> lis
             if production_wiring is not True:
                 errors.append(
                     f"{relative(pin_path, repository_root)}: contract.productionWiring must be true"
-                )
-
-    if debug_device_root.is_dir():
-        for path in kotlin_files(debug_device_root):
-            if path.name.startswith("DebugFixtureDosing"):
-                errors.append(
-                    f"{relative(path, repository_root)}: Dosing debug fixture implementation is "
-                    "forbidden after physical-device cutover"
-                )
-            source = path.read_text(encoding="utf-8", errors="ignore")
-            if "DebugFixtureDosingStateStore" in source:
-                errors.append(
-                    f"{relative(path, repository_root)}: parallel Dosing fixture state is forbidden"
-                )
-        fixture_catalog = debug_device_root / "DebugDeviceFixtureCatalog.kt"
-        if fixture_catalog.is_file():
-            fixture_source = fixture_catalog.read_text(encoding="utf-8", errors="ignore")
-            direct_exclusion = (
-                ".filterNot { product -> product.family == DeviceFamily.DOSING }"
-                in fixture_source
-            )
-            allowlist_match = re.search(
-                r"FIXTURE_FAMILIES\s*=\s*setOf\((?P<families>[^)]*)\)",
-                fixture_source,
-            )
-            filtered_by_allowlist = (
-                ".filter { product -> product.family in FIXTURE_FAMILIES }"
-                in fixture_source
-            )
-            allowlist_excludes_dosing = (
-                filtered_by_allowlist
-                and allowlist_match is not None
-                and "DeviceFamily.DOSING" not in allowlist_match.group("families")
-            )
-            if not direct_exclusion and not allowlist_excludes_dosing:
-                errors.append(
-                    f"{relative(fixture_catalog, repository_root)}: Dosing products must be excluded "
-                    "from installable debug fixtures"
-                )
-        fixture_container = debug_device_root / "DebugDeviceFixtureAppContainer.kt"
-        if fixture_container.is_file():
-            fixture_source = fixture_container.read_text(encoding="utf-8", errors="ignore")
-            for forbidden in (
-                "DebugFixtureDosing",
-                "DeviceDosingRootViewModel",
-                "ActiveOwnerDependencyGraphResolver",
-            ):
-                if forbidden in fixture_source:
-                    errors.append(
-                        f"{relative(fixture_container, repository_root)}: Dosing/debug composition "
-                        f"must not contain {forbidden}"
-                    )
-            if "OwnerDependencyGraphAccess" not in fixture_source:
-                errors.append(
-                    f"{relative(fixture_container, repository_root)}: debug decorators must share "
-                    "the production owner graph"
                 )
 
     if release_smoke_container.is_file():

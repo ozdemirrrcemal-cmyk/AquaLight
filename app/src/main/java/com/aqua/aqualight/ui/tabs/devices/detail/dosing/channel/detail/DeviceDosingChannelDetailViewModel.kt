@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejectio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingManualDoseDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingErrorContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -34,25 +35,23 @@ data class DeviceDosingChannelDetailDraft(
     val missedDoseRecoverySyncing: Boolean = false
 )
 
-enum class DeviceDosingChannelDetailFailure {
-    INVALID_INPUT,
-    NOT_EDITABLE,
-    CALIBRATION_REQUIRED,
-    BUSY,
-    STATE_CHANGED,
-    OUTPUT_STOP_UNCONFIRMED,
-    SAFETY_BLOCKED,
-    UNAVAILABLE,
-    TRY_AGAIN
+internal sealed interface DeviceDosingChannelDetailFailure {
+    data object INVALID_INPUT : DeviceDosingChannelDetailFailure
+    data class Rejected(
+        val reason: DeviceDosingChannelRejection
+    ) : DeviceDosingChannelDetailFailure
+    data object UNAVAILABLE : DeviceDosingChannelDetailFailure
+    data object TRY_AGAIN : DeviceDosingChannelDetailFailure
 }
 
-sealed interface DeviceDosingChannelDetailEvent {
+internal sealed interface DeviceDosingChannelDetailEvent {
     data object MissedDoseRecoverySaved : DeviceDosingChannelDetailEvent
     data object ManualDoseStarted : DeviceDosingChannelDetailEvent
     data object ManualDoseStopped : DeviceDosingChannelDetailEvent
     data object ChannelReset : DeviceDosingChannelDetailEvent
     data class OperationFailed(
-        val failure: DeviceDosingChannelDetailFailure
+        val failure: DeviceDosingChannelDetailFailure,
+        val context: DeviceDosingErrorContext = DeviceDosingErrorContext.CHANNEL_DETAIL
     ) : DeviceDosingChannelDetailEvent
 }
 
@@ -174,7 +173,8 @@ internal class DeviceDosingChannelDetailViewModel(
             viewModelScope.launch {
                 eventChannel.send(
                     DeviceDosingChannelDetailEvent.OperationFailed(
-                        DeviceDosingChannelDetailFailure.INVALID_INPUT
+                        failure = DeviceDosingChannelDetailFailure.INVALID_INPUT,
+                        context = DeviceDosingErrorContext.MANUAL_DOSE
                     )
                 )
             }
@@ -184,7 +184,8 @@ internal class DeviceDosingChannelDetailViewModel(
             operation = { deviceUid, slotId ->
                 operations.doseNow(deviceUid, slotId, amountMicroliters)
             },
-            successEvent = DeviceDosingChannelDetailEvent.ManualDoseStarted
+            successEvent = DeviceDosingChannelDetailEvent.ManualDoseStarted,
+            context = DeviceDosingErrorContext.MANUAL_DOSE
         )
     }
 
@@ -192,7 +193,8 @@ internal class DeviceDosingChannelDetailViewModel(
         if (!mutableDraft.value.manualDoseActive) return
         mutate(
             operation = operations::doseStop,
-            successEvent = DeviceDosingChannelDetailEvent.ManualDoseStopped
+            successEvent = DeviceDosingChannelDetailEvent.ManualDoseStopped,
+            context = DeviceDosingErrorContext.MANUAL_DOSE
         )
     }
 
@@ -200,13 +202,15 @@ internal class DeviceDosingChannelDetailViewModel(
         if (!mutableDraft.value.resetEnabled) return
         mutate(
             operation = operations::reset,
-            successEvent = DeviceDosingChannelDetailEvent.ChannelReset
+            successEvent = DeviceDosingChannelDetailEvent.ChannelReset,
+            context = DeviceDosingErrorContext.CHANNEL_DETAIL
         )
     }
 
     private fun mutate(
         operation: suspend (String, String) -> DeviceDosingChannelOperationResult,
-        successEvent: DeviceDosingChannelDetailEvent
+        successEvent: DeviceDosingChannelDetailEvent,
+        context: DeviceDosingErrorContext
     ) {
         val deviceUid = boundDeviceUid
         val slotId = boundSlotId
@@ -226,13 +230,14 @@ internal class DeviceDosingChannelDetailViewModel(
                 DeviceDosingChannelOperationResult.Failed
             }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
-            applyResult(result, successEvent)
+            applyResult(result, successEvent, context)
         }
     }
 
     private suspend fun applyResult(
         result: DeviceDosingChannelOperationResult,
-        successEvent: DeviceDosingChannelDetailEvent?
+        successEvent: DeviceDosingChannelDetailEvent?,
+        context: DeviceDosingErrorContext = DeviceDosingErrorContext.CHANNEL_DETAIL
     ): Boolean = when (result) {
         is DeviceDosingChannelOperationResult.Success -> {
             applySnapshot(result.snapshot)
@@ -251,7 +256,10 @@ internal class DeviceDosingChannelDetailViewModel(
             mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
             successEvent?.let {
                 eventChannel.send(
-                    DeviceDosingChannelDetailEvent.OperationFailed(result.reason.toDetailFailure())
+                    DeviceDosingChannelDetailEvent.OperationFailed(
+                        failure = DeviceDosingChannelDetailFailure.Rejected(result.reason),
+                        context = context
+                    )
                 )
             }
             false
@@ -261,7 +269,8 @@ internal class DeviceDosingChannelDetailViewModel(
             successEvent?.let {
                 eventChannel.send(
                     DeviceDosingChannelDetailEvent.OperationFailed(
-                        DeviceDosingChannelDetailFailure.UNAVAILABLE
+                        failure = DeviceDosingChannelDetailFailure.UNAVAILABLE,
+                        context = context
                     )
                 )
             }
@@ -272,7 +281,8 @@ internal class DeviceDosingChannelDetailViewModel(
             successEvent?.let {
                 eventChannel.send(
                     DeviceDosingChannelDetailEvent.OperationFailed(
-                        DeviceDosingChannelDetailFailure.TRY_AGAIN
+                        failure = DeviceDosingChannelDetailFailure.TRY_AGAIN,
+                        context = context
                     )
                 )
             }
@@ -302,17 +312,3 @@ internal class DeviceDosingChannelDetailViewModel(
         missedDoseRecovery.onSnapshot(snapshot)
     }
 }
-
-internal fun DeviceDosingChannelRejection.toDetailFailure(): DeviceDosingChannelDetailFailure =
-    when (this) {
-        DeviceDosingChannelRejection.INVALID_DRAFT -> DeviceDosingChannelDetailFailure.INVALID_INPUT
-        DeviceDosingChannelRejection.NOT_EDITABLE -> DeviceDosingChannelDetailFailure.NOT_EDITABLE
-        DeviceDosingChannelRejection.NOT_CALIBRATED ->
-            DeviceDosingChannelDetailFailure.CALIBRATION_REQUIRED
-        DeviceDosingChannelRejection.BUSY -> DeviceDosingChannelDetailFailure.BUSY
-        DeviceDosingChannelRejection.CONFLICT -> DeviceDosingChannelDetailFailure.STATE_CHANGED
-        DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
-            DeviceDosingChannelDetailFailure.OUTPUT_STOP_UNCONFIRMED
-        DeviceDosingChannelRejection.UNSAFE -> DeviceDosingChannelDetailFailure.SAFETY_BLOCKED
-        DeviceDosingChannelRejection.UNKNOWN -> DeviceDosingChannelDetailFailure.TRY_AGAIN
-    }

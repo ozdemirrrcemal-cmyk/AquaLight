@@ -78,6 +78,45 @@ object DeviceFirmwareRuntimeContract {
         const val STREAM = "stream"
     }
 
+    /** Stable terminal OTA identities emitted by current firmware snapshots. */
+    object FailureCode {
+        const val SECURE_TIME_NOT_READY = "SECURE_TIME_NOT_READY"
+        const val DEVICE_NETWORK_UNAVAILABLE = "DEVICE_NETWORK_UNAVAILABLE"
+        const val SAFE_MODE_ENTER_FAILED = "SAFE_MODE_ENTER_FAILED"
+        const val SAFE_MODE_RESTORE_FAILED = "SAFE_MODE_RESTORE_FAILED"
+        const val TLS_TRUST_UNAVAILABLE = "TLS_TRUST_UNAVAILABLE"
+        const val INSECURE_TRANSPORT = "INSECURE_TRANSPORT"
+        const val DOWNLOAD_URL_OPEN_FAILED = "DOWNLOAD_URL_OPEN_FAILED"
+        const val DOWNLOAD_HTTP_STATUS = "DOWNLOAD_HTTP_STATUS"
+        const val RELEASE_SIZE_MISMATCH = "RELEASE_SIZE_MISMATCH"
+        const val INSUFFICIENT_SPACE = "INSUFFICIENT_SPACE"
+        const val FLASH_BEGIN_FAILED = "FLASH_BEGIN_FAILED"
+        const val FLASH_WRITE_FAILED = "FLASH_WRITE_FAILED"
+        const val DOWNLOAD_STREAM_INTERRUPTED = "DOWNLOAD_STREAM_INTERRUPTED"
+        const val DOWNLOAD_SIZE_MISMATCH = "DOWNLOAD_SIZE_MISMATCH"
+        const val INTEGRITY_CHECK_FAILED = "INTEGRITY_CHECK_FAILED"
+        const val FLASH_FINALIZE_FAILED = "FLASH_FINALIZE_FAILED"
+
+        val ALL = setOf(
+            SECURE_TIME_NOT_READY,
+            DEVICE_NETWORK_UNAVAILABLE,
+            SAFE_MODE_ENTER_FAILED,
+            SAFE_MODE_RESTORE_FAILED,
+            TLS_TRUST_UNAVAILABLE,
+            INSECURE_TRANSPORT,
+            DOWNLOAD_URL_OPEN_FAILED,
+            DOWNLOAD_HTTP_STATUS,
+            RELEASE_SIZE_MISMATCH,
+            INSUFFICIENT_SPACE,
+            FLASH_BEGIN_FAILED,
+            FLASH_WRITE_FAILED,
+            DOWNLOAD_STREAM_INTERRUPTED,
+            DOWNLOAD_SIZE_MISMATCH,
+            INTEGRITY_CHECK_FAILED,
+            FLASH_FINALIZE_FAILED
+        )
+    }
+
     object Manifest {
         const val SCHEMA = "aql.ota.product-manifest.v1"
         const val BRAND = "AquaLight"

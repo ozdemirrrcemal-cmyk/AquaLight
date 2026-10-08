@@ -11,17 +11,19 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import java.net.URLDecoder
 import java.util.Locale
-import androidx.core.content.ContextCompat
-import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import java.util.UUID
 import kotlin.coroutines.resume
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
-import kotlinx.coroutines.delay
 
 /**
  * Manual BLE setup preflight.
@@ -31,28 +33,36 @@ import kotlinx.coroutines.delay
  */
 class AqlBleDeviceInfoPreflightClient(
     context: Context
-) {
+) : ManualProvisioningPreflightClient {
 
     private val appContext = context.applicationContext
     private val bluetoothManager = appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val closeCoordinator = AqlBleConnectionCloseCoordinator<BluetoothGatt>(
+        schedule = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        cancel = { task -> mainHandler.removeCallbacks(task) },
+        disconnect = { gatt -> disconnectGatt(gatt) },
+        release = { gatt -> releaseGatt(gatt) },
+        fallbackDelayMillis = GATT_CLOSE_FALLBACK_MS
+    )
 
-    suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult {
+    override suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult {
         val address = bleAddress.trim()
-        if (address.isBlank()) return ManualSetupPreflightResult.Blocked("BLE address is missing. Scan again.")
-        if (!hasRequiredPermissions()) return ManualSetupPreflightResult.Blocked("Bluetooth scan/connect permission is required.")
-        val adapter = bluetoothManager?.adapter ?: return ManualSetupPreflightResult.Blocked("Bluetooth adapter is unavailable.")
-        if (!adapter.isEnabled) return ManualSetupPreflightResult.Blocked("Bluetooth is disabled.")
+        if (address.isBlank()) return ManualSetupPreflightResult.ConnectionFailed
+        if (!hasRequiredPermissions()) return ManualSetupPreflightResult.MissingPermission
+        val adapter = bluetoothManager?.adapter ?: return ManualSetupPreflightResult.BluetoothUnavailable
+        if (!adapter.isEnabled) return ManualSetupPreflightResult.BluetoothOff
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrElse {
-            return ManualSetupPreflightResult.Blocked("BLE device address is invalid. Scan again.")
+            return ManualSetupPreflightResult.ConnectionFailed
         }
         val deviceInfo = readDeviceInfoWithRetry(
             device = device,
             timeoutMs = PREFLIGHT_TIMEOUT_MS,
             attempts = PREFLIGHT_READ_ATTEMPTS
-        ) ?: return ManualSetupPreflightResult.Blocked("DeviceInfo verification timed out. Keep setup mode open and scan again.")
+        ) ?: return ManualSetupPreflightResult.ConnectionFailed
         return deviceInfo.fold(
             onSuccess = { info -> validateManualDeviceInfo(info) },
-            onFailure = { error -> ManualSetupPreflightResult.Blocked(error.message ?: "DeviceInfo verification failed. Scan again.") }
+            onFailure = { ManualSetupPreflightResult.ConnectionFailed }
         )
     }
 
@@ -126,13 +136,25 @@ class AqlBleDeviceInfoPreflightClient(
             fun finish(result: Result<DeviceInfo>) {
                 if (completed) return
                 completed = true
-                runCatching { gattRef?.disconnect() }
-                runCatching { gattRef?.close() }
-                if (continuation.isActive) continuation.resume(result)
+                val gatt = gattRef
+                if (gatt == null) {
+                    if (continuation.isActive) continuation.resume(result)
+                } else {
+                    closeCoordinator.beginGracefulClose(gatt) {
+                        if (continuation.isActive) continuation.resume(result)
+                    }
+                }
             }
 
             val callback = object : BluetoothGattCallback() {
                 override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                    if (
+                        closeCoordinator.handleConnectionState(
+                            connection = gatt,
+                            disconnected = newState == BluetoothProfile.STATE_DISCONNECTED,
+                            failed = status != BluetoothGatt.GATT_SUCCESS
+                        )
+                    ) return
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         finish(Result.failure(IllegalStateException("BLE connection failed with status $status.")))
                         return
@@ -176,8 +198,9 @@ class AqlBleDeviceInfoPreflightClient(
             }
 
             continuation.invokeOnCancellation {
-                runCatching { gattRef?.disconnect() }
-                runCatching { gattRef?.close() }
+                gattRef?.let { connection ->
+                    closeCoordinator.beginGracefulClose(connection)
+                }
             }
 
             gattRef = runCatching {
@@ -342,28 +365,28 @@ class AqlBleDeviceInfoPreflightClient(
 
     private fun validateManualDeviceInfo(info: DeviceInfo): ManualSetupPreflightResult {
         if (info.contractVersion != AqlBleProvisioningContract.CONTRACT_VERSION) {
-            return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo contractVersion: ${info.contractVersion}.")
+            return ManualSetupPreflightResult.IncompatibleDevice
         }
         if (info.securityVersion != AqlBleProvisioningContract.PROVISIONING_SECURITY_VERSION) {
-            return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo securityVersion: ${info.securityVersion}.")
+            return ManualSetupPreflightResult.IncompatibleDevice
         }
         if (info.brand.isNotBlank() && !info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) {
-            return ManualSetupPreflightResult.Blocked("DeviceInfo brand is not supported: ${info.brand}.")
+            return ManualSetupPreflightResult.IncompatibleDevice
         }
         if (info.mode == AqlBleProvisioningContract.Status.FACTORY && info.claimRequired && !info.physicalReset) {
-            return ManualSetupPreflightResult.QrRequired("First setup requires the secure QR code. Scan the QR label to continue.")
+            return ManualSetupPreflightResult.QrRequired
         }
         if (info.mode != AqlBleProvisioningContract.Status.PHYSICAL_RESET) {
-            return ManualSetupPreflightResult.Blocked("Manual BLE setup is available only after holding SETUP/RESET for 5 seconds.")
+            return ManualSetupPreflightResult.ResetRequired
         }
         if (!info.physicalReset) {
-            return ManualSetupPreflightResult.Blocked("DeviceInfo physicalReset flag is not active. Hold SETUP/RESET for 5 seconds, then scan again.")
+            return ManualSetupPreflightResult.ResetRequired
         }
         if (info.claimRequired) {
-            return ManualSetupPreflightResult.QrRequired("This device requires QR claim verification. Scan the QR label to continue.")
+            return ManualSetupPreflightResult.QrRequired
         }
         if (info.sessionMode != AqlBleProvisioningContract.SessionMode.PHYSICAL_RESET_SECURE || info.devicePublicKey.isBlank()) {
-            return ManualSetupPreflightResult.Blocked("Secure physical reset recovery is not ready. Hold SETUP/RESET for 5 seconds, then scan again.")
+            return ManualSetupPreflightResult.ResetRequired
         }
         return ManualSetupPreflightResult.Allowed(
             deviceUid = info.deviceUid,
@@ -482,7 +505,18 @@ class AqlBleDeviceInfoPreflightClient(
         const val PREFLIGHT_READ_ATTEMPTS = 2
         const val QR_CANDIDATE_PREFLIGHT_READ_ATTEMPTS = 2
         const val PREFLIGHT_RETRY_DELAY_MS = 650L
+        const val GATT_CLOSE_FALLBACK_MS = 1_500L
     }
+}
+
+@SuppressLint("MissingPermission")
+private fun disconnectGatt(gatt: BluetoothGatt) {
+    gatt.disconnect()
+}
+
+@SuppressLint("MissingPermission")
+private fun releaseGatt(gatt: BluetoothGatt) {
+    gatt.close()
 }
 
 sealed interface ManualSetupPreflightResult {
@@ -497,8 +531,17 @@ sealed interface ManualSetupPreflightResult {
         val bleName: String
     ) : ManualSetupPreflightResult
 
-    data class QrRequired(val message: String) : ManualSetupPreflightResult
-    data class Blocked(val message: String) : ManualSetupPreflightResult
+    data object QrRequired : ManualSetupPreflightResult
+    data object ResetRequired : ManualSetupPreflightResult
+    data object MissingPermission : ManualSetupPreflightResult
+    data object BluetoothOff : ManualSetupPreflightResult
+    data object BluetoothUnavailable : ManualSetupPreflightResult
+    data object ConnectionFailed : ManualSetupPreflightResult
+    data object IncompatibleDevice : ManualSetupPreflightResult
+}
+
+interface ManualProvisioningPreflightClient {
+    suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult
 }
 
 

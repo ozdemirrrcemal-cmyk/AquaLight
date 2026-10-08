@@ -1,10 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices
 
-import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 
 object DeviceCardMapper {
 
@@ -15,8 +14,6 @@ object DeviceCardMapper {
             .trim()
             .takeIf(String::isNotBlank)
             .orEmpty()
-        val isReachable = device.availability == OwnerDeviceAvailability.REACHABLE
-
         return DeviceCardUi(
             deviceUid = device.deviceUid,
             card = DeviceCompactCardUi(
@@ -25,11 +22,7 @@ object DeviceCardMapper {
                 serialText = device.serialText.ifBlank { device.deviceUid },
                 supportingText = supportingText,
                 iconRes = DeviceFamilyIconMapper.iconFor(device.family),
-                statusStyle = if (isReachable) {
-                    DeviceConnectionVisualState.ONLINE
-                } else {
-                    DeviceConnectionVisualState.OFFLINE
-                },
+                statusStyle = device.availability.toDeviceConnectionVisualState(),
                 actionText = "",
                 showAction = false
             )

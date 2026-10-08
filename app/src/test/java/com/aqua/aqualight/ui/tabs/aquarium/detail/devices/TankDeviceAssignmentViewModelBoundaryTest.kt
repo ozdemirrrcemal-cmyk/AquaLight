@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.AssignDeviceToTankResult
 import com.aqua.aqualight.application.devices.AvailableTankDevicesSnapshot
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
@@ -155,6 +156,29 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         viewModel.onDeviceNavigationFinished("device-1", committed = false)
 
         assertEquals("device-1" to OwnerDeviceFamily.DOSING, preparation.lastDiscardRequest)
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
+    fun `tank detail preserves unavailable title and message resources`() = runTest {
+        val viewModel = createTankDetailViewModel(
+            operations = FakeTankDeviceAssignmentOperations(
+                assigned = listOf(device("device-1"))
+            ),
+            menuAccess = FakeMenuAccessOperations(
+                DeviceMenuAccessResult.Unavailable(
+                    title = "AquaLight device-1",
+                    reason = DeviceMenuUnavailableReason.DEVICE_OFFLINE
+                )
+            )
+        )
+        viewModel.bind(10L)
+
+        viewModel.onDeviceClicked("device-1")
+        val event = viewModel.events.first() as TankDetailDevicesEvent.ShowDeviceUnavailable
+
+        assertEquals(R.string.device_menu_offline_dialog_title, event.titleRes)
+        assertEquals(R.string.device_menu_offline_message, event.messageRes)
         assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 

@@ -114,6 +114,24 @@ class DeviceFirmwareUpdateViewModelTest {
     }
 
     @Test
+    fun `unpublished release never maps to up to date`() {
+        val firmware = FakeFirmwareOperations(preparedPlan())
+        val viewModel = DeviceFirmwareUpdateViewModel(
+            rootOperations = FakeRootOperations(deviceSnapshot()),
+            firmwareUpdateOperations = firmware,
+            manifestUrl = MANIFEST_URL
+        )
+        viewModel.bind(DEVICE_UID)
+
+        firmware.emit(DeviceOtaState.ReleaseNotPublished(DEVICE_UID, "1.0.0"))
+
+        assertEquals(DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED, viewModel.uiState.value.mode)
+        assertEquals("1.0.0", viewModel.uiState.value.currentVersion)
+        assertEquals("", viewModel.uiState.value.targetVersion)
+        assertFalse(viewModel.uiState.value.releaseContent.isPresent)
+    }
+
+    @Test
     fun `install dispatches only the selected exact plan`() {
         val plan = preparedPlan()
         val firmware = FakeFirmwareOperations(plan)

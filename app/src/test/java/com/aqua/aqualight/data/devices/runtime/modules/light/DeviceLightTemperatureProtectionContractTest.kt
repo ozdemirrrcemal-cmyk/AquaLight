@@ -24,7 +24,7 @@ class DeviceLightTemperatureProtectionContractTest {
             save = false
         ).toJson()
 
-        assertEquals(setOf("thresholdC", "save"), payload.keySet())
+        assertEquals(setOf("thresholdC", "save"), payload.keys().asSequence().toSet())
         assertEquals(60.0, payload.getDouble("thresholdC"), 0.0)
         assertFalse(payload.getBoolean("save"))
         assertThrows(IllegalArgumentException::class.java) {
@@ -95,7 +95,10 @@ class DeviceLightTemperatureProtectionContractTest {
                     setResult(saved = true, saveRequested = true, thresholdC = 62.5)
             )
         )
-        val repository = DeviceLightTemperatureProtectionRuntimeRepository(gateway)
+        val repository = DeviceLightTemperatureProtectionRuntimeRepository(
+            gateway,
+            DeviceLightRuntimeStateOwner()
+        )
         val deviceUid = DeviceUid("device-light-temperature")
 
         val status = repository.requestStatus(deviceUid)
@@ -114,7 +117,7 @@ class DeviceLightTemperatureProtectionContractTest {
             gateway.actions
         )
         assertEquals(0, gateway.payloads[0].length())
-        assertEquals(setOf("thresholdC", "save"), gateway.payloads[1].keySet())
+        assertEquals(setOf("thresholdC", "save"), gateway.payloads[1].keys().asSequence().toSet())
         assertEquals(62.5, gateway.payloads[1].getDouble("thresholdC"), 0.0)
         assertEquals(
             62.5,

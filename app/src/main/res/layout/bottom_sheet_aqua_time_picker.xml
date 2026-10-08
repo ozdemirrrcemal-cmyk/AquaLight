@@ -61,6 +61,7 @@
             android:layout_height="@dimen/aqua_size_1" />
 
         <TextView
+            android:id="@+id/tvAquaTimePickerMinuteLabel"
             style="@style/TextAppearance.Aqua.BottomSheet.TimePicker.Label"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -74,6 +75,7 @@
         android:layout_marginTop="@dimen/aqua_size_8">
 
         <View
+            android:id="@+id/viewAquaTimePickerCombinedSelection"
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_size_48"
             android:layout_gravity="center_vertical"
@@ -81,6 +83,34 @@
             android:layout_marginEnd="@dimen/aqua_size_8"
             android:background="@drawable/bg_aqua_time_picker_selection"
             android:importantForAccessibility="no" />
+
+        <LinearLayout
+            android:id="@+id/aquaTimePickerSplitSelection"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_48"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/aqua_size_8"
+            android:layout_marginEnd="@dimen/aqua_size_8"
+            android:importantForAccessibility="no"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_aqua_time_picker_selection" />
+
+            <Space
+                android:layout_width="@dimen/aqua_size_32"
+                android:layout_height="@dimen/aqua_size_1" />
+
+            <View
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_aqua_time_picker_selection" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -150,5 +180,15 @@
             android:layout_marginStart="@dimen/aqua_size_8"
             android:layout_weight="1" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvAquaTimePickerHelper"
+        style="@style/TextAppearance.Aqua.BottomSheet.TimePicker.Hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_12"
+        android:gravity="center"
+        android:visibility="gone"
+        tools:text="A new point will be created when you confirm." />
 
 </LinearLayout>

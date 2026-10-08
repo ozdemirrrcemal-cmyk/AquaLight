@@ -126,6 +126,7 @@ object DeviceFirmwareStatusParser {
         val targetVersion = source.requiredStringAllowEmpty("targetVersion")
         val sha256Expected = source.requiredStringAllowEmpty("sha256Expected")
         val sha256Actual = source.requiredStringAllowEmpty("sha256Actual")
+        val failureCode = source.requiredStringAllowEmpty("failureCode")
         val urlScheme = source.requiredStringAllowEmpty("urlScheme")
         val lastError = source.requiredStringAllowEmpty("lastError")
         val lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
@@ -145,6 +146,11 @@ object DeviceFirmwareStatusParser {
         require(urlScheme.isEmpty() || urlScheme == "https")
         require(sha256Expected.isEmpty() || sha256Expected.isSha256Hex())
         require(sha256Actual.isEmpty() || sha256Actual.isSha256Hex())
+        requireValidFailureCode(
+            phase = phase,
+            failureCode = failureCode,
+            lastErrorField = lastErrorField
+        )
 
         val activePhase = phase in setOf(
             DeviceFirmwareOtaPhase.STARTING,
@@ -158,8 +164,8 @@ object DeviceFirmwareStatusParser {
             phase = phase,
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
-            lastError = lastError,
-            lastErrorField = lastErrorField
+            failureCode = failureCode,
+            lastError = lastError
         )
         if (active || phase.isTerminal) {
             require(targetVersion.isNotBlank()) { "Active/terminal OTA targetVersion is missing." }
@@ -184,6 +190,7 @@ object DeviceFirmwareStatusParser {
             targetVersion = targetVersion,
             sha256Expected = sha256Expected,
             sha256Actual = sha256Actual,
+            failureCode = failureCode,
             lastError = lastError,
             lastErrorField = lastErrorField,
             urlScheme = urlScheme,
@@ -192,21 +199,30 @@ object DeviceFirmwareStatusParser {
     }
 
     private fun parseOtaClearPreviousExact(source: JSONObject): DeviceFirmwareOtaSnapshot {
-        source.requireExactKeys(OTA_CLEAR_PREVIOUS_KEYS, "firmware.ota.clear.data.previous")
+        source.requireExactKeys(
+            OTA_CLEAR_PREVIOUS_KEYS,
+            "firmware.ota.clear.data.previous"
+        )
         val phaseRaw = source.requiredExactString("phase")
         val phase = requireNotNull(DeviceFirmwareOtaPhase.fromWireExact(phaseRaw)) {
             "Unknown previous firmware OTA phase: $phaseRaw"
         }
         val restartRequired = source.requiredExactBoolean("restartRequired")
         val restartScheduled = source.requiredExactBoolean("restartScheduled")
+        val failureCode = source.requiredStringAllowEmpty("failureCode")
         val lastError = source.requiredStringAllowEmpty("lastError")
         val lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
+        requireValidFailureCode(
+            phase = phase,
+            failureCode = failureCode,
+            lastErrorField = lastErrorField
+        )
         requireValidRestartState(
             phase = phase,
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
-            lastError = lastError,
-            lastErrorField = lastErrorField
+            failureCode = failureCode,
+            lastError = lastError
         )
         return DeviceFirmwareOtaSnapshot(
             phase = phase,
@@ -218,20 +234,83 @@ object DeviceFirmwareStatusParser {
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
             targetVersion = source.requiredStringAllowEmpty("targetVersion"),
+            failureCode = failureCode,
             lastError = lastError,
             lastErrorField = lastErrorField
         )
+    }
+
+    private fun requireValidFailureCode(
+        phase: DeviceFirmwareOtaPhase,
+        failureCode: String,
+        lastErrorField: String
+    ) {
+        if (failureCode.isEmpty()) {
+            require(phase != DeviceFirmwareOtaPhase.FAILED) {
+                "Failed OTA snapshot must include failureCode."
+            }
+            require(lastErrorField.isEmpty()) {
+                "OTA snapshot without failureCode cannot include lastErrorField."
+            }
+            return
+        }
+
+        require(failureCode in DeviceFirmwareRuntimeContract.FailureCode.ALL) {
+            "Unknown firmware OTA failureCode: $failureCode"
+        }
+        require(lastErrorField == expectedFailureField(failureCode)) {
+            "OTA failureCode and lastErrorField disagree."
+        }
+
+        val succeededRestoreFailure =
+            phase == DeviceFirmwareOtaPhase.SUCCEEDED &&
+                failureCode ==
+                DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+        require(phase == DeviceFirmwareOtaPhase.FAILED || succeededRestoreFailure) {
+            "OTA failureCode is not valid for phase ${phase.wireValue}."
+        }
+    }
+
+    private fun expectedFailureField(failureCode: String): String = when (failureCode) {
+        DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY,
+        DeviceFirmwareRuntimeContract.FailureCode.TLS_TRUST_UNAVAILABLE ->
+            DeviceFirmwareRuntimeContract.ErrorField.TLS
+        DeviceFirmwareRuntimeContract.FailureCode.DEVICE_NETWORK_UNAVAILABLE ->
+            DeviceFirmwareRuntimeContract.ErrorField.WIFI
+        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_ENTER_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE
+        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+        DeviceFirmwareRuntimeContract.FailureCode.INSECURE_TRANSPORT,
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_URL_OPEN_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.URL
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS ->
+            DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS
+        DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH,
+        DeviceFirmwareRuntimeContract.FailureCode.INSUFFICIENT_SPACE,
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_SIZE_MISMATCH ->
+            DeviceFirmwareRuntimeContract.ErrorField.SIZE
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_BEGIN_FAILED,
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_WRITE_FAILED,
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_FINALIZE_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.FLASH
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED ->
+            DeviceFirmwareRuntimeContract.ErrorField.STREAM
+        DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.SHA256
+        else -> error("Unsupported firmware OTA failureCode: $failureCode")
     }
 
     private fun requireValidRestartState(
         phase: DeviceFirmwareOtaPhase,
         restartRequired: Boolean,
         restartScheduled: Boolean,
-        lastError: String,
-        lastErrorField: String
+        failureCode: String,
+        lastError: String
     ) {
         val exactRestoreFailure =
-            lastErrorField == DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+            failureCode ==
+                DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
         val restartRequiredPhase = phase == DeviceFirmwareOtaPhase.SUCCEEDED ||
             (phase == DeviceFirmwareOtaPhase.FAILED && exactRestoreFailure)
 
@@ -314,8 +393,8 @@ object DeviceFirmwareStatusParser {
         "operation", "cleared", "runtimeTransport", "command", "previous", "ota"
     )
     private val OTA_CLEAR_PREVIOUS_KEYS = setOf(
-        "phase", "restartRequired", "restartScheduled", "targetVersion", "lastError",
-        "lastErrorField"
+        "phase", "restartRequired", "restartScheduled", "targetVersion", "failureCode",
+        "lastError", "lastErrorField"
     )
     private val OTA_REQUEST_ECHO_KEYS = setOf(
         "urlScheme", "version", "expectedSize", "applyNow", "allowInsecureHttp",
@@ -324,8 +403,8 @@ object DeviceFirmwareStatusParser {
     private val OTA_SNAPSHOT_KEYS = setOf(
         "phase", "active", "restartRequired", "restartScheduled", "allowInsecureHttp",
         "startedAtMs", "finishedAtMs", "bytesWritten", "contentLength", "progressPermille",
-        "progressPercent", "targetVersion", "sha256Expected", "sha256Actual", "lastError",
-        "lastErrorField", "urlScheme", "httpStatus"
+        "progressPercent", "targetVersion", "sha256Expected", "sha256Actual", "failureCode",
+        "lastError", "lastErrorField", "urlScheme", "httpStatus"
     )
     private val OTA_EVENT_KEYS = OTA_SNAPSHOT_KEYS + setOf(
         "completed", "success", "failed", "runtimeTransport", "binaryTransfer"

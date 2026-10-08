@@ -274,12 +274,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <ViewStub
-                android:id="@+id/lightSettingsSectionStub"
-                android:inflatedId="@+id/lightSettingsSection"
-                android:layout="@layout/layout_device_light_settings_section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

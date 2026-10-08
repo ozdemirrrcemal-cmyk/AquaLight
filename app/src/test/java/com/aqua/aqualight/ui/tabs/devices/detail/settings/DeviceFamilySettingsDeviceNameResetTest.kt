@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -94,7 +93,6 @@ class DeviceFamilySettingsDeviceNameResetTest {
         initialSnapshot: DeviceRootSnapshot
     ) : DeviceFamilySettingsOperations {
         private val snapshot = MutableStateFlow<DeviceRootSnapshot?>(initialSnapshot)
-        private val lightProtection = MutableStateFlow(DeviceLightProtectionSnapshot())
         val updatedNames = mutableListOf<String>()
         var updateResult: Result<Unit> = Result.success(Unit)
 
@@ -118,21 +116,6 @@ class DeviceFamilySettingsDeviceNameResetTest {
             return updateResult
         }
 
-        override fun observeLightProtection(
-            deviceUid: String
-        ): Flow<DeviceLightProtectionSnapshot> = lightProtection
-
-        override fun currentLightProtection(
-            deviceUid: String
-        ): DeviceLightProtectionSnapshot = lightProtection.value
-
-        override suspend fun refreshLightProtection(deviceUid: String): Result<Unit> =
-            Result.success(Unit)
-
-        override suspend fun updateLightProtectionThreshold(
-            deviceUid: String,
-            thresholdCelsius: Int
-        ): Result<Unit> = Result.success(Unit)
     }
 
     private class FakeFirmwareOperations : DeviceFirmwareUpdateOperations {

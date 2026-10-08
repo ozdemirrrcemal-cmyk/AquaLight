@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_keyword_carbon_dioxide">karbondioksit</string>
+    <string name="catalog_keyword_co2_regulator">co2 regülatörü</string>
+    <string name="catalog_keyword_pressure_regulator">basınç regülatörü</string>
+    <string name="catalog_keyword_pressure_reducer">basınç düşürücü</string>
+    <string name="catalog_keyword_co2_system">co2 sistemi</string>
+    <string name="catalog_keyword_co2_set">co2 seti</string>
+    <string name="catalog_keyword_bio">bio</string>
+    <string name="catalog_keyword_bio_co2">bio co2</string>
+    <string name="catalog_keyword_fermentation">fermantasyon</string>
+    <string name="catalog_keyword_kit">kit</string>
+    <string name="catalog_keyword_needle_valve">iğne valfi</string>
+    <string name="catalog_keyword_solenoid_valve">selenoid valf</string>
+    <string name="catalog_keyword_dual_stage">çift kademeli</string>
+    <string name="catalog_keyword_single_stage">tek kademeli</string>
+    <string name="catalog_keyword_reactor">reaktör</string>
+    <string name="catalog_keyword_inline">hat içi</string>
+    <string name="catalog_keyword_cartridge">kartuş</string>
+    <string name="catalog_keyword_disposable">tek kullanımlık</string>
+    <string name="catalog_keyword_night_shutoff">gece kapatma</string>
+    <string name="catalog_keyword_gauge">manometre</string>
+    <string name="catalog_keyword_digital_control">dijital kontrol</string>
+    <string name="catalog_keyword_bubble_counter">damla sayacı</string>
+    <string name="catalog_keyword_low_pressure">düşük basınç</string>
+    <string name="catalog_keyword_pressurized">basınçlı</string>
+    <string name="catalog_keyword_fertilization">gübreleme</string>
+</resources>

@@ -47,6 +47,25 @@ class DefaultNotificationScheduler(
         scheduleOrCancel(owner, task.copy(ownerUid = owner))
     }
 
+    override suspend fun finalizeCareTaskDelivery(ownerUid: String, taskId: Long) {
+        val owner = requireOwnerUid(ownerUid)
+        require(taskId > 0L) { "taskId must be positive" }
+
+        val task = UserDataScope.withOwnerUid(owner) {
+            careTasks.taskFlow(taskId).firstOrNull()
+        }
+        if (task == null || task.ownerUid != owner) {
+            cancelCareTask(owner, taskId)
+            return
+        }
+
+        scheduleOrCancel(
+            ownerUid = owner,
+            task = task.copy(ownerUid = owner),
+            preserveVisibleNotificationWhenConsumed = true
+        )
+    }
+
     override suspend fun cancelCareTask(ownerUid: String, taskId: Long) {
         val owner = requireOwnerUid(ownerUid)
         require(taskId > 0L) { "taskId must be positive" }
@@ -106,7 +125,11 @@ class DefaultNotificationScheduler(
         taskSnapshot.exceptionOrNull()?.let { error -> throw error }
     }
 
-    private suspend fun scheduleOrCancel(ownerUid: String, task: CareTask) {
+    private suspend fun scheduleOrCancel(
+        ownerUid: String,
+        task: CareTask,
+        preserveVisibleNotificationWhenConsumed: Boolean = false
+    ) {
         if (!isEligible(ownerUid, task)) {
             cancelCareTask(ownerUid, task.id)
             return
@@ -117,6 +140,12 @@ class DefaultNotificationScheduler(
             scheduleLedger.markScheduled(ownerUid, task.id)
         } else {
             scheduleLedger.markCancelled(ownerUid, task.id)
+        }
+        val shouldCancelVisible = shouldCancelVisibleNotification(
+            futureAlarmScheduled = scheduled,
+            preserveVisibleNotificationWhenConsumed = preserveVisibleNotificationWhenConsumed
+        )
+        if (shouldCancelVisible) {
             renderer.cancelCareReminder(ownerUid, task.id)
         }
     }
@@ -133,6 +162,15 @@ class DefaultNotificationScheduler(
     private fun requireOwnerUid(ownerUid: String): String {
         return UserDataScope.normalizeOwnerUid(ownerUid).also { normalized ->
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
+        }
+    }
+
+    internal companion object {
+        fun shouldCancelVisibleNotification(
+            futureAlarmScheduled: Boolean,
+            preserveVisibleNotificationWhenConsumed: Boolean
+        ): Boolean {
+            return !futureAlarmScheduled && !preserveVisibleNotificationWhenConsumed
         }
     }
 }

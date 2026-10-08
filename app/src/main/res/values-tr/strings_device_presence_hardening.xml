@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_menu_checking_accessibility">Cihaz bağlantısı kontrol ediliyor</string>
+    <string name="device_menu_unavailable_dialog_title">Cihaz Kullanılamıyor</string>
+    <string name="device_menu_unavailable_dialog_message">%1$s\n\n%2$s</string>
+    <string name="device_menu_local_network_unavailable_title">Yerel Ağ Kullanılamıyor</string>
     <string name="device_menu_local_network_unavailable_message">Telefonunuzu cihazla aynı Wi-Fi ağına bağlayıp yeniden deneyin.</string>
+    <string name="device_menu_authentication_required_title">Yeniden Eşleştirme Gerekiyor</string>
     <string name="device_menu_authentication_required_message">Cihaz kontrollerini açmadan önce bu cihazı hesabınızla yeniden eşleştirmeniz gerekiyor.</string>
+    <string name="device_menu_device_unresponsive_title">Cihaza Ulaşılamadı</string>
     <string name="device_menu_device_unresponsive_message">Cihaz yerel ağda görünüyor ancak yanıt vermiyor. Güç ve Wi-Fi bağlantısını kontrol edin.</string>
+    <string name="device_menu_verification_timed_out_title">Cihaz Durumu Doğrulanamadı</string>
     <string name="device_menu_verification_timed_out_message">Bağlantı kontrolü gereğinden uzun sürdü. AquaLight otomatik olarak denemeye devam edecek.</string>
+    <string name="device_menu_status_unverified_title">Cihaz Durumu Doğrulanamadı</string>
+    <string name="device_menu_status_unverified_message">Cihazın güncel bağlantı durumu doğrulanamadı. Cihazın açık ve telefonunuzla aynı Wi-Fi ağına bağlı olduğundan emin olup yeniden deneyin.</string>
+    <string name="device_menu_invalid_device_message">Cihaz bilgileri doğrulanamadı. Cihazlar ekranını yenileyip yeniden deneyin.</string>
+    <string name="device_menu_not_registered_message">Bu cihaz artık hesabınızda kayıtlı görünmüyor. Cihazlar ekranını yenileyip yeniden deneyin.</string>
+    <string name="device_menu_commercial_product_mismatch_message">Cihazın ürün bilgileri desteklenen AquaLight profilleriyle eşleşmiyor. Uygulamayı güncelleyip yeniden deneyin; sorun sürerse destek alın.</string>
 </resources>

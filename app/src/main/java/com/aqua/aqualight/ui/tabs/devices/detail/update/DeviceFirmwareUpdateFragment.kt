@@ -67,6 +67,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
                 DeviceFirmwareUpdateMode.SUCCEEDED,
                 DeviceFirmwareUpdateMode.ROLLED_BACK,
                 DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
+                DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED,
                 DeviceFirmwareUpdateMode.UP_TO_DATE,
                 DeviceFirmwareUpdateMode.UNSUPPORTED -> findNavController().navigateUp()
                 else -> Unit

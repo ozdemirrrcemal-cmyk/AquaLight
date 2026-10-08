@@ -5,7 +5,8 @@
     <string name="local_data_recovery_care_tasks_message">Hasarlı bir bakım görevi kaydı güvenli biçimde sıfırlandı. Lütfen etkilenen bakım hatırlatıcılarını gözden geçirip yeniden oluşturun.</string>
     <string name="local_data_recovery_devices_message">Hasarlı bir yerel cihaz kaydı güvenli biçimde sıfırlandı. Güvenliğiniz için etkilenen cihazların yeniden eklenmesi gerekir.</string>
     <string name="local_data_recovery_assignments_message">Hasarlı bir tank-cihaz atama kaydı güvenli biçimde sıfırlandı. Lütfen tank cihaz atamalarınızı gözden geçirin.</string>
-    <string name="local_data_recovery_combined_message">Bazı hasarlı yerel veriler güvenli biçimde sıfırlandı. Lütfen akvaryumlarınızı, bakım görevlerinizi, cihazlarınızı ve tank atamalarınızı gözden geçirin.</string>
+    <string name="local_data_recovery_light_library_message">Hasarlı Işık Kitaplığı verileri güvenli biçimde sıfırlandı. Lütfen etkilenen manuel kayıtları ve özel eğrileri yeniden oluşturun.</string>
+    <string name="local_data_recovery_combined_message">Bazı hasarlı yerel veriler güvenli biçimde sıfırlandı. Lütfen akvaryumlarınızı, bakım görevlerinizi, cihazlarınızı, ışık ayarlarınızı ve tank atamalarınızı gözden geçirin.</string>
     <string name="session_startup_failed_title">Yerel Veriler Kullanılamıyor</string>
     <string name="session_startup_failed_message">AquaLight yerel oturumunuzu güvenli biçimde açamadı. Lütfen yeniden giriş yapmayı deneyin. Sorun devam ederse uygulamayı yeniden başlatın.</string>
     <string name="device_provisioning_cancelling_title">Kurulum iptal ediliyor</string>

@@ -17,10 +17,6 @@ TIMER_AUTHORITY = ROOT / (
 )
 COMPOSITIONS = {
     "production": ROOT / "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
-    "debug": ROOT / (
-        "app/src/debug/java/com/aqua/aqualight/debug/devices/"
-        "DebugDeviceFixtureAppContainer.kt"
-    ),
     "releaseSmoke": ROOT / (
         "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
     ),
@@ -55,24 +51,14 @@ class TimerRootDependencyWiringTest(unittest.TestCase):
                 self.assertIn("timerControlOperations =", text)
                 self.assertIn("controlSurfacePreparationOperations =", text)
 
-    def test_production_and_debug_keep_owner_scoped_timer_dependencies(self) -> None:
+    def test_production_keeps_owner_scoped_timer_dependencies(self) -> None:
         production = COMPOSITIONS["production"].read_text(encoding="utf-8")
-        debug = COMPOSITIONS["debug"].read_text(encoding="utf-8")
 
         self.assertIn("timerControlOperations = graph.timerControlOperations", production)
         self.assertIn(
             "controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations",
             production,
         )
-        self.assertIn("delegate = graph.timerControlOperations", debug)
-        self.assertIn(
-            "delegate = graph.controlSurfacePreparationOperations",
-            debug,
-        )
-        self.assertIn("cachedTimerDependencies", debug)
-        self.assertIn("dependencies.graph === graph", debug)
-        self.assertGreaterEqual(debug.count("timerDependencies(graph)"), 2)
-        self.assertIn("runtime = runtime", debug)
 
     def test_release_smoke_uses_a_single_stateless_timer_adapter(self) -> None:
         smoke = COMPOSITIONS["releaseSmoke"].read_text(encoding="utf-8")

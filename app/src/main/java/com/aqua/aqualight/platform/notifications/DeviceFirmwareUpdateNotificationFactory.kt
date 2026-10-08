@@ -75,6 +75,7 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
             }
             is DeviceOtaState.Idle,
             is DeviceOtaState.Checking,
+            is DeviceOtaState.ReleaseNotPublished,
             is DeviceOtaState.Unsupported,
             is DeviceOtaState.UpToDate -> null
         }

@@ -1,0 +1,249 @@
+package com.aqua.aqualight.data.devices.light.system
+
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.light.system.DeviceLightFanMode
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFailure
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemMutationResult
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemReadResult
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
+import com.aqua.aqualight.data.devices.light.supportsLightSystem
+import com.aqua.aqualight.data.devices.light.supportsLightSystemPresentation
+import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
+import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightSystemReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentSystem
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+
+/** Owner-scoped adapter over the authoritative Light thermal and protection runtime owners. */
+internal class DefaultDeviceLightSystemOperations(
+    private val devicesRepository: DevicesRepository
+) : DeviceLightSystemOperations {
+
+    private val rootOperations = DefaultDeviceRootOperations(devicesRepository)
+
+    override fun observe(deviceUid: String): Flow<DeviceLightSystemReadResult> {
+        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
+        val modules = devicesRepository.runtimeModules()
+        return if (uid == null || modules == null) {
+            flowOf(readFailure(DeviceLightSystemFailure.UNAVAILABLE))
+        } else {
+            modules.light.stateRevision.map {
+                val status = modules.light.currentStatus(
+                    uid,
+                    DeviceLightStatusReadAuthority.PRESENTATION
+                )
+                if (status == null) {
+                    readFailure(DeviceLightSystemFailure.UNAVAILABLE)
+                } else if (!status.supportsLightSystemPresentation()) {
+                    readFailure(DeviceLightSystemFailure.UNSUPPORTED)
+                } else {
+                    val frame = modules.light.currentSystem(
+                        uid,
+                        DeviceLightSystemReadAuthority.PRESENTATION
+                    )
+                    val authoritative = modules.light.currentSystem(
+                        uid,
+                        DeviceLightSystemReadAuthority.AUTHORITATIVE
+                    )
+                    projectLightSystemPresentationSnapshot(
+                        deviceUid = uid,
+                        thermal = frame?.thermal,
+                        protection = frame?.protection,
+                        firmwareWriteAuthoritative =
+                            frame != null && frame == authoritative
+                    )
+                }
+            }.distinctUntilChanged()
+        }
+    }
+
+    override fun current(deviceUid: String): DeviceLightSystemReadResult =
+        when (val resolution = resolve(deviceUid)) {
+            is SystemRuntimeResolution.Failed -> readFailure(resolution.failure)
+            is SystemRuntimeResolution.Ready -> resolution.projectCurrent()
+        }
+
+    override suspend fun refresh(deviceUid: String): DeviceLightSystemReadResult =
+        when (val resolution = resolve(deviceUid)) {
+            is SystemRuntimeResolution.Failed -> readFailure(resolution.failure)
+            is SystemRuntimeResolution.Ready -> refresh(resolution)
+        }
+
+    override suspend fun save(
+        deviceUid: String,
+        settings: DeviceLightSystemSettings
+    ): DeviceLightSystemMutationResult = when (val resolution = resolve(deviceUid)) {
+        is SystemRuntimeResolution.Failed -> mutationFailure(resolution.failure)
+        is SystemRuntimeResolution.Ready -> save(resolution, settings)
+    }
+
+    private suspend fun refresh(
+        resolution: SystemRuntimeResolution.Ready
+    ): DeviceLightSystemReadResult = when (
+        val refresh = resolution.modules.refreshLightRuntime(resolution.deviceUid)
+    ) {
+        is DeviceLightRuntimeRefreshResult.Success -> resolution.projectCurrent()
+        is DeviceLightRuntimeRefreshResult.Failed ->
+            readFailure(refresh.outcome.toSystemFailure())
+        DeviceLightRuntimeRefreshResult.RejectedStale ->
+            readFailure(DeviceLightSystemFailure.UNAVAILABLE)
+        DeviceLightRuntimeRefreshResult.Malformed ->
+            readFailure(DeviceLightSystemFailure.INVALID_DATA)
+    }
+
+    private suspend fun save(
+        resolution: SystemRuntimeResolution.Ready,
+        settings: DeviceLightSystemSettings
+    ): DeviceLightSystemMutationResult = when (val current = resolution.projectCurrent()) {
+        is DeviceLightSystemReadResult.Failed -> mutationFailure(current.failure)
+        is DeviceLightSystemReadResult.Available -> saveAvailable(
+            resolution = resolution,
+            settings = settings,
+            current = current
+        )
+    }
+
+    private suspend fun saveAvailable(
+        resolution: SystemRuntimeResolution.Ready,
+        settings: DeviceLightSystemSettings,
+        current: DeviceLightSystemReadResult.Available
+    ): DeviceLightSystemMutationResult = if (!current.snapshot.accepts(settings)) {
+        mutationFailure(DeviceLightSystemFailure.INVALID_DATA)
+    } else {
+        val thermalOutcome = resolution.modules.lightThermal.applyConfig(
+            resolution.deviceUid,
+            DeviceLightThermalConfigApplyPayload(
+                mode = settings.mode.toRuntimeMode(),
+                minTemperatureC = settings.startTemperatureCelsius.toDouble(),
+                maxTemperatureC = settings.fullSpeedTemperatureCelsius.toDouble(),
+                save = true
+            )
+        )
+        val thermalResult = (thermalOutcome as? DeviceRuntimeCommandOutcome.Success)?.value
+        if (thermalResult == null || !thermalResult.persisted()) {
+            mutationFailure(thermalOutcome.toSystemFailure())
+        } else {
+            saveProtection(resolution, settings)
+        }
+    }
+
+    private suspend fun saveProtection(
+        resolution: SystemRuntimeResolution.Ready,
+        settings: DeviceLightSystemSettings
+    ): DeviceLightSystemMutationResult {
+        val protectionOutcome = resolution.modules.lightTemperatureProtection.setThreshold(
+            resolution.deviceUid,
+            DeviceLightTemperatureProtectionSetPayload(
+                thresholdC = settings.protectionThresholdCelsius.toDouble(),
+                save = true
+            )
+        )
+        val protectionResult = (protectionOutcome as? DeviceRuntimeCommandOutcome.Success)?.value
+        return if (
+            protectionResult == null ||
+            !protectionResult.saveRequested ||
+            !protectionResult.saved
+        ) {
+            resolution.modules.lightThermal.requestStatus(resolution.deviceUid)
+            resolution.modules.lightTemperatureProtection.requestStatus(resolution.deviceUid)
+            mutationFailure(
+                failure = protectionOutcome.toSystemFailure(),
+                partialApplyPossible = true
+            )
+        } else {
+            when (val projected = resolution.projectCurrent()) {
+                is DeviceLightSystemReadResult.Available ->
+                    DeviceLightSystemMutationResult.Success(projected.snapshot)
+                is DeviceLightSystemReadResult.Failed -> mutationFailure(projected.failure)
+            }
+        }
+    }
+
+    private fun resolve(deviceUid: String): SystemRuntimeResolution {
+        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
+        val root = uid?.let { rootOperations.current(it.value) }
+        return when {
+            uid == null || root == null ->
+                SystemRuntimeResolution.Failed(DeviceLightSystemFailure.UNAVAILABLE)
+            !root.supportsLightSystem() ->
+                SystemRuntimeResolution.Failed(DeviceLightSystemFailure.UNSUPPORTED)
+            else -> devicesRepository.runtimeModules()?.let { modules ->
+                SystemRuntimeResolution.Ready(uid, root, modules)
+            } ?: SystemRuntimeResolution.Failed(DeviceLightSystemFailure.UNAVAILABLE)
+        }
+    }
+}
+
+private sealed interface SystemRuntimeResolution {
+    data class Ready(
+        val deviceUid: DeviceUid,
+        val root: DeviceRootSnapshot,
+        val modules: DeviceRuntimeModuleProvider
+    ) : SystemRuntimeResolution {
+        fun projectCurrent(): DeviceLightSystemReadResult =
+            project(root, DeviceLightSystemReadAuthority.AUTHORITATIVE)
+
+        fun project(
+            currentRoot: DeviceRootSnapshot?,
+            authority: DeviceLightSystemReadAuthority
+        ): DeviceLightSystemReadResult {
+            val frame = modules.light.currentSystem(deviceUid, authority)
+            val authoritative = modules.light.currentSystem(
+                deviceUid,
+                DeviceLightSystemReadAuthority.AUTHORITATIVE
+            )
+            return projectLightSystemSnapshot(
+                deviceUid = deviceUid,
+                root = currentRoot,
+                thermal = frame?.thermal,
+                protection = frame?.protection,
+                firmwareWriteAuthoritative = frame != null && frame == authoritative
+            )
+        }
+    }
+
+    data class Failed(val failure: DeviceLightSystemFailure) : SystemRuntimeResolution
+}
+
+private fun DeviceLightFanMode.toRuntimeMode(): DeviceLightThermalMode = when (this) {
+    DeviceLightFanMode.AUTOMATIC -> DeviceLightThermalMode.AUTO
+    DeviceLightFanMode.ON -> DeviceLightThermalMode.ON
+    DeviceLightFanMode.OFF -> DeviceLightThermalMode.OFF
+}
+
+private fun DeviceLightThermalConfigApplyResult.persisted(): Boolean =
+    saveRequested && saved
+
+private fun DeviceRuntimeCommandOutcome<*>.toSystemFailure(): DeviceLightSystemFailure = when (this) {
+    is DeviceRuntimeCommandOutcome.NotConnected,
+    is DeviceRuntimeCommandOutcome.NotAuthenticated -> DeviceLightSystemFailure.NOT_CONNECTED
+    is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> DeviceLightSystemFailure.UNSUPPORTED
+    is DeviceRuntimeCommandOutcome.FirmwareError -> DeviceLightSystemFailure.REJECTED
+    is DeviceRuntimeCommandOutcome.ProtocolError -> DeviceLightSystemFailure.INVALID_DATA
+    is DeviceRuntimeCommandOutcome.SendFailed,
+    is DeviceRuntimeCommandOutcome.Timeout,
+    is DeviceRuntimeCommandOutcome.Cancelled -> DeviceLightSystemFailure.UNAVAILABLE
+    is DeviceRuntimeCommandOutcome.Success -> DeviceLightSystemFailure.INVALID_DATA
+}
+
+private fun readFailure(failure: DeviceLightSystemFailure) =
+    DeviceLightSystemReadResult.Failed(failure)
+
+private fun mutationFailure(
+    failure: DeviceLightSystemFailure,
+    partialApplyPossible: Boolean = false
+) = DeviceLightSystemMutationResult.Failed(failure, partialApplyPossible)

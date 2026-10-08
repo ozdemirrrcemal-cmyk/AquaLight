@@ -156,6 +156,11 @@ internal class DeviceOtaCoordinator(
         deviceUid: DeviceUid,
         availability: DeviceFirmwareAvailability
     ): DeviceOtaState = when (availability) {
+        is DeviceFirmwareAvailability.ReleaseNotPublished ->
+            DeviceOtaState.ReleaseNotPublished(
+                deviceUid = deviceUid.value,
+                currentVersion = availability.currentVersion
+            ).also { clearPlanState(deviceUid) }
         is DeviceFirmwareAvailability.UpToDate -> DeviceOtaState.UpToDate(
             deviceUid = deviceUid.value,
             currentVersion = availability.currentVersion,
@@ -368,7 +373,7 @@ internal class DeviceOtaCoordinator(
                 handleCommandFailure(
                     deviceUid = deviceUid,
                     outcome = outcome,
-                    preserveRecovery = stateFlow(deviceUid).value is DeviceOtaState.Recovering
+                    preserveRecovery = transactionStore.active(deviceUid) != null
                 )
             }
         }
@@ -435,7 +440,7 @@ internal class DeviceOtaCoordinator(
         val payload = event.payload as? DeviceRuntimeEventPayload.Snapshot
         val selected = selectedPlans[event.deviceUid]
         when {
-            payload == null -> fail(
+            payload == null -> preserveProtocolUncertainty(
                 event.deviceUid,
                 DeviceOtaFailureMapper.protocol(
                     "Firmware OTA event payload is not a snapshot."
@@ -447,7 +452,7 @@ internal class DeviceOtaCoordinator(
                     applySnapshot(event.deviceUid, snapshot, selected, event.generation)
                 },
                 onFailure = { error ->
-                    fail(
+                    preserveProtocolUncertainty(
                         event.deviceUid,
                         DeviceOtaFailureMapper.protocol(error.message.orEmpty())
                     )
@@ -457,7 +462,12 @@ internal class DeviceOtaCoordinator(
     }
 
     private fun processSnapshotUpdates(snapshots: Map<DeviceUid, DeviceSnapshot>) {
-        pendingVersionVerification.keys.toList().forEach { deviceUid ->
+        val transactionDeviceUids = transactionStore.activeTransactions()
+            .mapNotNull { transaction ->
+                runCatching { DeviceUid(transaction.plan.deviceUid) }.getOrNull()
+            }
+            .toSet()
+        (pendingVersionVerification.keys + transactionDeviceUids).forEach { deviceUid ->
             snapshots[deviceUid]?.let { snapshot -> verifyInstalledFirmware(deviceUid, snapshot) }
         }
     }
@@ -476,7 +486,7 @@ internal class DeviceOtaCoordinator(
         } else {
             DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
                 val failure = DeviceOtaFailureMapper.protocol(error)
-                fail(deviceUid, failure)
+                preserveProtocolUncertainty(deviceUid, failure)
                 return failure
             }
             val activeSelection = selected?.copy(runtimeGeneration = generation)
@@ -517,12 +527,8 @@ internal class DeviceOtaCoordinator(
             currentState is DeviceOtaState.Starting -> currentState
         snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
             currentState is DeviceOtaState.Recovering &&
-            activeSelection != null -> DeviceOtaState.Failed(
-            deviceUid = deviceUid.value,
-            failure = DeviceOtaFailureMapper.connection(
-                "Recovered firmware reported no active OTA operation."
-            )
-        )
+            activeSelection != null &&
+            transactionStore.active(deviceUid) != null -> currentState
         else -> DeviceOtaStateMapper.map(
             snapshot = snapshot,
             deviceUid = deviceUid,
@@ -656,9 +662,9 @@ internal class DeviceOtaCoordinator(
     }
 
     private fun verifyInstalledFirmware(deviceUid: DeviceUid, snapshot: DeviceSnapshot) {
-        val selected = pendingVersionVerification[deviceUid]
+        val transaction = transactionStore.active(deviceUid) ?: return
+        val selected = pendingVersionVerification[deviceUid] ?: selectedPlans[deviceUid] ?: return
         if (
-            selected != null &&
             snapshot.hasValidatedRuntimeMetadata &&
             snapshot.runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration
         ) {
@@ -667,9 +673,11 @@ internal class DeviceOtaCoordinator(
                     publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
                 snapshot.firmwareVersion == selected.dataPlan.targetVersion ->
                     completeInstalledFirmwareVerification(deviceUid, selected)
-                snapshot.firmwareVersion == selected.dataPlan.currentVersion ->
+                snapshot.firmwareVersion == selected.dataPlan.currentVersion &&
+                    transaction.isWaitingForPostRestartVerification ->
                     completeRollbackVerification(deviceUid, selected)
-                else -> publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
+                snapshot.firmwareVersion != selected.dataPlan.currentVersion ->
+                    publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
             }
         }
     }
@@ -787,12 +795,25 @@ internal class DeviceOtaCoordinator(
         preserveRecovery: Boolean
     ): AppCommandResult {
         val failure = DeviceOtaFailureMapper.command(outcome)
-        if (preserveRecovery && failure.recoverable) {
+        if (preserveRecovery && transactionStore.active(deviceUid) != null) {
+            markRuntimeUnavailable(deviceUid)
+        } else if (preserveRecovery && failure.recoverable) {
             scheduleRecovery(deviceUid)
         } else {
             fail(deviceUid, failure)
         }
         return outcome.toApplicationResult(failure)
+    }
+
+    private fun preserveProtocolUncertainty(
+        deviceUid: DeviceUid,
+        failure: DeviceOtaFailure
+    ) {
+        if (transactionStore.active(deviceUid) != null) {
+            markRuntimeUnavailable(deviceUid)
+        } else {
+            fail(deviceUid, failure)
+        }
     }
 
     private fun hasActiveOperation(deviceUid: DeviceUid): Boolean =
@@ -996,6 +1017,7 @@ private fun DeviceSnapshot.matchesProductIdentity(plan: DeviceFirmwareUpdatePlan
 private fun DeviceRuntimeCommandOutcome<*>.mayHaveStartedOta(): Boolean = when (this) {
     is DeviceRuntimeCommandOutcome.Timeout -> true
     is DeviceRuntimeCommandOutcome.Cancelled -> messageId.isNotBlank()
+    is DeviceRuntimeCommandOutcome.ProtocolError -> messageId.isNotBlank()
     else -> false
 }
 

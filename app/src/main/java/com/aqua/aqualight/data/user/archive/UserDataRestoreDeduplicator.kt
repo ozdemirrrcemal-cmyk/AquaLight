@@ -11,7 +11,8 @@ internal class UserDataRestoreDeduplicator(
     private val ownerUid: String,
     private val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
     private val provenance: UserDataRestoreProvenanceSnapshot =
-        UserDataRestoreProvenanceSnapshot.Empty
+        UserDataRestoreProvenanceSnapshot.Empty,
+    private val recordMedia: RestoreRecordMedia = RestoreRecordMedia()
 ) {
     private val unmatchedAquariums = existingAquariums.toMutableList()
     private val unmatchedCareTasks = existingCareTasks.toMutableList()
@@ -56,24 +57,64 @@ internal class UserDataRestoreDeduplicator(
     }
 
     private fun SavedAquariumTank.matchesArchivedContent(archived: ArchiveAquarium): Boolean {
-        val normalizedCurrent = toArchiveAquarium(archived.photo).copy(
+        val plantPhotoReferences = archived.plants.mapNotNull { plant ->
+            plant.photo?.let { reference -> plant.id to reference }
+        }.toMap()
+        val normalizedCurrent = toArchiveAquarium(
+            photoReference = archived.photo,
+            plantPhotoReferences = plantPhotoReferences,
+            livestockPhotoReferences = archived.livestock.mapNotNull { item ->
+                item.photo?.let { item.id to it }
+            }.toMap()
+        ).copy(
             id = archived.id,
             createdAtMillis = archived.createdAtMillis
         )
-        return normalizedCurrent == archived && matchesArchivedPhoto(archived.photo)
+        val recordPhotosMatch = matchesArchivedPlantPhotos(archived) && matchesArchivedLivestockPhotos(archived)
+        return normalizedCurrent == archived && matchesArchivedTankPhoto(archived.photo) && recordPhotosMatch
     }
 
-    private fun SavedAquariumTank.matchesArchivedPhoto(
+    private fun SavedAquariumTank.matchesArchivedTankPhoto(
         reference: ArchiveMediaReference?
     ): Boolean {
         return if (reference == null) {
             photoUri.isNullOrBlank()
         } else {
-            val fingerprint = snapshotTankPhoto(photoUri)
-            fingerprint != null &&
-                fingerprint.byteSize == reference.byteSize &&
-                fingerprint.sha256.equals(reference.sha256, ignoreCase = true)
+            snapshotTankPhoto(photoUri).matches(reference)
         }
+    }
+
+    private fun SavedAquariumTank.matchesArchivedPlantPhotos(
+        archived: ArchiveAquarium
+    ): Boolean {
+        val currentPlantsById = plants.associateBy { plant -> plant.id }
+        return archived.plants.all { archivedPlant ->
+            val currentPlant = currentPlantsById[archivedPlant.id] ?: return@all false
+            val reference = archivedPlant.photo
+            if (reference == null) {
+                currentPlant.photoUri.isNullOrBlank()
+            } else {
+                recordMedia.snapshotPlant(currentPlant.photoUri).matches(reference)
+            }
+        }
+    }
+
+    private fun SavedAquariumTank.matchesArchivedLivestockPhotos(archived: ArchiveAquarium): Boolean {
+        val items = livestock.associateBy { it.id }
+        return archived.livestock.all { item ->
+            val current = items[item.id] ?: return@all false
+            val reference = item.photo
+            if (reference == null) current.photoUri.isNullOrBlank()
+            else recordMedia.livestock.snapshot(current.photoUri).matches(reference)
+        }
+    }
+
+    private fun UserDataArchiveMediaFingerprint?.matches(
+        reference: ArchiveMediaReference
+    ): Boolean {
+        return this != null &&
+            byteSize == reference.byteSize &&
+            sha256.equals(reference.sha256, ignoreCase = true)
     }
 
     private fun CareTask.matchesArchivedOrigin(
@@ -93,3 +134,8 @@ internal class UserDataRestoreDeduplicator(
             generatedRuleKey == restored.generatedRuleKey
     }
 }
+
+internal data class RestoreRecordMedia(
+    val snapshotPlant: (String?) -> UserDataArchiveMediaFingerprint? = { null },
+    val livestock: LivestockRestoreMedia = LivestockRestoreMedia()
+)

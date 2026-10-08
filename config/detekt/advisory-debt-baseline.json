@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
-  "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
-  "totalFindings": 998,
+  "sourceCommit": "ff9cd9f9f7df3d8316d9051e42b9bdf165ca3947",
+  "totalFindings": 983,
   "fingerprints": [
     {
       "ruleId": "detekt.complexity.ComplexCondition",
@@ -1123,12 +1123,6 @@
     },
     {
       "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "Class 'TankDetailFragment' with '23' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt",
       "message": "Class 'TankDetailLifeFragment' with '14' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
@@ -1215,12 +1209,6 @@
       "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceWifiProvisioningFragment.kt",
       "message": "Class 'DeviceWifiProvisioningFragment' with '19' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-      "message": "Class 'DeviceLightRootViewModel' with '12' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
     },
     {
@@ -1759,18 +1747,6 @@
     },
     {
       "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightStatusParser.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 4
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceSystemTimePayloadFactory.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 7
@@ -1945,12 +1921,6 @@
     },
     {
       "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 3
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 7
@@ -1996,12 +1966,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/add/DeviceScanPulseView.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 10
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 1
     },
     {
       "ruleId": "detekt.style.MagicNumber",
@@ -2110,12 +2074,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/qr/AqlProvisioningQrParser.kt",
       "message": "Line detected, which is longer than the defined maximum line length in the code style.",
       "count": 1
-    },
-    {
-      "ruleId": "detekt.style.MaxLineLength",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
-      "count": 2
     },
     {
       "ruleId": "detekt.style.MaxLineLength",
@@ -2877,12 +2835,6 @@
       "ruleId": "detekt.style.ReturnCount",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankNameFragment.kt",
       "message": "Function validateAndSave has 3 return statements which exceeds the limit of 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.ReturnCount",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "Function restoreSelectedTab has 4 return statements which exceeds the limit of 2.",
       "count": 1
     },
     {

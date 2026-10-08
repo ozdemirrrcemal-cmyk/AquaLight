@@ -30,7 +30,7 @@
     <string name="device_add_scan_secure_qr_action">Scan secure QR code</string>
     <string name="device_add_setup_rules_title">Setup rules</string>
     <string name="device_add_setup_rules_message">First setup uses the QR code. For an already paired device, open setup mode on the device, then press Manual BLE Scan. AquaLight verifies the firmware state before sending Wi‑Fi.</string>
-    <string name="device_add_manual_scan_hint">Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent.</string>
+    <string name="device_add_manual_scan_hint">Select the device after putting it in setup mode. AquaLight verifies that it is secure and ready for setup before sending your Wi‑Fi details.</string>
     <string name="device_setup_method_secure_qr">Secure QR Setup</string>
     <string name="device_setup_method_manual_ble">Manual BLE Setup</string>
     <string name="device_status_empty_title">No active devices</string>
@@ -81,9 +81,9 @@
     <string name="device_family_dosing">Dosing</string>
     <string name="device_family_timer">Timer</string>
     <string name="device_family_cooling">Cooling</string>
-    <string name="device_menu_manual_control_title">Manual control</string>
+    <string name="device_menu_manual_control_title">Manual Control</string>
     <string name="device_menu_manual_control_description">Direct channel control for supported light outputs.</string>
-    <string name="device_menu_quick_setup_title">Quick setup</string>
+    <string name="device_menu_quick_setup_title">Quick Setup</string>
     <string name="device_menu_quick_setup_description">Fast setup from firmware-supported light presets and profiles.</string>
     <string name="device_menu_programs_title">Programs</string>
     <string name="device_menu_programs_description">Create and manage daily light programs.</string>

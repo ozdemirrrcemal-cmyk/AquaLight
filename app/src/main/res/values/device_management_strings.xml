@@ -5,7 +5,8 @@
     <string name="local_data_recovery_care_tasks_message">A damaged care-task record was reset safely. Please review and recreate affected care reminders.</string>
     <string name="local_data_recovery_devices_message">A damaged local device record was reset safely. For your security, affected devices must be added again.</string>
     <string name="local_data_recovery_assignments_message">A damaged tank-device assignment record was reset safely. Please review your tank device assignments.</string>
-    <string name="local_data_recovery_combined_message">Some damaged local data was reset safely. Please review your aquariums, care tasks, devices, and tank assignments.</string>
+    <string name="local_data_recovery_light_library_message">Damaged Light Library data was reset safely. Please recreate affected manual scenes and custom curves.</string>
+    <string name="local_data_recovery_combined_message">Some damaged local data was reset safely. Please review your aquariums, care tasks, devices, light settings, and tank assignments.</string>
     <string name="session_startup_failed_title">Local Data Unavailable</string>
     <string name="session_startup_failed_message">AquaLight could not safely open your local session. Please try signing in again. If the problem continues, restart the app.</string>
     <string name="device_provisioning_cancelling_title">Cancelling setup</string>

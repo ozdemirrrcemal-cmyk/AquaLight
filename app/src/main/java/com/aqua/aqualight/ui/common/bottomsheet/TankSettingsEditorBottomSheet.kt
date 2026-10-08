@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
@@ -7,10 +8,13 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
@@ -19,6 +23,8 @@ import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionInputPolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.text.DateFormatSymbols
 import java.util.Calendar
@@ -37,6 +43,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private var resultSent = false
     private var selectedChoice: String = ""
+    private var selectedWaterEnvironment: String = AquariumTankTaxonomy.WATER_ENVIRONMENT_FRESHWATER
     private var selectedUnit: String = UNIT_CM
 
     private val mode: Mode
@@ -46,6 +53,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         super.onCreate(savedInstanceState)
         selectedChoice = savedInstanceState?.getString(STATE_SELECTED_CHOICE)
             ?: requireArguments().getString(ARG_CURRENT_TEXT).orEmpty()
+        selectedWaterEnvironment = savedInstanceState?.getString(STATE_SELECTED_WATER_ENVIRONMENT)
+            ?: AquariumTankTaxonomy.environmentForTankType(selectedChoice)
+            ?: AquariumTankTaxonomy.WATER_ENVIRONMENT_FRESHWATER
         selectedUnit = savedInstanceState?.getString(STATE_SELECTED_UNIT)
             ?: normalizeUnit(requireArguments().getString(ARG_CURRENT_UNIT))
     }
@@ -76,6 +86,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(STATE_SELECTED_CHOICE, selectedChoice)
+        outState.putString(STATE_SELECTED_WATER_ENVIRONMENT, selectedWaterEnvironment)
         outState.putString(STATE_SELECTED_UNIT, selectedUnit)
         super.onSaveInstanceState(outState)
     }
@@ -110,21 +121,89 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun bindTypeEditor() {
         val binding = ContentSheetTankTypeBinding.inflate(layoutInflater)
-        selectedChoice = selectedChoice.ifBlank {
-            getString(R.string.aquarium_tank_type_fish)
-        }
-        val options = listOf(
-            binding.optionFish to getString(R.string.aquarium_tank_type_fish),
-            binding.optionShrimp to getString(R.string.aquarium_tank_type_shrimp),
-            binding.optionPlanted to getString(R.string.aquarium_tank_type_planted),
-            binding.optionMarine to getString(R.string.aquarium_tank_type_marine),
-            binding.optionSofties to getString(R.string.aquarium_tank_type_softies),
-            binding.optionMixedReef to getString(R.string.aquarium_tank_type_mixed_reef),
-            binding.optionSps to getString(R.string.aquarium_tank_type_sps),
-            binding.optionCoral to getString(R.string.aquarium_tank_type_coral),
-            binding.optionOther to getString(R.string.aquarium_tank_type_other)
+        selectedChoice = AquariumTankTaxonomyText.canonicalTankType(
+            requireContext(),
+            selectedChoice
+        ) ?: AquariumTankTaxonomy.TYPE_FRESHWATER_FISH
+        selectedWaterEnvironment = AquariumTankTaxonomy.environmentForTankType(selectedChoice)
+            ?: AquariumTankTaxonomy.WATER_ENVIRONMENT_FRESHWATER
+
+        val environmentOptions = listOf(
+            binding.optionEnvironmentFreshwater to AquariumTankTaxonomy.WATER_ENVIRONMENT_FRESHWATER,
+            binding.optionEnvironmentBrackish to AquariumTankTaxonomy.WATER_ENVIRONMENT_BRACKISH,
+            binding.optionEnvironmentMarine to AquariumTankTaxonomy.WATER_ENVIRONMENT_MARINE
         )
-        bindChoiceOptions(options)
+        val profileViews = listOf(
+            binding.optionProfile1,
+            binding.optionProfile2,
+            binding.optionProfile3,
+            binding.optionProfile4,
+            binding.optionProfile5,
+            binding.optionProfile6
+        )
+        val lastProfileByEnvironment = mutableMapOf(
+            selectedWaterEnvironment to selectedChoice
+        )
+
+        fun render() {
+            renderChoiceOptions(environmentOptions, selectedWaterEnvironment)
+
+            val profileCodes = AquariumTankTaxonomy.tankTypeCodesForEnvironment(
+                selectedWaterEnvironment
+            )
+            if (selectedChoice !in profileCodes) {
+                selectedChoice = lastProfileByEnvironment[selectedWaterEnvironment]
+                    ?.takeIf(profileCodes::contains)
+                    ?: profileCodes.first()
+            }
+
+            profileViews.forEachIndexed { index, view ->
+                val profileCode = profileCodes.getOrNull(index)
+                view.isVisible = profileCode != null
+                if (profileCode == null) {
+                    view.setOnClickListener(null)
+                    view.isSelected = false
+                    return@forEachIndexed
+                }
+
+                view.text = AquariumTankTaxonomyText.tankTypeLabel(
+                    requireContext(),
+                    profileCode
+                )
+                view.isSelected = profileCode == selectedChoice
+                view.setTypeface(
+                    null,
+                    if (view.isSelected) {
+                        android.graphics.Typeface.BOLD
+                    } else {
+                        android.graphics.Typeface.NORMAL
+                    }
+                )
+                view.setBackgroundResource(R.drawable.bg_aqua_selection_row_compact)
+                view.setOnClickListener {
+                    selectedChoice = profileCode
+                    lastProfileByEnvironment[selectedWaterEnvironment] = profileCode
+                    render()
+                }
+            }
+        }
+
+        environmentOptions.forEach { (view, environmentCode) ->
+            view.setOnClickListener {
+                if (environmentCode == selectedWaterEnvironment) return@setOnClickListener
+                lastProfileByEnvironment[selectedWaterEnvironment] = selectedChoice
+                selectedWaterEnvironment = environmentCode
+                val profileCodes = AquariumTankTaxonomy.tankTypeCodesForEnvironment(
+                    selectedWaterEnvironment
+                )
+                selectedChoice = lastProfileByEnvironment[selectedWaterEnvironment]
+                    ?.takeIf(profileCodes::contains)
+                    ?: profileCodes.first()
+                render()
+            }
+        }
+
+        render()
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
             publishResult(status = RESULT_SAVED, textValue = selectedChoice)
@@ -146,7 +225,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         )
 
         fun formatValue(cmValue: Int): String {
-            return AquariumDimensionInputPolicy.format(
+            return formatDimensionInput(
                 context = requireContext(),
                 centimeters = cmValue,
                 unit = selectedUnit
@@ -164,28 +243,13 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         )
 
         fun convertInputsTo(newUnit: String): Boolean {
-            val inputs = inputViews()
-            val converted = inputs.map { input ->
-                AquariumDimensionInputPolicy.convert(
-                    context = requireContext(),
-                    value = input.text,
-                    fromUnit = selectedUnit,
-                    toUnit = newUnit
-                )
-            }
-
-            if (converted.any { it == null }) {
-                converted.forEachIndexed { index, value ->
-                    if (value == null) inputs[index].error = validationMessage
-                }
-                return false
-            }
-
-            inputs.forEachIndexed { index, input ->
-                input.error = null
-                input.setText(requireNotNull(converted[index]))
-            }
-            return true
+            return convertDimensionInputs(
+                context = requireContext(),
+                inputs = inputViews(),
+                validationMessage = validationMessage,
+                fromUnit = selectedUnit,
+                toUnit = newUnit
+            )
         }
 
         binding.inputWidth.setText(formatValue(requireArguments().getInt(ARG_WIDTH_CM)))
@@ -383,19 +447,16 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         attachContent(binding.root)
     }
 
-    private fun bindChoiceOptions(options: List<Pair<TextView, String>>) {
-        options.forEach { (view, value) ->
-            view.setOnClickListener {
-                selectedChoice = value
-                renderChoiceOptions(options)
-            }
-        }
-        renderChoiceOptions(options)
+    private fun renderChoiceOptions(options: List<Pair<TextView, String>>) {
+        renderChoiceOptions(options, selectedChoice)
     }
 
-    private fun renderChoiceOptions(options: List<Pair<TextView, String>>) {
+    private fun renderChoiceOptions(
+        options: List<Pair<TextView, String>>,
+        selectedValue: String
+    ) {
         options.forEach { (view, value) ->
-            val selected = value.equals(selectedChoice, ignoreCase = true)
+            val selected = value.equals(selectedValue, ignoreCase = true)
             view.isSelected = selected
             view.setTypeface(
                 null,
@@ -475,6 +536,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         private const val ARG_CURRENT_UNIT = "arg_current_unit"
 
         private const val STATE_SELECTED_CHOICE = "state_selected_choice"
+        private const val STATE_SELECTED_WATER_ENVIRONMENT = "state_selected_water_environment"
         private const val STATE_SELECTED_UNIT = "state_selected_unit"
         private const val TAG_PREFIX = "TankSettingsEditorBottomSheet:"
         private const val MIN_TANK_NAME_LENGTH = 2
@@ -522,4 +584,48 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             return if (unit.equals(UNIT_IN, ignoreCase = true)) UNIT_IN else UNIT_CM
         }
     }
+}
+
+private fun formatDimensionInput(
+    context: Context,
+    centimeters: Int,
+    unit: String
+): String {
+    if (!AquariumMeasurementPolicy.isValidDimensionCm(centimeters)) return ""
+    return AquariumDimensionInputPolicy.format(
+        context = context,
+        centimeters = centimeters,
+        unit = unit
+    )
+}
+
+private fun convertDimensionInputs(
+    context: Context,
+    inputs: List<EditText>,
+    validationMessage: String,
+    fromUnit: String,
+    toUnit: String
+): Boolean {
+    if (inputs.all { input -> input.text.isNullOrBlank() }) return true
+
+    val converted = inputs.map { input ->
+        AquariumDimensionInputPolicy.convert(
+            context = context,
+            value = input.text,
+            fromUnit = fromUnit,
+            toUnit = toUnit
+        )
+    }
+    val conversionSucceeded = converted.none { it == null }
+    if (conversionSucceeded) {
+        inputs.forEachIndexed { index, input ->
+            input.error = null
+            input.setText(requireNotNull(converted[index]))
+        }
+    } else {
+        converted.forEachIndexed { index, value ->
+            if (value == null) inputs[index].error = validationMessage
+        }
+    }
+    return conversionSucceeded
 }

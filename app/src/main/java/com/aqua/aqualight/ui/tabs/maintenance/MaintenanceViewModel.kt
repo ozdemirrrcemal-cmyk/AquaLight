@@ -17,7 +17,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -184,37 +184,45 @@ class MaintenanceViewModel(
         selectedTabFlow.value = tab
     }
 
-    fun completeTask(taskId: Long): Job = viewModelScope.launch {
-        operations.completeTask(taskId)
+    suspend fun completeTask(taskId: Long) {
+        viewModelScope.async {
+            operations.completeTask(taskId)
+        }.await()
     }
 
-    fun deleteTask(taskId: Long): Job = viewModelScope.launch {
-        operations.deleteTask(taskId)
+    suspend fun deleteTask(taskId: Long) {
+        viewModelScope.async {
+            operations.deleteTask(taskId)
+        }.await()
     }
 
-    fun updateCompletedTaskDate(
+    suspend fun updateCompletedTaskDate(
         taskId: Long,
         completedAtMillis: Long
-    ): Job = viewModelScope.launch {
-        operations.updateCompletedTaskDate(taskId, completedAtMillis)
+    ) {
+        viewModelScope.async {
+            operations.updateCompletedTaskDate(taskId, completedAtMillis)
+        }.await()
     }
 
-    fun addCompletedActivity(
+    suspend fun addCompletedActivity(
         tankId: Long,
         type: CareTaskType,
         completedAtMillis: Long = System.currentTimeMillis(),
         waterChangePercent: Int? = null,
         note: String = ""
-    ): Job = viewModelScope.launch {
-        operations.addCompletedActivity(
-            CompletedCareActivityInput(
-                tankId = tankId,
-                type = type,
-                completedAtMillis = completedAtMillis,
-                waterChangePercent = waterChangePercent,
-                note = note
+    ) {
+        viewModelScope.async {
+            operations.addCompletedActivity(
+                CompletedCareActivityInput(
+                    tankId = tankId,
+                    type = type,
+                    completedAtMillis = completedAtMillis,
+                    waterChangePercent = waterChangePercent,
+                    note = note
+                )
             )
-        )
+        }.await()
     }
 
     suspend fun deleteManualTask(taskId: Long) {

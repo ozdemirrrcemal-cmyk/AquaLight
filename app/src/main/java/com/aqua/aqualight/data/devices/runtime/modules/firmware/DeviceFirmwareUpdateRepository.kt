@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
-import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareManifestUrlResolver
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -57,7 +56,7 @@ class DeviceFirmwareUpdateRepository(
             },
             onFailure = { error ->
                 if (error is DeviceFirmwareManifestNotPublishedException) {
-                    noPublishedRelease(snapshot).getOrThrow()
+                    releaseNotPublished(snapshot).getOrThrow()
                 } else {
                     throw error
                 }
@@ -74,6 +73,9 @@ class DeviceFirmwareUpdateRepository(
             val availability = fetchAndEvaluateUpdate(snapshot, manifestUrl, applyNow).getOrThrow()
             when (availability) {
                 is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
+                is DeviceFirmwareAvailability.ReleaseNotPublished -> error(
+                    "No official OTA release information is published for this product."
+                )
                 is DeviceFirmwareAvailability.UpToDate -> error(
                     "No newer compatible OTA artifact found."
                 )
@@ -97,15 +99,11 @@ class DeviceFirmwareUpdateRepository(
         return runtime.clearOtaStatus(deviceUid)
     }
 
-    private fun noPublishedRelease(
+    private fun releaseNotPublished(
         snapshot: DeviceSnapshot
     ): Result<DeviceFirmwareAvailability> = runCatching {
         val currentVersion = snapshot.firmwareVersion.trim()
         require(currentVersion.isNotBlank()) { "Current firmware version is not known." }
-        DeviceFirmwareAvailability.UpToDate(
-            currentVersion = currentVersion,
-            latestVersion = currentVersion,
-            releaseContent = DeviceFirmwareReleaseContent.EMPTY
-        )
+        DeviceFirmwareAvailability.ReleaseNotPublished(currentVersion)
     }
 }

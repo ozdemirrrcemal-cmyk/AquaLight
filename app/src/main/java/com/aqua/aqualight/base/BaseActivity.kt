@@ -127,26 +127,30 @@ open class BaseActivity : AppCompatActivity() {
         )
     }
 
-    fun showDeviceOfflineDialog(
+    fun showDeviceUnavailableDialog(
         deviceTitle: String,
-        @StringRes messageRes: Int = R.string.device_menu_offline_message
+        @StringRes titleRes: Int,
+        @StringRes messageRes: Int
     ) {
         if (isFinishing || isDestroyed) return
 
-        val safeTitle = deviceTitle.trim().ifBlank {
+        val safeDeviceTitle = deviceTitle.trim().ifBlank {
             getString(R.string.device_menu_default_title)
         }
+        val safeTitle = getString(titleRes).trim().ifBlank {
+            getString(R.string.device_menu_unavailable_dialog_title)
+        }
         val safeMessage = getString(messageRes).trim().ifBlank {
-            getString(R.string.device_menu_offline_message)
+            getString(R.string.device_menu_status_unverified_message)
         }
 
         DialogManager.showInfoDialog(
             context = this,
             type = DialogType.WARNING,
-            title = getString(R.string.device_menu_offline_dialog_title),
+            title = safeTitle,
             message = getString(
-                R.string.device_menu_offline_dialog_message,
-                safeTitle,
+                R.string.device_menu_unavailable_dialog_message,
+                safeDeviceTitle,
                 safeMessage
             ),
             buttonTextResId = android.R.string.ok

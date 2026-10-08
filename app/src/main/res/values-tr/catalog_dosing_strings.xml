@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_dosing_keyword_dosing_pump">dozaj pompası</string>
+    <string name="catalog_dosing_keyword_doser">dozaj cihazı</string>
+    <string name="catalog_dosing_keyword_aquarium_doser">akvaryum dozaj pompası</string>
+    <string name="catalog_dosing_keyword_dosing_system">dozaj sistemi</string>
+    <string name="catalog_dosing_keyword_dosing_station">dozaj istasyonu</string>
+    <string name="catalog_dosing_keyword_extension">genişleme</string>
+    <string name="catalog_dosing_keyword_slave">ikincil ünite</string>
+    <string name="catalog_dosing_keyword_add_on">ek ünite</string>
+    <string name="catalog_dosing_keyword_peristaltic">peristaltik</string>
+    <string name="catalog_dosing_keyword_peristaltic_pump">peristaltik pompa</string>
+    <string name="catalog_dosing_keyword_continuous_duty">sürekli çalışma</string>
+    <string name="catalog_dosing_keyword_stepper">step motorlu</string>
+    <string name="catalog_dosing_keyword_multi_channel">çok kanallı</string>
+    <string name="catalog_dosing_keyword_multi_head">çok kafalı</string>
+    <string name="catalog_dosing_keyword_smart">akıllı</string>
+    <string name="catalog_dosing_keyword_wireless">kablosuz</string>
+    <string name="catalog_dosing_keyword_master">ana ünite</string>
+    <string name="catalog_dosing_keyword_integrated">entegre</string>
+    <string name="catalog_dosing_keyword_drive_port">sürücü portu</string>
+    <string name="catalog_dosing_keyword_starter_edition">başlangıç sürümü</string>
+</resources>

@@ -2,7 +2,7 @@
 <resources>
     <!-- Settings / data management -->
     <string name="data_management_backup_title">Create backup</string>
-    <string name="data_management_backup_subtitle">Save your aquariums, care records and eligible device assignments in an AquaLight backup.</string>
+    <string name="data_management_backup_subtitle">Save aquariums, care records and eligible device assignments with up to 4,000 photos per backup (64 MB total).</string>
     <string name="data_management_backup_card_description">Create an AquaLight backup of your aquarium data.</string>
     <string name="data_management_restore_title">Restore from backup</string>
     <string name="data_management_restore_subtitle">Review an AquaLight backup and add its data without deleting your current aquariums.</string>

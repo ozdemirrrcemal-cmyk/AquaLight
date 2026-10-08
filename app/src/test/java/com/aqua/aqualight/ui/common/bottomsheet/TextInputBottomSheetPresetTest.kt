@@ -8,6 +8,22 @@ import org.junit.Test
 class TextInputBottomSheetPresetTest {
 
     @Test
+    fun `duplicate comparison ignores case whitespace and unicode width`() {
+        assertTrue(
+            isTextInputValueDisallowed(
+                value = "  EVENING   VIEW ",
+                disallowedValues = listOf("Evening View")
+            )
+        )
+        assertTrue(
+            isTextInputValueDisallowed(
+                value = "Ａ",
+                disallowedValues = listOf("a")
+            )
+        )
+    }
+
+    @Test
     fun `preset selection publishes the configured reset value`() {
         assertEquals(
             "",

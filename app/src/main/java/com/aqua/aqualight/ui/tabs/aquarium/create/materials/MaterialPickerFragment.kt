@@ -4,9 +4,7 @@ import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.AquariumMaterial
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -18,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentMaterialPickerBinding
@@ -30,7 +29,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCatalog
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import androidx.navigation.fragment.navArgs
@@ -69,6 +67,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
     private var allProducts: List<AquariumMaterial> = emptyList()
     private val selectedProductIds = mutableSetOf<String>()
+    private lateinit var materialAdapter: MaterialPickerAdapter
 
     private var searchQuery: String = ""
 
@@ -94,6 +93,8 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         _binding = FragmentMaterialPickerBinding.bind(view)
 
+        materialAdapter = createMaterialAdapter()
+        configureMaterialRecyclerView()
         setupHeader()
         setupClickListeners()
         setupCustomMaterialResultListener()
@@ -236,6 +237,33 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         )
     }
 
+    private fun createMaterialAdapter(): MaterialPickerAdapter {
+        return MaterialPickerAdapter(
+            categoryTitle = categoryTitle,
+            onProductClick = ::handleMaterialClick,
+            onAddClick = ::showNewMaterialSheet
+        )
+    }
+
+    private fun configureMaterialRecyclerView() {
+        binding.materialRecyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = materialAdapter
+            setHasFixedSize(true)
+        }
+    }
+
+    private fun handleMaterialClick(
+        productId: String
+    ) {
+        toggleSelection(productId)
+        materialAdapter.updateSelection(
+            productId = productId,
+            isSelected = selectedProductIds.contains(productId)
+        )
+        updateSelectedCount()
+    }
+
     private fun setupClickListeners() {
         binding.btnSave.setOnClickListener {
             saveSelections()
@@ -352,216 +380,10 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private fun renderMaterialList(
         products: List<AquariumMaterial>
     ) {
-        binding.listContainer.removeAllViews()
-
-        if (products.isEmpty()) {
-            showEmptyState()
-        } else {
-            products.forEach { product ->
-                binding.listContainer.addView(
-                    createMaterialCard(product)
-                )
-            }
-        }
-
-        binding.listContainer.addView(
-            createNewMaterialButton()
+        materialAdapter.submitProducts(
+            products = products,
+            selectedProductIds = selectedProductIds
         )
-    }
-
-    private fun showEmptyState() {
-        val emptyText = TextView(requireContext()).apply {
-            text = getString(R.string.material_picker_no_materials_found)
-            gravity = Gravity.CENTER
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.aqua_state_text_secondary
-                )
-            )
-            setTextSize(
-                android.util.TypedValue.COMPLEX_UNIT_PX,
-                resources.getDimension(R.dimen.aqua_text_size_state_title_small)
-            )
-            includeFontPadding = false
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_34)
-            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_18)
-            layoutParams = params
-        }
-
-        binding.listContainer.addView(emptyText)
-    }
-
-    private fun createMaterialCard(
-        product: AquariumMaterial
-    ): View {
-        val isSelected = selectedProductIds.contains(product.id)
-
-        val card = MaterialCardView(requireContext()).apply {
-            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
-            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            strokeColor = ContextCompat.getColor(
-                requireContext(),
-                if (isSelected) {
-                    R.color.aqua_card_accent
-                } else {
-                    R.color.aqua_card_outline
-                }
-            )
-            setCardBackgroundColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (isSelected) {
-                        R.color.aqua_card_surface_pressed
-                    } else {
-                        R.color.aqua_card_surface
-                    }
-                )
-            )
-            cardElevation = 0f
-            useCompatPadding = false
-            isClickable = true
-            isFocusable = true
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_9)
-            layoutParams = params
-
-            setOnClickListener {
-                toggleSelection(product.id)
-
-                renderMaterialList(
-                    getFilteredProducts(searchQuery)
-                )
-
-                updateSelectedCount()
-            }
-        }
-
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = resources.getDimensionPixelOffset(R.dimen.aqua_size_74)
-
-            setPadding(
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_14),
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
-            )
-        }
-
-        val textBox = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-
-            val params = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-            params.marginEnd = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
-            layoutParams = params
-        }
-
-        val category = TextView(requireContext()).apply {
-            text = product.categoryTitle
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.aqua_card_text_secondary
-                )
-            )
-            setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
-            includeFontPadding = false
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-        }
-
-        val name = TextView(requireContext()).apply {
-            text = product.name
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.aqua_card_text_primary
-                )
-            )
-            setTextSizeResource(R.dimen.aqua_text_size_body_compact)
-            setTypeface(null, Typeface.NORMAL)
-            includeFontPadding = false
-            maxLines = 2
-            ellipsize = TextUtils.TruncateAt.END
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6)
-            layoutParams = params
-        }
-
-        val check = TextView(requireContext()).apply {
-            text = if (isSelected) getString(R.string.aqua_selected_symbol) else ""
-            gravity = Gravity.CENTER
-            setTextSizeResource(R.dimen.aqua_text_size_caption)
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
-            includeFontPadding = false
-            setBackgroundResource(
-                if (isSelected) {
-                    R.drawable.bg_material_check_selected
-                } else {
-                    R.drawable.bg_material_check_unselected
-                }
-            )
-
-            layoutParams = LinearLayout.LayoutParams(
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_24),
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_24)
-            )
-        }
-
-        textBox.addView(category)
-        textBox.addView(name)
-
-        row.addView(textBox)
-        row.addView(check)
-
-        card.addView(row)
-
-        return card
-    }
-
-    private fun createNewMaterialButton(): View {
-        return MaterialButton(requireContext()).apply {
-            text = getString(R.string.material_picker_new_title, categoryTitle)
-            setTextSizeResource(R.dimen.aqua_text_size_body)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
-            setTypeface(null, Typeface.BOLD)
-            setAllCaps(false)
-            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
-            setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_primary))
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
-            )
-            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_8)
-            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_16)
-            layoutParams = params
-
-            setOnClickListener {
-                showNewMaterialSheet()
-            }
-        }
     }
 
     private fun showNewMaterialSheet() {
@@ -730,6 +552,9 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         findNavController().navigateUp()
     }
     override fun onDestroyView() {
+        if (::materialAdapter.isInitialized) {
+            binding.materialRecyclerView.adapter = null
+        }
         super.onDestroyView()
         _binding = null
     }

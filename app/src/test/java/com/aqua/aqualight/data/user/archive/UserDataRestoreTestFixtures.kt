@@ -11,7 +11,7 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
-internal class RestoreHarness {
+internal class RestoreHarness(mediaOverride: UserDataRestoreMediaOperations? = null) {
     val tanks = mutableListOf<SavedAquariumTank>()
     val tasks = mutableListOf<CareTask>()
     val assignments = linkedMapOf<DeviceUid, TankDeviceAssignment>()
@@ -34,7 +34,9 @@ internal class RestoreHarness {
             updateCareRemindersEnabled = { tankId, enabled ->
                 updateTank(tankId) { tank -> tank.copy(careRemindersEnabled = enabled) }
             },
-            addLivestockToTank = { _, _ -> Unit },
+            addLivestockToTank = { tankId, item ->
+                updateTank(tankId) { tank -> tank.copy(livestock = tank.livestock + item) }
+            },
             deleteTanks = { tankIds -> tanks.removeAll { tank -> tank.id in tankIds } }
         ),
         careTasks = UserDataRestoreDataSources.CareTaskDataSource(
@@ -48,7 +50,7 @@ internal class RestoreHarness {
             removeDeviceFromTank = { tankId, deviceUid -> removeAssignment(tankId, deviceUid) }
         )
     )
-    private val media = UserDataRestoreMediaOperations(
+    private val media = mediaOverride ?: UserDataRestoreMediaOperations(
         snapshotTankPhoto = { null },
         prepareRestoredTankPhoto = { _, _, _ -> error("No photo expected in this test") },
         commit = {},

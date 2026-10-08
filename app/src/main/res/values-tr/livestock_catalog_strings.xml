@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_livestock_picker">Canlı Kataloğu</string>
+    <string name="livestock_picker_category_label">Kategori</string>
+    <string name="livestock_picker_empty">Eşleşen canlı bulunamadı.</string>
+    <string name="livestock_picker_catalog_unavailable">Canlı kataloğu yüklenemedi. Yine de özel bir canlı ekleyebilirsiniz.</string>
+    <string name="livestock_picker_result_zero">0 canlı</string>
+    <plurals name="livestock_picker_result_count">
+        <item quantity="one">%1$d canlı</item>
+        <item quantity="other">%1$d canlı</item>
+    </plurals>
+    <string name="livestock_picker_selected_zero">Bir canlı seçin</string>
+    <string name="livestock_picker_selected_one">1 seçildi</string>
+    <string name="livestock_picker_continue">Devam Et</string>
+    <string name="livestock_picker_new_category">Yeni %1$s</string>
+    <string name="livestock_picker_item_selected">Seçildi</string>
+    <string name="livestock_picker_item_not_selected">Seçilmedi</string>
+    <string name="livestock_catalog_entry_missing_message">Bu canlı katalog kaydı artık mevcut değil.</string>
+    <string name="livestock_category_fish">Balık</string>
+    <string name="livestock_category_shrimp">Karides</string>
+    <string name="livestock_category_snail">Salyangoz</string>
+    <string name="livestock_category_crab_crayfish">Yengeç / Kerevit</string>
+    <string name="livestock_category_coral">Mercan</string>
+    <string name="livestock_category_other">Diğer</string>
+    <string name="livestock_catalog_entry_missing_title">Canlı kataloğu kaydı bulunamadı</string>
+</resources>

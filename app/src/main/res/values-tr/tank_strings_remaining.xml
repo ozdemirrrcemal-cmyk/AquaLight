@@ -85,7 +85,7 @@
     <string name="tank_pdf_section_tank_summary">1. Tank Özeti</string>
     <string name="tank_pdf_section_tank_photo">2. Tank Fotoğrafı</string>
     <string name="tank_pdf_section_devices">3. Cihazlar</string>
-    <string name="tank_pdf_section_tank_life">4. Tank Yaşamı</string>
+    <string name="tank_pdf_section_tank_life">4. Canlılar</string>
     <string name="tank_pdf_section_plants">5. Bitkiler</string>
     <string name="tank_pdf_section_bio_components">6. Biyolojik Bileşenler</string>
     <string name="tank_pdf_section_hardware_components">7. Donanım Bileşenleri</string>
@@ -141,7 +141,6 @@
     <string name="aquarium_day_format">%1$d. Gün</string>
     <string name="aquarium_activity_date_today_format">%1$s · Bugün</string>
     <string name="aquarium_activity_date_yesterday_format">%1$s · Dün</string>
-    <string name="aquarium_livestock_summary_format">%1$d tür • toplam %2$d canlı</string>
     <string name="aquarium_livestock_added_date_not_set">Eklenme tarihi ayarlanmadı</string>
     <string name="aquarium_livestock_added_date_format">%1$s tarihinde eklendi</string>
     <string name="aquarium_livestock_default_title">Canlı</string>

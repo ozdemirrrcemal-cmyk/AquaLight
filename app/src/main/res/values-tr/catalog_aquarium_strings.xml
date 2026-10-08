@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_keyword_standard">standart</string>
+    <string name="catalog_keyword_cube">küp</string>
+    <string name="catalog_keyword_long">uzun</string>
+    <string name="catalog_keyword_shallow">sığ</string>
+    <string name="catalog_keyword_tall">yüksek</string>
+    <string name="catalog_keyword_mat">mat</string>
+    <string name="catalog_keyword_pad">altlık</string>
+    <string name="catalog_keyword_thermometer">termometre</string>
+    <string name="catalog_keyword_inflow">emiş</string>
+    <string name="catalog_keyword_intake">giriş</string>
+    <string name="catalog_keyword_outflow">çıkış</string>
+    <string name="catalog_keyword_return">dönüş</string>
+    <string name="catalog_keyword_pipe">boru</string>
+    <string name="catalog_keyword_accessory">aksesuar</string>
+    <string name="catalog_keyword_cover">kapak</string>
+    <string name="catalog_keyword_lid">kapak</string>
+    <string name="catalog_keyword_clip">klips</string>
+    <string name="catalog_keyword_scissors">makas</string>
+    <string name="catalog_keyword_tweezers">cımbız</string>
+    <string name="catalog_keyword_leveler">düzleyici</string>
+    <string name="catalog_keyword_flattener">düzleştirici</string>
+    <string name="catalog_keyword_tool">alet</string>
+    <string name="catalog_keyword_cleaning">temizlik</string>
+    <string name="catalog_keyword_cleaner">temizleyici</string>
+    <string name="catalog_keyword_scraper">kazıyıcı</string>
+    <string name="catalog_keyword_brush">fırça</string>
+    <string name="catalog_keyword_water">su</string>
+    <string name="catalog_keyword_tester">test cihazı</string>
+</resources>

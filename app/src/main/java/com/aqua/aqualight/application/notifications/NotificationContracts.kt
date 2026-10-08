@@ -121,6 +121,7 @@ interface NotificationPermissionPolicy {
 
 interface NotificationScheduler {
     suspend fun scheduleCareTask(ownerUid: String, taskId: Long)
+    suspend fun finalizeCareTaskDelivery(ownerUid: String, taskId: Long)
     suspend fun cancelCareTask(ownerUid: String, taskId: Long)
     suspend fun reconcileOwner(ownerUid: String)
     suspend fun cancelOwner(ownerUid: String)
@@ -239,6 +240,10 @@ class NotificationPreferenceUseCase(
             return
         }
         scheduler.scheduleCareTask(ownerUid, taskId)
+    }
+
+    suspend fun finalizeCareTaskDelivery(ownerUid: String, taskId: Long) {
+        scheduler.finalizeCareTaskDelivery(ownerUid, taskId)
     }
 
     suspend fun cancelCareTask(ownerUid: String, taskId: Long) {

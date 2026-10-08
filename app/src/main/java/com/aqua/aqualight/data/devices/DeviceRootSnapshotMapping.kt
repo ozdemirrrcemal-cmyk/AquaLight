@@ -32,7 +32,7 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
         serialNumber = identity.serialNumber,
         hardwareRevision = product.hardwareRevision.value,
         ipAddress = endpoint.ip.trim(),
-        firmwareLabel = firmwareLabel(),
+        firmwareLabel = firmwareVersion,
         modelLabel = "${product.model.value} / ${product.hardwareRevision.value}",
         lightChannelCount = channelSlots.lightChannels.size,
         timerChannelCount = channelSlots.timerChannels.size,
@@ -57,12 +57,6 @@ private fun DeviceSnapshot.toInvalidDeviceRootSnapshot(): DeviceRootSnapshot = D
     catalogState = DeviceRootCatalogState.INVALID,
     serialNumber = identity.serialNumber,
     ipAddress = endpoint.ip.trim(),
-    firmwareLabel = firmwareLabel(),
     productDisplayName = identity.displayName,
     hasCustomName = identity.customName.isNotBlank()
 )
-
-private fun DeviceSnapshot.firmwareLabel(): String = listOf(
-    firmwareVersion.ifBlank { null },
-    firmwareBuild.ifBlank { null }
-).filterNotNull().joinToString(separator = " / ")

@@ -61,6 +61,58 @@ class TankStoreRulesTest {
         assertThrows(StoreInvariantViolation::class.java) {
             TankStoreRules.validateTank(duplicatePlantIds)
         }
+
+        val missingPlantCatalogId = validTank(id = 46L, ownerUid = "owner-a")
+            .toBuilder()
+            .addPlants(
+                validPlant(id = 10L)
+                    .toBuilder()
+                    .clearCatalogId()
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(missingPlantCatalogId)
+        }
+    }
+
+    @Test
+    fun livestockRequiresStrictCatalogOrCustomIdentity() {
+        val blankIdentity = validTank(id = 47L, ownerUid = "owner-a")
+            .toBuilder()
+            .addLivestock(
+                validLivestock(id = 101L)
+                    .toBuilder()
+                    .clearCatalogEntryId()
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(blankIdentity)
+        }
+
+        val mismatchedCustomIdentity = validTank(id = 48L, ownerUid = "owner-a")
+            .toBuilder()
+            .addLivestock(
+                validLivestock(id = 102L)
+                    .toBuilder()
+                    .setCatalogEntryId("custom:999")
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(mismatchedCustomIdentity)
+        }
+
+        val validCustomIdentity = validTank(id = 49L, ownerUid = "owner-a")
+            .toBuilder()
+            .addLivestock(validLivestock(id = 103L))
+            .build()
+
+        assertEquals(validCustomIdentity, TankStoreRules.validateTank(validCustomIdentity))
     }
 
     @Test
@@ -92,9 +144,20 @@ class TankStoreRulesTest {
 
     private fun validPlant(id: Long): StoredPlantTag = StoredPlantTag.newBuilder()
         .setId(id)
+        .setCatalogId("plant:anubias_barteri")
         .setPlantName("Anubias")
         .setCategory("Rhizome")
         .setMarkerX(0.5f)
         .setMarkerY(0.5f)
+        .build()
+
+    private fun validLivestock(id: Long): StoredLivestock = StoredLivestock.newBuilder()
+        .setId(id)
+        .setName("Custom Fish")
+        .setCategory("Fish")
+        .setQuantity(1)
+        .setAddedDateEpochDay(20_454L)
+        .setNote("")
+        .setCatalogEntryId("custom:$id")
         .build()
 }

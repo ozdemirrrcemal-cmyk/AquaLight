@@ -10,6 +10,9 @@ ANDROID_TESTS = ROOT / "app/src/androidTest/java/com/aqua/aqualight"
 contract = APP / "application/devices/provisioning/ProvisioningProgressOperations.kt"
 adapter = APP / "data/devices/provisioning/DefaultProvisioningProgressOperations.kt"
 mapping = APP / "data/devices/provisioning/ProvisioningProgressMapping.kt"
+gatt_client = APP / "data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt"
+preflight_client = APP / "data/devices/provisioning/ble/AqlBleDeviceInfoPreflightClient.kt"
+close_coordinator = APP / "data/devices/provisioning/ble/AqlBleConnectionCloseCoordinator.kt"
 storage_port = APP / "data/devices/provisioning/store/ProvisioningDraftStorage.kt"
 encrypted_store = APP / "data/devices/provisioning/store/AqlProvisioningDraftStore.kt"
 draft_adapter = APP / "data/devices/provisioning/repository/DefaultProvisioningDraftOperations.kt"
@@ -21,6 +24,10 @@ production = APP / "composition/OwnerViewModelFactory.kt"
 smoke = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 view_model_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningProgressViewModelBoundaryTest.kt"
 cancellation_test = TESTS / "ui/tabs/devices/add/DeviceProvisioningCancellationBoundaryTest.kt"
+close_coordinator_test = (
+    TESTS
+    / "data/devices/provisioning/ble/AqlBleConnectionCloseCoordinatorTest.kt"
+)
 presenter_test = TESTS / "ui/tabs/devices/add/ProvisioningProgressPresenterTest.kt"
 mapping_test = TESTS / "data/devices/provisioning/ProvisioningProgressMappingTest.kt"
 draft_test = TESTS / "data/devices/provisioning/repository/DefaultProvisioningDraftOperationsTest.kt"
@@ -35,6 +42,9 @@ required = (
     contract,
     adapter,
     mapping,
+    gatt_client,
+    preflight_client,
+    close_coordinator,
     storage_port,
     encrypted_store,
     draft_adapter,
@@ -46,6 +56,7 @@ required = (
     smoke,
     view_model_test,
     cancellation_test,
+    close_coordinator_test,
     presenter_test,
     mapping_test,
     draft_test,
@@ -133,6 +144,42 @@ if mapping.is_file():
     ):
         if forbidden in text:
             errors.append(f"provisioning mapping exposes runtime credential: {forbidden}")
+
+if gatt_client.is_file():
+    text = gatt_client.read_text(encoding="utf-8")
+    for token in (
+        "AqlBleConnectionCloseCoordinator<BluetoothGatt>",
+        "gatt?.let { connection -> closeCoordinator.beginGracefulClose(connection) }",
+        "closeCoordinator.handleConnectionState(",
+        "GATT_CLOSE_FALLBACK_MS = 1_500L",
+    ):
+        if token not in text:
+            errors.append(f"provisioning GATT retry teardown is incomplete: {token}")
+    if "runCatching { gatt?.close() }" in text:
+        errors.append("provisioning GATT must not release immediately after disconnect request")
+
+if preflight_client.is_file():
+    text = preflight_client.read_text(encoding="utf-8")
+    for token in (
+        "AqlBleConnectionCloseCoordinator<BluetoothGatt>",
+        "closeCoordinator.beginGracefulClose(gatt)",
+        "closeCoordinator.handleConnectionState(",
+        "GATT_CLOSE_FALLBACK_MS = 1_500L",
+    ):
+        if token not in text:
+            errors.append(f"DeviceInfo preflight retry teardown is incomplete: {token}")
+
+if close_coordinator.is_file():
+    text = close_coordinator.read_text(encoding="utf-8")
+    for token in (
+        "IdentityHashMap<T, PendingClose>()",
+        "fun beginGracefulClose(",
+        "fun handleConnectionState(",
+        "if (disconnected || failed) finish(connection)",
+        "runCatching { closing.onReleased() }",
+    ):
+        if token not in text:
+            errors.append(f"BLE close coordinator invariant is missing: {token}")
 
 if storage_port.is_file():
     text = storage_port.read_text(encoding="utf-8")
@@ -257,6 +304,16 @@ if cancellation_test.is_file():
     ):
         if token not in text:
             errors.append(f"provisioning cancellation coverage is missing: {token}")
+
+if close_coordinator_test.is_file():
+    text = close_coordinator_test.read_text(encoding="utf-8")
+    for token in (
+        "disconnect callback releases connection and cancels fallback",
+        "fallback releases connection when Android omits disconnect callback",
+        "stale callback never owns a new or unrelated connection",
+    ):
+        if token not in text:
+            errors.append(f"BLE close coordinator coverage is missing: {token}")
 
 if presenter_test.is_file():
     text = presenter_test.read_text(encoding="utf-8")
