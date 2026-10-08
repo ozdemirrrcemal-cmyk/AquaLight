@@ -17,7 +17,10 @@ class DeviceDosingV1TimeStatusRecoveryTest {
     @Test
     fun `time status change refreshes all dosing state through the central coordinator`() = runTest {
         val gateway = ScriptedGateway().apply { enqueueSingleChannelRefresh() }
-        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        val adapter = DeviceDosingV1StateAdapter(
+            DeviceDosingV1Repository(gateway),
+            isDosingDevice = { uid -> uid == DEVICE_UID }
+        )
 
         val result = adapter.consume(
             DeviceRuntimeTypedEvent(
@@ -42,6 +45,31 @@ class DeviceDosingV1TimeStatusRecoveryTest {
             ),
             gateway.actions
         )
+    }
+
+    @Test
+    fun `Light Timer and unknown time events do not trigger Dosing commands`() = runTest {
+        val gateway = ScriptedGateway()
+        val adapter = DeviceDosingV1StateAdapter(
+            DeviceDosingV1Repository(gateway),
+            isDosingDevice = { uid -> uid == DEVICE_UID }
+        )
+
+        listOf("AQL-LIGHT", "AQL-TIMER", "AQL-UNKNOWN").forEach { otherUid ->
+            val result = adapter.consume(
+                DeviceRuntimeTypedEvent(
+                    deviceUid = DeviceUid(otherUid),
+                    generation = GENERATION,
+                    messageId = "time-status-$otherUid",
+                    type = DeviceRuntimeTypedEvent.Type.TIME_STATUS_CHANGED,
+                    payload = DeviceRuntimeEventPayload.Snapshot(
+                        DeviceDosingV1TestFixtures.directEvent()
+                    )
+                )
+            )
+            assertEquals(DeviceDosingV1EventResult.Ignored, result)
+        }
+        assertEquals(emptyList<String>(), gateway.actions)
     }
 
     private class ScriptedGateway : DeviceRuntimeCommandGateway {

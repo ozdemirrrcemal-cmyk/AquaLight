@@ -48,7 +48,10 @@ internal class DeviceDosingV1ProductionRuntime(
     private val adapter = DeviceDosingV1StateAdapter(
         repository = DeviceDosingV1Repository(runtimeModules.commandGateway),
         stateOwner = stateOwner,
-        reconciliationScope = runtimeScope
+        reconciliationScope = runtimeScope,
+        isDosingDevice = { uid ->
+            devicesRepository.currentDevice(uid)?.product?.family == DeviceFamily.DOSING
+        }
     )
     private val alertMonitor = DeviceDosingLowLevelAlertMonitor(
         ownerUid = ownerUid,

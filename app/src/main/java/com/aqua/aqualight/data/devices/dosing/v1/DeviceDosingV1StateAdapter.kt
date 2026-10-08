@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
@@ -57,7 +58,9 @@ internal sealed interface DeviceDosingV1EventResult {
 internal class DeviceDosingV1StateAdapter(
     internal val repository: DeviceDosingV1Repository,
     stateOwner: DeviceDosingV1StateOwner = DeviceDosingV1StateOwner(),
-    internal val reconciliationScope: CoroutineScope? = null
+    internal val reconciliationScope: CoroutineScope? = null,
+    // Fail closed unless production supplies a firmware-backed family resolver.
+    isDosingDevice: (DeviceUid) -> Boolean = { false }
 ) {
     internal val stateAccess = DeviceDosingV1StateAccess(stateOwner)
     private val operationGate = DeviceDosingV1ChannelOperationGate()
@@ -84,7 +87,8 @@ internal class DeviceDosingV1StateAdapter(
     )
     private val eventCoordinator = DeviceDosingV1EventCoordinator(
         stateOwner = stateOwner,
-        refreshCoordinator = refreshCoordinator
+        refreshCoordinator = refreshCoordinator,
+        isDosingDevice = isDosingDevice
     )
 
     val channelOperations = DeviceDosingV1ChannelOperationsAdapter(this)
