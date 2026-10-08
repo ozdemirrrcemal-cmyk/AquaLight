@@ -56,9 +56,10 @@ class LightCentralRefreshArchitectureTest(unittest.TestCase):
         provider = MODULE_PROVIDER.read_text(encoding="utf-8")
 
         self.assertIn(
-            "private val lightRuntimeRefreshCoordinator = DeviceLightRuntimeRefreshCoordinator(",
+            "private val lightRuntimeRefreshCoordinator: DeviceLightRuntimeRefreshCoordinator =",
             provider,
         )
+        self.assertIn("DeviceLightRuntimeRefreshCoordinator(", provider)
         self.assertIn(
             "LightRuntimeBootstrapPort(lightRuntimeRefreshCoordinator)",
             provider,

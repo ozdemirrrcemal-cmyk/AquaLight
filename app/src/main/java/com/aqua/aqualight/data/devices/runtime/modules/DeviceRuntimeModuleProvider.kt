@@ -84,15 +84,16 @@ class DeviceRuntimeModuleProvider internal constructor(
     val lightThermal: DeviceLightThermalRuntimeRepository = DeviceLightThermalRuntimeRepository(
         commandGateway, lightStateOwner, lightOperationGate
     )
-    private val lightRuntimeRefreshCoordinator: DeviceLightRuntimeRefreshCoordinator = DeviceLightRuntimeRefreshCoordinator(
-        runtime = light,
-        thermal = lightThermal,
-        protection = lightTemperatureProtection
-    )
+    private val lightRuntimeRefreshCoordinator: DeviceLightRuntimeRefreshCoordinator =
+        DeviceLightRuntimeRefreshCoordinator(
+            runtime = light,
+            thermal = lightThermal,
+            protection = lightTemperatureProtection
+        )
     private val lightCommittedReconciliationScheduler: DeviceLightCommittedReconciliationScheduler? =
         reconciliationScope?.let { scope ->
-        DeviceLightCommittedReconciliationScheduler(scope, lightRuntimeRefreshCoordinator)
-    }
+            DeviceLightCommittedReconciliationScheduler(scope, lightRuntimeRefreshCoordinator)
+        }
     val cooling = DeviceCoolingRuntimeRepository(commandGateway)
 
     internal val domainBootstrapPorts: List<DeviceRuntimeDomainBootstrapPort> = listOf(
