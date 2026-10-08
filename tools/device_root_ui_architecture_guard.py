@@ -999,11 +999,11 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
     provider = _read(repository_root, LIGHT_RUNTIME_PROVIDER, errors)
     for token, reason in (
         (
-            "private val lightStateOwner = DeviceLightRuntimeStateOwner()",
+            "private val lightStateOwner: DeviceLightRuntimeStateOwner = DeviceLightRuntimeStateOwner()",
             "Light must construct exactly one owner-scoped runtime state owner",
         ),
         (
-            "private val lightOperationGate = DeviceLightDeviceOperationGate(",
+            "private val lightOperationGate: DeviceLightDeviceOperationGate = DeviceLightDeviceOperationGate(",
             "Light must construct exactly one shared device-operation gate",
         ),
     ):
