@@ -53,8 +53,8 @@ class DeviceRuntimeModuleProvider internal constructor(
     timerAccessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess,
     reconciliationScope: CoroutineScope? = null
 ) {
-    private val lightStateOwner = DeviceLightRuntimeStateOwner()
-    private val lightOperationGate = DeviceLightDeviceOperationGate(
+    private val lightStateOwner: DeviceLightRuntimeStateOwner = DeviceLightRuntimeStateOwner()
+    private val lightOperationGate: DeviceLightDeviceOperationGate = DeviceLightDeviceOperationGate(
         cancelOptionalReconciliation = { uid ->
             lightCommittedReconciliationScheduler?.cancel(uid)
         }
@@ -76,20 +76,21 @@ class DeviceRuntimeModuleProvider internal constructor(
     )
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
-    val light = DeviceLightRuntimeRepository(commandGateway, lightStateOwner, lightOperationGate)
-    val lightTemperatureProtection =
+    val light: DeviceLightRuntimeRepository = DeviceLightRuntimeRepository(commandGateway, lightStateOwner, lightOperationGate)
+    val lightTemperatureProtection: DeviceLightTemperatureProtectionRuntimeRepository =
         DeviceLightTemperatureProtectionRuntimeRepository(
             commandGateway, lightStateOwner, lightOperationGate
         )
-    val lightThermal = DeviceLightThermalRuntimeRepository(
+    val lightThermal: DeviceLightThermalRuntimeRepository = DeviceLightThermalRuntimeRepository(
         commandGateway, lightStateOwner, lightOperationGate
     )
-    private val lightRuntimeRefreshCoordinator = DeviceLightRuntimeRefreshCoordinator(
+    private val lightRuntimeRefreshCoordinator: DeviceLightRuntimeRefreshCoordinator = DeviceLightRuntimeRefreshCoordinator(
         runtime = light,
         thermal = lightThermal,
         protection = lightTemperatureProtection
     )
-    private val lightCommittedReconciliationScheduler = reconciliationScope?.let { scope ->
+    private val lightCommittedReconciliationScheduler: DeviceLightCommittedReconciliationScheduler? =
+        reconciliationScope?.let { scope ->
         DeviceLightCommittedReconciliationScheduler(scope, lightRuntimeRefreshCoordinator)
     }
     val cooling = DeviceCoolingRuntimeRepository(commandGateway)
