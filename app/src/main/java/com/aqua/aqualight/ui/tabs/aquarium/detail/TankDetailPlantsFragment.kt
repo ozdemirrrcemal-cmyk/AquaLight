@@ -99,11 +99,11 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
         item.plantCard.setOnClickListener {
             openPlantDetail(plant)
         }
-        item.btnPlantPhoto.contentDescription = getString(
+        item.plantPhotoFrame.contentDescription = getString(
             R.string.aquarium_plant_photo_action_description,
             plant.plantName
         )
-        item.btnPlantPhoto.setOnClickListener {
+        item.plantPhotoFrame.setOnClickListener {
             if (!isNavigating && findNavController().currentDestination?.id == R.id.tankDetailFragment) {
                 showPlantPhotoSource(plant)
             }

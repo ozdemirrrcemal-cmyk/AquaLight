@@ -178,6 +178,7 @@ for forbidden in (
     "PlantCatalog.resolve",
     "R.string.plant_health_entry_summary",
     "R.string.plant_health_entry_last_check",
+    "btnPlantPhoto",
 ):
     if forbidden in tank_plants:
         errors.append(
@@ -194,10 +195,10 @@ for token in (
     "isNavigating || photoTarget.isInProgress || photoActionsBlocked",
     "item.plantCard.setOnClickListener",
     "openPlantDetail(plant)",
-    "item.btnPlantPhoto.setOnClickListener",
+    "item.plantPhotoFrame.setOnClickListener",
     "showPlantPhotoSource(plant)",
     "R.string.plant_health_detail_action_description",
-    "item.btnPlantPhoto.contentDescription",
+    "item.plantPhotoFrame.contentDescription",
     "R.string.aquarium_plant_photo_action_description",
 ):
     if token not in tank_plants:
@@ -208,14 +209,17 @@ if "plantHealthEntry" in read(TANK_PLANTS_LAYOUT):
 try:
     card = ET.fromstring(read(PLANT_CARD_LAYOUT))
     photo = next(node for node in card.iter()
-                 if node.get(android + "id") == "@+id/btnPlantPhoto")
+                 if node.get(android + "id") == "@+id/plantPhotoFrame")
     for dimension in ("layout_width", "layout_height"):
-        if photo.get(android + dimension) != "@dimen/aqua_size_48":
-            errors.append("Separate plant photo button must retain its 48dp touch target")
-    if photo.get("style") != "@style/Widget.Aqua.Button.IconToggle":
-        errors.append("Plant photo button must use the shared Aqua icon button style")
+        if photo.get(android + dimension) != "@dimen/aqua_size_56":
+            errors.append("Plant photo frame must retain its accessible 56dp touch target")
+    for attribute in ("clickable", "focusable"):
+        if photo.get(android + attribute) != "true":
+            errors.append(f"Plant photo frame must be {attribute}")
+    if any(node.get(android + "id") == "@+id/btnPlantPhoto" for node in card.iter()):
+        errors.append("Redundant plant camera button must stay removed")
 except (ET.ParseError, StopIteration):
-    errors.append("Separate plant photo button is missing or malformed")
+    errors.append("Clickable plant photo frame is missing or malformed")
 
 for strings_file in (ENTITY_STRINGS, ENTITY_STRINGS_TR):
     text = read(strings_file)
