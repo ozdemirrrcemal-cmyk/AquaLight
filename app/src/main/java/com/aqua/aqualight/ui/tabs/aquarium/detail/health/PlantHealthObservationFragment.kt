@@ -107,8 +107,9 @@ class PlantHealthObservationFragment : TankRecordPhotoFragment(
             if (other) R.string.plant_health_note_required else R.string.plant_health_note_optional
         )
         binding.tvValidation.isVisible = other && draft.note.isBlank()
+        val readyToSubmit = draft.save.value == PlantSaveState.Idle || draft.save.value == PlantSaveState.Failed
         binding.btnSaveObservation.isEnabled = plantPresent && draft.canSave &&
-            draft.save.value != PlantSaveState.Working && !photoTarget.isInProgress
+            readyToSubmit && !photoTarget.isInProgress
     }
 
     private suspend fun renderSave(state: PlantSaveState) {
@@ -137,10 +138,10 @@ class PlantHealthObservationFragment : TankRecordPhotoFragment(
     override suspend fun onPhotoSelected(photoUri: String?) {
         val index = requireNotNull(photoTarget.recordId).toInt() - 1
         try {
-            draft.replacePhoto(index, photoUri)
-        } catch (error: Exception) {
-            if (error is kotlinx.coroutines.CancellationException) throw error
-            showPhotoSnackBar(getString(R.string.aquarium_photo_crop_failed))
+            runCatching { draft.replacePhoto(index, photoUri) }.onFailure { error ->
+                if (error is kotlinx.coroutines.CancellationException) throw error
+                showPhotoSnackBar(getString(R.string.aquarium_photo_crop_failed))
+            }
         } finally {
             photoTarget.finish()
             if (hasPhotoView) renderForm()

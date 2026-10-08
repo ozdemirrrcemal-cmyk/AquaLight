@@ -27,7 +27,8 @@ class PlantObservationDraftViewModel(
     private val revisionState = MutableStateFlow(0L)
     val revision = revisionState.asStateFlow()
     private val saveState = MutableStateFlow<PlantSaveState>(
-        savedState.get<Long>(SAVED_ID)?.let { PlantSaveState.Saved(it) } ?: PlantSaveState.Idle
+        savedState.get<Long>(SAVED_ID)?.let { PlantSaveState.Saved(it) }
+            ?: if (savedState.get<Boolean>(ATTEMPTED) == true) PlantSaveState.Failed else PlantSaveState.Idle
     )
     val save = saveState.asStateFlow()
     val symptoms: Set<String> get() = savedState.get<ArrayList<String>>(SIGNS).orEmpty().toSet()
@@ -75,15 +76,15 @@ class PlantObservationDraftViewModel(
     }
 
     private suspend fun persist(input: PlantObservationInput) = mutex.withLock {
-        try {
-            val id = operations.createObservation(input)
+        runCatching { operations.createObservation(input) }.onSuccess { id ->
             savedState[SAVED_ID] = id
             saveState.value = PlantSaveState.Saved(id)
-        } catch (error: Exception) {
+        }.onFailure { error ->
             if (error is CancellationException) throw error
             // Only unlock edits after the authoritative store confirms no request was written.
             // Ambiguous failures keep the payload fixed so retry can finish the same record.
-            val exists = runCatching { operations.containsRequest(input.requestId) }.getOrNull()
+            val exists = runCatching { operations.containsRequest(input.requestId) }
+                .onFailure { if (it is CancellationException) throw it }.getOrNull()
             if (exists == false) savedState[ATTEMPTED] = false
             saveState.value = PlantSaveState.Failed
         }

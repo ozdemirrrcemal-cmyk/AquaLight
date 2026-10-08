@@ -34,7 +34,7 @@ internal class PlantSymptomGrid(container: LinearLayout, onToggle: (String) -> U
         option: PlantSymptomOption
     ): ItemPlantHealthSymptomBinding {
         val item = ItemPlantHealthSymptomBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        item.root.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+        item.root.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
             if (index > 0) marginStart = parent.resources.getDimensionPixelSize(R.dimen.aqua_size_6)
             bottomMargin = parent.resources.getDimensionPixelSize(R.dimen.aqua_size_6)
         }

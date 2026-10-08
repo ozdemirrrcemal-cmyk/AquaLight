@@ -31,7 +31,7 @@
     <string name="plant_health_care_tank_context_title">Tank care context</string>
     <string name="plant_health_care_tank_context_body">Water changes, fertilization, trimming, CO₂ and lighting maintenance will be shown here from tank-care records.</string>
     <string name="plant_health_notes_empty_title">No plant notes yet</string>
-    <string name="plant_health_notes_empty_body">Plant-specific notes will be stored here when the note persistence layer is connected.</string>
+    <string name="plant_health_notes_empty_body">Add a note to a new observation to keep it here with its date.</string>
     <string name="plant_health_observation_title">New Observation</string>
     <string name="plant_health_observation_question">What are you observing?</string>
     <string name="plant_health_observation_helper">Select visible signs. Healthy looking is used on its own.</string>

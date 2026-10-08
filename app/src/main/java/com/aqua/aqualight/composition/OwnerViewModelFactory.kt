@@ -103,12 +103,12 @@ internal class OwnerViewModelFactory(
     override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
-            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        check(!needsSavedState(modelClass)) {
+            "${modelClass.simpleName} requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
             modelClass = modelClass,
-            quickSetupSavedStateHandle = null
+            ownerSavedStateHandle = null
         )
     }
 
@@ -117,9 +117,7 @@ internal class OwnerViewModelFactory(
         extras: CreationExtras
     ): T = createInternal(
         modelClass = modelClass,
-        quickSetupSavedStateHandle = if (
-            modelClass == DeviceLightQuickSetupViewModel::class.java
-        ) {
+        ownerSavedStateHandle = if (needsSavedState(modelClass)) {
             extras.createSavedStateHandle()
         } else {
             null
@@ -129,7 +127,7 @@ internal class OwnerViewModelFactory(
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     private fun <T : ViewModel> createInternal(
         modelClass: Class<T>,
-        quickSetupSavedStateHandle: SavedStateHandle?
+        ownerSavedStateHandle: SavedStateHandle?
     ): T {
         check(supports(modelClass)) { "No owner-scoped ViewModel binding for ${modelClass.name}." }
         val graph = ownerGraphResolver.requireActive()
@@ -230,7 +228,7 @@ internal class OwnerViewModelFactory(
             )
             PlantObservationDraftViewModel::class.java -> PlantObservationDraftViewModel(
                 DefaultPlantHealthOperations(graph.plantHealthStore, graph.ownerUid),
-                extras.createSavedStateHandle()
+                checkNotNull(ownerSavedStateHandle)
             )
             LivestockHealthViewModel::class.java -> LivestockHealthViewModel(
                 operations = DefaultLivestockHealthOperations(graph.livestockHealthStore),
@@ -274,7 +272,7 @@ internal class OwnerViewModelFactory(
                 rootOperations = rootOperations
             )
             DeviceLightQuickSetupViewModel::class.java -> DeviceLightQuickSetupViewModel(
-                savedStateHandle = checkNotNull(quickSetupSavedStateHandle),
+                savedStateHandle = checkNotNull(ownerSavedStateHandle),
                 operations = graph.lightOperations.quickSetupOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
@@ -406,6 +404,10 @@ internal class OwnerViewModelFactory(
     )
 
     private companion object {
+        fun needsSavedState(modelClass: Class<out ViewModel>) =
+            modelClass == DeviceLightQuickSetupViewModel::class.java ||
+                modelClass == PlantObservationDraftViewModel::class.java
+
         val OWNER_BINDINGS: Set<Class<out ViewModel>> = setOf(
             SettingsViewModel::class.java,
             DataManagementViewModel::class.java,

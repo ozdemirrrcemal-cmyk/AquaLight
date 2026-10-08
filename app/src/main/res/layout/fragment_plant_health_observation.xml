@@ -54,6 +54,7 @@
                 android:text="@string/plant_health_symptom_image_note" />
             <TextView
                 android:id="@+id/tvNoteLabel"
+                android:labelFor="@id/etNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodySmallBold"

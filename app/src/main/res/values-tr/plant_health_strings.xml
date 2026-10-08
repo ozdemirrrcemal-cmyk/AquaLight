@@ -31,7 +31,7 @@
     <string name="plant_health_care_tank_context_title">Tank bakım bağlamı</string>
     <string name="plant_health_care_tank_context_body">Su değişimi, gübreleme, budama, CO₂ ve ışık bakım kayıtları burada tank bakım geçmişinden gösterilecek.</string>
     <string name="plant_health_notes_empty_title">Henüz bitki notu yok</string>
-    <string name="plant_health_notes_empty_body">Bitkiye özel not kayıt altyapısı bağlandığında notlar burada tutulacak.</string>
+    <string name="plant_health_notes_empty_body">Yeni gözleme not ekleyerek burada tarihiyle birlikte saklayabilirsiniz.</string>
     <string name="plant_health_observation_title">Yeni Gözlem</string>
     <string name="plant_health_observation_question">Ne gözlemliyorsun?</string>
     <string name="plant_health_observation_helper">Görünür belirtileri seçin. Sağlıklı görünüyor seçeneği tek başına kullanılır.</string>

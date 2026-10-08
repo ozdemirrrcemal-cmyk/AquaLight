@@ -6,8 +6,6 @@ import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantHealthDetailBinding
 
-internal enum class PlantHealthDetailTab { OVERVIEW, OBSERVATIONS, CARE, NOTES }
-
 internal fun FragmentPlantHealthDetailBinding.bindPlantHealthTabs(select: (PlantHealthDetailTab) -> Unit) {
     tabOverview.setOnClickListener { select(PlantHealthDetailTab.OVERVIEW) }
     tabObservations.setOnClickListener { select(PlantHealthDetailTab.OBSERVATIONS) }

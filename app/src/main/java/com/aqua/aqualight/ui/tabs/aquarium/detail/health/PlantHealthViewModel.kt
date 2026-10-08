@@ -35,10 +35,11 @@ class PlantHealthViewModel(private val operations: PlantHealthOperations) : View
         if (deletionState.value == PlantDeletionState.Working) return
         deletionState.value = PlantDeletionState.Working
         viewModelScope.launch {
-            try {
+            runCatching {
                 operations.deleteObservation(tankId, plantId, id)
+            }.onSuccess {
                 deletionState.value = PlantDeletionState.Deleted
-            } catch (error: Exception) {
+            }.onFailure { error ->
                 if (error is CancellationException) throw error
                 deletionState.value = PlantDeletionState.Failed
             }
