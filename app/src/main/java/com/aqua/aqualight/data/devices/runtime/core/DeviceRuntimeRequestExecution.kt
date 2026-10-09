@@ -3,6 +3,8 @@ package com.aqua.aqualight.data.devices.runtime.core
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
@@ -11,19 +13,22 @@ internal suspend fun <T> executeCorrelatedRuntimeRequest(
     command: DeviceRuntimeCommand<T>,
     timeoutMillis: Long,
     context: DeviceRuntimeExecutionContext
-): DeviceRuntimeCommandOutcome<T> = when (
-    val preparation = prepareRuntimeRequest(
-        deviceUid = deviceUid,
-        command = command,
-        context = context
-    )
-) {
-    is DeviceRuntimeRequestPreparation.Rejected -> preparation.outcome
-    is DeviceRuntimeRequestPreparation.Ready -> sendAndAwaitRuntimeRequest(
-        preparation = preparation,
-        timeoutMillis = timeoutMillis,
-        pendingRequests = context.pendingRequests
-    )
+): DeviceRuntimeCommandOutcome<T> {
+    currentCoroutineContext().ensureActive()
+    return when (
+        val preparation = prepareRuntimeRequest(
+            deviceUid = deviceUid,
+            command = command,
+            context = context
+        )
+    ) {
+        is DeviceRuntimeRequestPreparation.Rejected -> preparation.outcome
+        is DeviceRuntimeRequestPreparation.Ready -> sendAndAwaitRuntimeRequest(
+            preparation = preparation,
+            timeoutMillis = timeoutMillis,
+            pendingRequests = context.pendingRequests
+        )
+    }
 }
 
 private sealed interface DeviceRuntimeRequestPreparation<out T> {
@@ -52,6 +57,17 @@ private fun <T> prepareRuntimeRequest(
                 action = command.action
             )
         )
+        command.expectedGeneration != null && command.expectedGeneration != session.generation ->
+            DeviceRuntimeRequestPreparation.Rejected(
+                DeviceRuntimeCommandOutcome.Cancelled(
+                    deviceUid = deviceUid,
+                    module = command.module,
+                    action = command.action,
+                    messageId = "",
+                    generation = checkNotNull(command.expectedGeneration),
+                    reason = "Command belongs to a replaced runtime connection."
+                )
+            )
         !session.authenticated -> DeviceRuntimeRequestPreparation.Rejected(
             DeviceRuntimeCommandOutcome.NotAuthenticated(
                 deviceUid = deviceUid,
@@ -103,6 +119,8 @@ private fun <T> createReadyRuntimeRequest(
         message = message,
         pending = pending
     )
+} catch (cancelled: CancellationException) {
+    throw cancelled
 } catch (_: Throwable) {
     DeviceRuntimeRequestPreparation.Rejected(
         DeviceRuntimeCommandOutcome.ProtocolError(
@@ -121,9 +139,16 @@ private suspend fun <T> sendAndAwaitRuntimeRequest(
     timeoutMillis: Long,
     pendingRequests: DeviceRuntimePendingRequestRegistry
 ): DeviceRuntimeCommandOutcome<T> {
-    val sent = runCatching {
+    val sent = try {
+        currentCoroutineContext().ensureActive()
         preparation.session.send(preparation.message)
-    }.getOrDefault(false)
+    } catch (cancelled: CancellationException) {
+        pendingRequests.remove(preparation.pending)
+        preparation.pending.deferred.cancel(cancelled)
+        throw cancelled
+    } catch (_: Throwable) {
+        false
+    }
 
     return if (sent) {
         awaitRuntimeRequest(preparation, timeoutMillis, pendingRequests)

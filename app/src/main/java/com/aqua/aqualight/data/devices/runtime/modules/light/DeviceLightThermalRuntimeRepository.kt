@@ -36,7 +36,10 @@ class DeviceLightThermalRuntimeRepository internal constructor(
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceLightThermalStatus> {
-        val outcome = protocol.requestStatus(deviceUid)
+        val outcome = protocol.requestStatus(
+            deviceUid,
+            stateOwner.currentGeneration(deviceUid, DeviceLightRuntimeProjection.THERMAL)
+        )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
             stateOwner.recordThermalStatus(deviceUid, outcome.generation, outcome.value)
         }
@@ -52,19 +55,17 @@ class DeviceLightThermalRuntimeRepository internal constructor(
         )
         return operationGate.withMutation(deviceUid) {
             if (
-                expectedGeneration == null ||
-                (
-                    stateOwner.currentGeneration(
-                        deviceUid, DeviceLightRuntimeProjection.THERMAL
-                    ) == expectedGeneration &&
-                        stateOwner.isAuthoritative(
-                            DeviceLightRuntimeProjection.THERMAL,
-                            deviceUid,
-                            expectedGeneration
-                        )
-                    )
+                expectedGeneration != null &&
+                stateOwner.currentGeneration(
+                    deviceUid, DeviceLightRuntimeProjection.THERMAL
+                ) == expectedGeneration &&
+                stateOwner.isAuthoritative(
+                    DeviceLightRuntimeProjection.THERMAL,
+                    deviceUid,
+                    expectedGeneration
+                )
             ) {
-                applyConfigWithinGate(deviceUid, payload)
+                applyConfigWithinGate(deviceUid, payload, expectedGeneration)
             } else {
                 DeviceRuntimeCommandOutcome.UnsupportedByDevice(
                     deviceUid, DeviceLightRuntimeContract.MODULE,
@@ -76,11 +77,22 @@ class DeviceLightThermalRuntimeRepository internal constructor(
 
     private suspend fun applyConfigWithinGate(
         deviceUid: DeviceUid,
-        payload: DeviceLightThermalConfigApplyPayload
+        payload: DeviceLightThermalConfigApplyPayload,
+        expectedGeneration: DeviceRuntimeConnectionGeneration
     ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> {
-        val outcome = protocol.applyConfig(deviceUid, payload)
+        val outcome = protocol.applyConfig(deviceUid, payload, expectedGeneration)
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            if (!stateOwner.recordThermalStatus(deviceUid, outcome.generation, outcome.value.status)) {
+            if (
+                !stateOwner.recordThermalStatus(
+                    deviceUid,
+                    outcome.generation,
+                    outcome.value.status,
+                    requireCurrentAuthority = true
+                ) &&
+                stateOwner.isAuthoritative(
+                    DeviceLightRuntimeProjection.THERMAL, deviceUid, outcome.generation
+                )
+            ) {
                 requestStatus(deviceUid)
             }
         }

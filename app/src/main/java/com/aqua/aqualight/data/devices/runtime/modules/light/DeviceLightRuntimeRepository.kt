@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.core.boundToGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
@@ -37,7 +38,7 @@ class DeviceLightRuntimeRepository internal constructor(
             lightCommand(
                 action = DeviceLightRuntimeContract.Action.STATUS_GET,
                 parser = DeviceLightStatusParser::parse
-            )
+            ).boundToGeneration(requestToken.generation)
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
             stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value, requestToken)
@@ -86,32 +87,34 @@ class DeviceLightRuntimeRepository internal constructor(
         parser: (JSONObject, DeviceLightProduct) -> T,
         refreshStatus: Boolean = false
     ): DeviceRuntimeCommandOutcome<T> {
+        val expectedGeneration = currentConnectionGeneration(deviceUid)
         val product = currentStatus(deviceUid)?.product
             ?: return unsupported(deviceUid, action)
         return executeProductCommand(
             deviceUid = deviceUid,
             product = product,
-            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus),
+            expectedGeneration = expectedGeneration
         )
     }
 
     internal suspend fun <T> executeProductCommand(
         deviceUid: DeviceUid,
         product: DeviceLightProduct,
-        command: DeviceLightProductCommand<T>
+        command: DeviceLightProductCommand<T>,
+        expectedGeneration: DeviceRuntimeConnectionGeneration? = currentConnectionGeneration(deviceUid)
     ): DeviceRuntimeCommandOutcome<T> {
         if (command.action.endsWith(".get")) {
-            return executeProductCommandRaw(deviceUid, product, command)
+            return executeProductCommandRaw(deviceUid, product, command, expectedGeneration)
         }
         // A queued user intent must not execute against a replacement connection generation.
-        val expectedGeneration = currentConnectionGeneration(deviceUid)
         return operationGate.withMutation(deviceUid) {
             if (
                 expectedGeneration != null &&
                 isCurrentGeneration(deviceUid, expectedGeneration) &&
                 currentStatus(deviceUid)?.product == product
             ) {
-                executeProductCommandRaw(deviceUid, product, command)
+                executeProductCommandRaw(deviceUid, product, command, expectedGeneration)
             } else {
                 unsupported(deviceUid, command.action)
             }
@@ -121,7 +124,8 @@ class DeviceLightRuntimeRepository internal constructor(
     private suspend fun <T> executeProductCommandRaw(
         deviceUid: DeviceUid,
         product: DeviceLightProduct,
-        command: DeviceLightProductCommand<T>
+        command: DeviceLightProductCommand<T>,
+        expectedGeneration: DeviceRuntimeConnectionGeneration?
     ): DeviceRuntimeCommandOutcome<T> {
         val outcome = gateway.execute(
             deviceUid,
@@ -129,9 +133,12 @@ class DeviceLightRuntimeRepository internal constructor(
                 action = command.action,
                 dataFactory = command.dataFactory,
                 parser = { data -> command.parser(data, product) }
-            )
+            ).boundToGeneration(expectedGeneration)
         )
-        if (command.refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success) {
+        if (
+            command.refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success &&
+            isCurrentGeneration(deviceUid, outcome.generation)
+        ) {
             val statusOutcome = requestStatus(deviceUid)
             if (statusOutcome is DeviceRuntimeCommandOutcome.Success) {
                 requestGraph(deviceUid)
@@ -148,6 +155,7 @@ internal suspend fun <T> DeviceLightRuntimeRepository.acclimationCommand(
     parser: (JSONObject, DeviceLightProduct) -> T,
     refreshStatus: Boolean = false
 ): DeviceRuntimeCommandOutcome<T> {
+    val expectedGeneration = currentConnectionGeneration(deviceUid)
     val status = currentStatus(deviceUid)
     val supported = status != null &&
         status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
@@ -157,7 +165,8 @@ internal suspend fun <T> DeviceLightRuntimeRepository.acclimationCommand(
         executeProductCommand(
             deviceUid = deviceUid,
             product = checkNotNull(status).product,
-            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus),
+            expectedGeneration = expectedGeneration
         )
     } else {
         unsupported(deviceUid, action)

@@ -1,17 +1,20 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.currentAuthoritativeSurface
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.deviceUid
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.expectedAllRefreshActions
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.expectedManagedPlanRefreshActions
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.expectedRefreshActions
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.fixture
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.generationOne
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.generationTwo
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.isSuccess
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRefreshTestFixtures.status
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
-import org.json.JSONArray
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -198,249 +201,118 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         )
     }
 
-    private fun fixture(
-        generation: DeviceRuntimeConnectionGeneration,
-        statusGate: CompletableDeferred<Unit>? = null,
-        managedPlanInstalled: Boolean = false,
-        mutationGate: CompletableDeferred<Unit>? = null
-    ): RefreshFixture {
-        val gateway = FixtureGateway(generation, statusGate, managedPlanInstalled, mutationGate)
-        val owner = DeviceLightRuntimeStateOwner()
-        owner.beginGeneration(deviceUid, generation)
-        val runtime = DeviceLightRuntimeRepository(gateway, owner)
-        return RefreshFixture(
-            gateway = gateway,
-            owner = owner,
-            runtime = runtime,
-            coordinator = DeviceLightRuntimeRefreshCoordinator(
-                runtime = runtime,
-                thermal = DeviceLightThermalRuntimeRepository(gateway, owner),
-                protection = DeviceLightTemperatureProtectionRuntimeRepository(gateway, owner)
-            )
+    @Test
+    fun `bootstrap preserves complete authority already hydrated in the same generation`() = runTest {
+        val fixture = fixture(generationOne)
+        assertTrue(fixture.coordinator.refreshAll(deviceUid).isSuccess())
+        val surface = fixture.runtime.currentAuthoritativeSurface()
+        val system = fixture.runtime.currentSystem(deviceUid, DeviceLightSystemReadAuthority.AUTHORITATIVE)
+
+        assertEquals(
+            DeviceLightRuntimeBootstrapResult.Hydrated(generationOne),
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
+        )
+        assertNotNull(surface)
+        assertEquals(surface, fixture.runtime.currentAuthoritativeSurface())
+        assertNotNull(system)
+        assertEquals(system, fixture.runtime.currentSystem(deviceUid, DeviceLightSystemReadAuthority.AUTHORITATIVE))
+        assertEquals(expectedAllRefreshActions, fixture.gateway.actions)
+    }
+
+    @Test
+    fun `bootstrap queued behind full refresh preserves the completed dashboard`() = runTest {
+        val statusGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, statusGate)
+        val refresh = async(start = CoroutineStart.UNDISPATCHED) { fixture.coordinator.refreshAll(deviceUid) }
+        val bootstrap = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
+        }
+        statusGate.complete(Unit)
+
+        assertTrue(refresh.await().isSuccess())
+        assertEquals(DeviceLightRuntimeBootstrapResult.Hydrated(generationOne), bootstrap.await())
+        assertNotNull(fixture.runtime.currentAuthoritativeSurface())
+        assertEquals(expectedAllRefreshActions, fixture.gateway.actions)
+    }
+
+    @Test
+    fun `full refresh queued behind minimal bootstrap hydrates all projections`() = runTest {
+        val statusGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, statusGate)
+        val bootstrap = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
+        }
+        val refresh = async(start = CoroutineStart.UNDISPATCHED) { fixture.coordinator.refreshAll(deviceUid) }
+        statusGate.complete(Unit)
+
+        assertEquals(DeviceLightRuntimeBootstrapResult.Hydrated(generationOne), bootstrap.await())
+        assertTrue(refresh.await().isSuccess())
+        assertNotNull(fixture.runtime.currentAuthoritativeSurface())
+        assertEquals(
+            listOf(DeviceLightRuntimeContract.Action.STATUS_GET) + expectedAllRefreshActions,
+            fixture.gateway.actions
         )
     }
 
-    private data class RefreshFixture(
-        val gateway: FixtureGateway,
-        val owner: DeviceLightRuntimeStateOwner,
-        val runtime: DeviceLightRuntimeRepository,
-        val coordinator: DeviceLightRuntimeRefreshCoordinator
-    )
-
-    private class FixtureGateway(
-        var generation: DeviceRuntimeConnectionGeneration,
-        private val statusGate: CompletableDeferred<Unit>?,
-        private val managedPlanInstalled: Boolean,
-        private val mutationGate: CompletableDeferred<Unit>?
-    ) : DeviceRuntimeCommandGateway {
-        val actions = mutableListOf<String>()
-
-        override suspend fun <T> execute(
-            deviceUid: DeviceUid,
-            command: DeviceRuntimeCommand<T>,
-            timeoutMillis: Long
-        ): DeviceRuntimeCommandOutcome<T> {
-            actions += command.action
-            if (command.action == DeviceLightRuntimeContract.Action.STATUS_GET) {
-                statusGate?.await()
-            }
-            if (command.action == DeviceLightRuntimeContract.Action.MANUAL_OFF) {
-                mutationGate?.await()
-            }
-            val response = AqlWsIncomingMessage.Response(
-                id = "refresh-${actions.size}",
-                type = "res",
-                module = command.module,
-                action = command.action,
-                data = responseData(command.action),
-                ok = true,
-                statusCode = HTTP_OK
-            )
-            return DeviceRuntimeCommandOutcome.Success(
-                deviceUid = deviceUid,
-                module = command.module,
-                action = command.action,
-                messageId = response.id,
-                generation = generation,
-                statusCode = response.statusCode,
-                value = command.parseSuccess(response)
-            )
+    @Test
+    fun `concurrent bootstrap requests use the first authoritative status`() = runTest {
+        val statusGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, statusGate)
+        val first = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
         }
-
-        private fun responseData(action: String): JSONObject = when (action) {
-            DeviceLightRuntimeContract.Action.STATUS_GET -> status(managedPlanInstalled)
-            DeviceLightRuntimeContract.Action.CUSTOM_GET -> customDocument()
-            DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET -> automaticPrograms()
-            DeviceLightRuntimeContract.Action.AUTO_PLAN_GET -> {
-                check(managedPlanInstalled)
-                managedAutoPlan()
-            }
-            DeviceLightRuntimeContract.Action.GRAPH_GET -> DeviceLightRuntimeFixtures.graph()
-            DeviceLightThermalV1Contract.Action.STATUS_GET -> thermalStatus()
-            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET ->
-                temperatureProtectionStatus()
-            DeviceLightRuntimeContract.Action.MANUAL_OFF -> JSONObject()
-            else -> error("Unexpected Light refresh action: $action")
+        val second = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
         }
+        statusGate.complete(Unit)
+
+        assertEquals(DeviceLightRuntimeBootstrapResult.Hydrated(generationOne), first.await())
+        assertEquals(DeviceLightRuntimeBootstrapResult.Hydrated(generationOne), second.await())
+        assertEquals(listOf(DeviceLightRuntimeContract.Action.STATUS_GET), fixture.gateway.actions)
     }
 
-    private companion object {
-        val deviceUid = DeviceUid("central-light-refresh")
-        val generationOne = DeviceRuntimeConnectionGeneration(1L)
-        val generationTwo = DeviceRuntimeConnectionGeneration(2L)
-        const val HTTP_OK = 200
-        const val LIGHT_SURFACE_PART_COUNT = 4
-        val expectedRefreshActions = listOf(
-            DeviceLightRuntimeContract.Action.STATUS_GET,
-            DeviceLightRuntimeContract.Action.CUSTOM_GET,
-            DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
-            DeviceLightRuntimeContract.Action.GRAPH_GET
+    @Test
+    fun `bootstrap rejects stale generation and rereads only status after reconnect`() = runTest {
+        val fixture = fixture(generationOne)
+        assertTrue(fixture.coordinator.refreshAll(deviceUid).isSuccess())
+        fixture.owner.invalidate(deviceUid, generationOne)
+        fixture.owner.beginGeneration(deviceUid, generationTwo)
+        fixture.gateway.generation = generationTwo
+        fixture.gateway.actions.clear()
+
+        assertEquals(
+            DeviceLightRuntimeBootstrapResult.RejectedStale,
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
         )
-        val expectedAllRefreshActions = listOf(
-            DeviceLightRuntimeContract.Action.STATUS_GET,
-            DeviceLightRuntimeContract.Action.GRAPH_GET,
-            DeviceLightRuntimeContract.Action.CUSTOM_GET,
-            DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
-            DeviceLightThermalV1Contract.Action.STATUS_GET,
-            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET
+        assertTrue(fixture.gateway.actions.isEmpty())
+        assertEquals(
+            DeviceLightRuntimeBootstrapResult.Hydrated(generationTwo),
+            fixture.coordinator.hydrateStatus(deviceUid, generationTwo)
         )
-        val expectedManagedPlanRefreshActions = listOf(
-            DeviceLightRuntimeContract.Action.STATUS_GET,
-            DeviceLightRuntimeContract.Action.CUSTOM_GET,
-            DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
-            DeviceLightRuntimeContract.Action.AUTO_PLAN_GET,
-            DeviceLightRuntimeContract.Action.GRAPH_GET
-        )
-
-        fun status(managedPlanInstalled: Boolean): JSONObject =
-            DeviceLightRuntimeFixtures.status().also { status ->
-                if (managedPlanInstalled) {
-                    status.getJSONObject("auto")
-                        .put("scheduleSource", "MANAGED_PLAN")
-                        .put("planRevision", 4)
-                        .put("planInstalled", true)
-                        .put("planId", "lp-00000001")
-                        .put("planRuntimeState", "NOT_SELECTED")
-                }
-            }
-
-        fun customDocument(): JSONObject = JSONObject()
-            .put("revision", 1)
-            .put("installed", false)
-            .put("weekdaysMask", 0)
-            .put("pointCount", 0)
-            .put("points", JSONArray())
-
-        fun automaticPrograms(): JSONObject = JSONObject()
-            .put("revision", 1)
-            .put("capacity", DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
-            .put("programCount", 0)
-            .put("enabledCount", 0)
-            .put("programs", JSONArray())
-
-        fun thermalStatus(): JSONObject = JSONObject(
-            """
-            {
-              "schema":"aql.light-thermal.v1","schemaVersion":1,
-              "productKey":"LIGHT_WRGB_PRO_ELITE","uptimeMs":1000,
-              "topology":{"fanOutputCount":2,"temperatureSensorCount":1},
-              "config":{"mode":"Auto","minTemperatureC":30.0,"maxTemperatureC":50.0},
-              "temperature":{
-                "sensorKey":"fixture","sensorIndex":0,"readingValid":true,
-                "temperatureC":35.0,"sampledAtMs":1000
-              },
-              "lightProtection":{"enabled":true,"active":false,"thresholdC":60.0},
-              "fans":[
-                {
-                  "fanKey":"fan1","index":0,"name":"Fan 1","regime":"Auto",
-                  "valueNow":0.25,"valueAuto":0.25,"percentNow":25.0,"percentAuto":25.0,
-                  "hardware":{
-                    "editable":false,"gpio":15,"ledcChannel":4,
-                    "pwmFrequencyHz":25000,"pwmResolutionBits":10,"invert":false,
-                    "pwmOutputHealth":"OK","health":"UNVERIFIED","physicalFeedbackAvailable":false
-                  }
-                },
-                {
-                  "fanKey":"fan2","index":1,"name":"Fan 2","regime":"Auto",
-                  "valueNow":0.25,"valueAuto":0.25,"percentNow":25.0,"percentAuto":25.0,
-                  "hardware":{
-                    "editable":false,"gpio":16,"ledcChannel":5,
-                    "pwmFrequencyHz":25000,"pwmResolutionBits":10,"invert":false,
-                    "pwmOutputHealth":"OK","health":"UNVERIFIED","physicalFeedbackAvailable":false
-                  }
-                }
-              ],
-              "runtime":{
-                "event":"light.thermal.telemetry.changed","statusEvent":"light.thermal.status.changed",
-                "sensorFailSafeActive":false,"automaticOutputCycleHealthy":true,
-                "hardwareEditable":false,"fanMappingEditable":false,"sensorMappingEditable":false
-              }
-            }
-            """.trimIndent()
-        )
-
-        fun temperatureProtectionStatus(): JSONObject = JSONObject(
-            """
-            {
-              "supported":true,
-              "temperatureProtection":{
-                "supported":true,"active":false,"thresholdEditable":true,
-                "thresholdC":60.0,"minimumC":50.0,"maximumC":70.0
-              },
-              "runtime":{
-                "module":"light","readOnly":false,"supportsStatusGet":true,"supportsSet":true,
-                "event":"light.thermal.status.changed"
-              }
-            }
-            """.trimIndent()
-        )
-
-        fun managedAutoPlan(): JSONObject = JSONObject()
-            .put("storageGeneration", 12)
-            .put("revision", 4)
-            .put("installed", true)
-            .put("planId", "lp-00000001")
-            .put(
-                "initialStartPercent",
-                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_DEFAULT
-            )
-            .put("phaseCount", 1)
-            .put(
-                "phases",
-                JSONArray().put(
-                    DeviceLightManagedPlanPhase(
-                        validFromEpochDay = 20_000,
-                        validUntilEpochDayExclusive = null,
-                        transitionDays = 7,
-                        weekdaysMask = 127,
-                        startTimeMs = 28_800_000,
-                        endTimeMs = 64_800_000,
-                        rampDurationMs = 1_800_000,
-                        scene = DeviceLightScene.wrgb(10, 20, 30, 40)
-                    ).toJson()
-                )
-            )
-            .put(
-                "runtime",
-                JSONObject()
-                    .put("clockReady", true)
-                    .put("state", "NOT_SELECTED")
-                    .put("activePhaseIndex", JSONObject.NULL)
-                    .put("transitionPermille", JSONObject.NULL)
-                    .put("nextTransitionEpochDay", JSONObject.NULL)
-            )
-
-        fun DeviceLightRuntimeRepository.currentAuthoritativeSurface(): List<Any>? {
-            val surface = listOfNotNull(
-                currentStatus(deviceUid),
-                currentLibrary(deviceUid, DeviceLightLibraryReadAuthority.AUTHORITATIVE),
-                currentAutomatic(deviceUid, DeviceLightAutomaticReadAuthority.AUTHORITATIVE),
-                currentDashboard(deviceUid, DeviceLightDashboardReadAuthority.AUTHORITATIVE)
-            )
-            return surface.takeIf { entries -> entries.size == LIGHT_SURFACE_PART_COUNT }
-        }
-
-        fun DeviceLightRuntimeRefreshResult.isSuccess(): Boolean =
-            this is DeviceLightRuntimeRefreshResult.Success
+        assertEquals(listOf(DeviceLightRuntimeContract.Action.STATUS_GET), fixture.gateway.actions)
+        assertNull(fixture.runtime.currentDashboard(deviceUid, DeviceLightDashboardReadAuthority.AUTHORITATIVE))
+        assertNotNull(fixture.runtime.currentDashboard(deviceUid, DeviceLightDashboardReadAuthority.PRESENTATION))
     }
+
+    @Test
+    fun `delayed bootstrap response cannot hydrate a replacement connection`() = runTest {
+        val statusGate = CompletableDeferred<Unit>()
+        val fixture = fixture(generationOne, statusGate)
+        val oldBootstrap = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.hydrateStatus(deviceUid, generationOne)
+        }
+        fixture.owner.invalidate(deviceUid, generationOne)
+        fixture.owner.beginGeneration(deviceUid, generationTwo)
+        fixture.gateway.generation = generationTwo
+        val newBootstrap = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.hydrateStatus(deviceUid, generationTwo)
+        }
+        statusGate.complete(Unit)
+
+        assertEquals(DeviceLightRuntimeBootstrapResult.RejectedStale, oldBootstrap.await())
+        assertEquals(DeviceLightRuntimeBootstrapResult.Hydrated(generationTwo), newBootstrap.await())
+        assertEquals(List(2) { DeviceLightRuntimeContract.Action.STATUS_GET }, fixture.gateway.actions)
+        assertTrue(fixture.runtime.isAuthoritative(deviceUid, generationTwo))
+    }
+
 }

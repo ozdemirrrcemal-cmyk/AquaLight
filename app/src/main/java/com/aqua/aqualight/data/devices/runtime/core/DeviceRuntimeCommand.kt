@@ -10,11 +10,26 @@ interface DeviceRuntimeCommand<T> {
     val module: String
     val action: String
 
+    /** Optional connection captured when the caller validated this command's authority. */
+    val expectedGeneration: DeviceRuntimeConnectionGeneration?
+        get() = null
+
     /** Returns a new canonical request object on every invocation. */
     fun encodeData(): JSONObject
 
     /** Parses the exact successful firmware response for this command. */
     fun parseSuccess(response: AqlWsIncomingMessage.Response): T
+}
+
+/** Keeps a checked intent attached to its connection without changing the gateway contract. */
+internal fun <T> DeviceRuntimeCommand<T>.boundToGeneration(
+    generation: DeviceRuntimeConnectionGeneration?
+): DeviceRuntimeCommand<T> = if (generation == null) {
+    this
+} else {
+    object : DeviceRuntimeCommand<T> by this {
+        override val expectedGeneration: DeviceRuntimeConnectionGeneration = generation
+    }
 }
 
 @JvmInline
@@ -38,4 +53,16 @@ internal data class DeviceRuntimeCommandSession(
     val generation: DeviceRuntimeConnectionGeneration,
     val authenticated: Boolean,
     val send: (AqlWsOutgoingMessage) -> Boolean
+)
+
+/** The same lock must protect reconnect and this final generation check plus transport send. */
+internal fun DeviceRuntimeCommandSession.withGenerationBoundSend(
+    sessionLock: Any,
+    currentGeneration: () -> DeviceRuntimeConnectionGeneration?
+): DeviceRuntimeCommandSession = copy(
+    send = { message ->
+        synchronized(sessionLock) {
+            currentGeneration() == generation && send(message)
+        }
+    }
 )

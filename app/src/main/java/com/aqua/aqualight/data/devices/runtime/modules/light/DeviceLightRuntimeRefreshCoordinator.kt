@@ -71,6 +71,9 @@ internal class DeviceLightRuntimeRefreshCoordinator(
     ): DeviceLightRuntimeBootstrapResult = runtime.operationGate.withDevice(deviceUid) {
         if (!runtime.isCurrentGeneration(deviceUid, generation)) {
             DeviceLightRuntimeBootstrapResult.RejectedStale
+        } else if (runtime.isAuthoritative(deviceUid, generation)) {
+            // Bootstrap only needs status. Re-reading it would revoke an already complete graph.
+            DeviceLightRuntimeBootstrapResult.Hydrated(generation)
         } else {
             when (val status = runtime.requestStatus(deviceUid)) {
                 is DeviceRuntimeCommandOutcome.Success -> if (
@@ -140,13 +143,13 @@ internal class DeviceLightRuntimeRefreshCoordinator(
         return if (existing != null) {
             existing.await()
         } else try {
-            val result = runtime.operationGate.withDevice(key.deviceUid) {
+            val result = runtime.operationGate.withRefresh(key.deviceUid) {
                 if (!runtime.isCurrentGeneration(key.deviceUid, key.generation)) {
                     DeviceLightRuntimeRefreshResult.RejectedStale
                 } else {
                     producer()
                 }
-            }
+            } ?: DeviceLightRuntimeRefreshResult.RejectedStale
             val accepted = if (runtime.isCurrentGeneration(key.deviceUid, key.generation)) {
                 result.forGeneration(key.generation)
             } else {
