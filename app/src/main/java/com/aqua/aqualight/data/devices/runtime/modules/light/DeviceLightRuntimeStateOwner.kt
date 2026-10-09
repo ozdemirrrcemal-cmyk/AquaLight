@@ -77,8 +77,9 @@ internal data class DeviceLightStatusRequestToken(
 
 internal class DeviceLightRuntimeStateOwner {
     private val lock = Any()
-    private val statusRequestSequences = HashMap<DeviceUid, Long>()
+    private val statusRequests = DeviceLightStatusRequests()
     private val authorityCoordinator = DeviceLightRuntimeAuthorityCoordinator()
+    internal val authorityQueries: DeviceLightRuntimeAuthorityReadAccess = authorityCoordinator
     private val _statuses = MutableStateFlow<Map<DeviceUid, DeviceLightStatus>>(emptyMap())
     private val _stateRevision = MutableStateFlow(0L)
     internal val dashboardProjection = DeviceLightDashboardRuntimeProjection(
@@ -154,38 +155,16 @@ internal class DeviceLightRuntimeStateOwner {
             )
         authorityCoordinator.invalidate(deviceUid, generation)
         if (targetsCurrentGeneration) {
-            advanceStatusRequestSequence(deviceUid)
+            statusRequests.advance(deviceUid)
             _stateRevision.value += 1L
         }
     }
 
-    fun currentGeneration(
-        deviceUid: DeviceUid,
-        projection: DeviceLightRuntimeProjection = DeviceLightRuntimeProjection.STATUS
-    ): DeviceRuntimeConnectionGeneration? =
-        authorityCoordinator.currentGeneration(projection, deviceUid)
-
     fun beginStatusRequest(deviceUid: DeviceUid): DeviceLightStatusRequestToken? =
         synchronized(lock) {
             val generation = currentGeneration(deviceUid) ?: return@synchronized null
-            DeviceLightStatusRequestToken(
-                deviceUid, generation, advanceStatusRequestSequence(deviceUid)
-            )
+            statusRequests.begin(deviceUid, generation)
         }
-
-    /** Invalidate any older in-flight readback without discarding presentation state. */
-    private fun advanceStatusRequestSequence(deviceUid: DeviceUid): Long {
-        val current = statusRequestSequences[deviceUid] ?: 0L
-        val next = if (current == Long.MAX_VALUE) 1L else current + 1L
-        statusRequestSequences[deviceUid] = next
-        return next
-    }
-
-    fun isAuthoritative(
-        projection: DeviceLightRuntimeProjection,
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authorityCoordinator.isAuthoritative(projection, deviceUid, generation)
 
     fun currentStatus(
         deviceUid: DeviceUid,
@@ -223,11 +202,7 @@ internal class DeviceLightRuntimeStateOwner {
     ): Boolean = synchronized(lock) {
         if (
             requestToken != null &&
-            (
-                requestToken.deviceUid != deviceUid ||
-                    requestToken.generation != generation ||
-                    statusRequestSequences[deviceUid] != requestToken.sequence
-            )
+            !statusRequests.accepts(requestToken, deviceUid, generation)
         ) {
             return@synchronized false
         }
@@ -241,7 +216,7 @@ internal class DeviceLightRuntimeStateOwner {
             return@synchronized false
         }
         // Unsolicited firmware status supersedes earlier outstanding polling.
-        if (requestToken == null) advanceStatusRequestSequence(deviceUid)
+        if (requestToken == null) statusRequests.advance(deviceUid)
         _statuses.value = _statuses.value + (deviceUid to status)
         dashboardProjection.reconcileStatus(deviceUid, generation)
         automaticProjection.reconcileStatus(deviceUid, generation, status)
@@ -361,11 +336,42 @@ internal class DeviceLightRuntimeStateOwner {
             _thermalStates.value = _thermalStates.value.without(deviceUid)
             systemProjection.clear(deviceUid)
             authorityCoordinator.clear(deviceUid)
-            statusRequestSequences.remove(deviceUid)
+            statusRequests.clear(deviceUid)
             _stateRevision.value += 1L
         }
     }
 
+}
+
+/** Request ordering only; snapshot mutation remains under the owning runtime's lock. */
+private class DeviceLightStatusRequests {
+    private val sequences = HashMap<DeviceUid, Long>()
+
+    fun begin(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): DeviceLightStatusRequestToken =
+        DeviceLightStatusRequestToken(deviceUid, generation, advance(deviceUid))
+
+    fun accepts(
+        token: DeviceLightStatusRequestToken,
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = token.deviceUid == deviceUid &&
+        token.generation == generation &&
+        sequences[deviceUid] == token.sequence
+
+    /** Invalidate older in-flight readback without discarding presentation state. */
+    fun advance(deviceUid: DeviceUid): Long {
+        val current = sequences[deviceUid] ?: 0L
+        val next = if (current == Long.MAX_VALUE) 1L else current + 1L
+        sequences[deviceUid] = next
+        return next
+    }
+
+    fun clear(deviceUid: DeviceUid) {
+        sequences.remove(deviceUid)
+    }
 }
 
 /** Automatic is a projection component of [DeviceLightRuntimeStateOwner], never a second owner. */

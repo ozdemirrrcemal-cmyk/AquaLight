@@ -76,7 +76,9 @@ class DeviceRuntimeModuleProvider internal constructor(
     )
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
-    val light: DeviceLightRuntimeRepository = DeviceLightRuntimeRepository(commandGateway, lightStateOwner, lightOperationGate)
+    val light: DeviceLightRuntimeRepository = DeviceLightRuntimeRepository(
+        commandGateway, lightStateOwner, lightOperationGate
+    )
     val lightTemperatureProtection: DeviceLightTemperatureProtectionRuntimeRepository =
         DeviceLightTemperatureProtectionRuntimeRepository(
             commandGateway, lightStateOwner, lightOperationGate

@@ -4,8 +4,22 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeGenerationAuthority
 
+/** Read-only authority queries do not expose lifecycle mutation to owner extensions. */
+internal interface DeviceLightRuntimeAuthorityReadAccess {
+    fun currentGeneration(
+        projection: DeviceLightRuntimeProjection,
+        deviceUid: DeviceUid
+    ): DeviceRuntimeConnectionGeneration?
+
+    fun isAuthoritative(
+        projection: DeviceLightRuntimeProjection,
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean
+}
+
 /** Independently tracks connection-generation authority for each Light runtime projection. */
-internal class DeviceLightRuntimeAuthorityCoordinator {
+internal class DeviceLightRuntimeAuthorityCoordinator : DeviceLightRuntimeAuthorityReadAccess {
     private val authorities = DeviceLightRuntimeProjection.entries.associateWith {
         DeviceRuntimeGenerationAuthority()
     }
@@ -27,55 +41,51 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
         }
     }
 
-    fun isAuthoritative(
+    override fun isAuthoritative(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authorityFor(projection).isAuthoritative(deviceUid, generation)
+    ): Boolean = authorities.getValue(projection).isAuthoritative(deviceUid, generation)
 
-    fun currentGeneration(
+    override fun currentGeneration(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid
-    ): DeviceRuntimeConnectionGeneration? = authorityFor(projection).currentGeneration(deviceUid)
+    ): DeviceRuntimeConnectionGeneration? = authorities.getValue(projection).currentGeneration(deviceUid)
 
     fun isCurrentlyAuthoritative(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid
-    ): Boolean = authorityFor(projection).isAuthoritative(deviceUid)
+    ): Boolean = authorities.getValue(projection).isAuthoritative(deviceUid)
 
     fun isCurrentGeneration(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authorityFor(projection).isCurrentGeneration(deviceUid, generation)
+    ): Boolean = authorities.getValue(projection).isCurrentGeneration(deviceUid, generation)
 
     fun acceptAuthoritativeSnapshot(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authorityFor(projection).acceptAuthoritativeSnapshot(deviceUid, generation)
+    ): Boolean = authorities.getValue(projection).acceptAuthoritativeSnapshot(deviceUid, generation)
 
     fun acceptsPatch(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authorityFor(projection).acceptsPatch(deviceUid, generation)
+    ): Boolean = authorities.getValue(projection).acceptsPatch(deviceUid, generation)
 
     fun invalidateProjection(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
     ) {
-        authorityFor(projection).invalidate(deviceUid, generation)
+        authorities.getValue(projection).invalidate(deviceUid, generation)
     }
 
     fun clear(deviceUid: DeviceUid) {
         authorities.values.forEach { authority -> authority.clear(deviceUid) }
     }
-
-    private fun authorityFor(
-        projection: DeviceLightRuntimeProjection
-    ): DeviceRuntimeGenerationAuthority = authorities.getValue(projection)
 }
 
 internal enum class DeviceLightRuntimeProjection {
@@ -87,3 +97,15 @@ internal enum class DeviceLightRuntimeProjection {
     TEMPERATURE_PROTECTION,
     THERMAL
 }
+
+/** Read-only owner queries share the same projection authority ledger. */
+internal fun DeviceLightRuntimeStateOwner.currentGeneration(
+    deviceUid: DeviceUid,
+    projection: DeviceLightRuntimeProjection = DeviceLightRuntimeProjection.STATUS
+): DeviceRuntimeConnectionGeneration? = authorityQueries.currentGeneration(projection, deviceUid)
+
+internal fun DeviceLightRuntimeStateOwner.isAuthoritative(
+    projection: DeviceLightRuntimeProjection,
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = authorityQueries.isAuthoritative(projection, deviceUid, generation)

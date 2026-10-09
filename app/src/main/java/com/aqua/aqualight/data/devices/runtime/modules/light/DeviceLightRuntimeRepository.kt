@@ -79,29 +79,6 @@ class DeviceLightRuntimeRepository internal constructor(
         refreshStatus = true
     )
 
-    internal suspend fun <T> acclimationCommand(
-        deviceUid: DeviceUid,
-        action: String,
-        dataFactory: () -> JSONObject = ::JSONObject,
-        parser: (JSONObject, DeviceLightProduct) -> T,
-        refreshStatus: Boolean = false
-    ): DeviceRuntimeCommandOutcome<T> {
-        val status = currentStatus(deviceUid)
-        val supported = status != null &&
-            status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
-            status.features.acclimation &&
-            status.acclimation.supported
-        return if (supported) {
-            executeProductCommand(
-                deviceUid = deviceUid,
-                product = checkNotNull(status).product,
-                command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
-            )
-        } else {
-            unsupported(deviceUid, action)
-        }
-    }
-
     internal suspend fun <T> productCommand(
         deviceUid: DeviceUid,
         action: String,
@@ -118,7 +95,7 @@ class DeviceLightRuntimeRepository internal constructor(
         )
     }
 
-    private suspend fun <T> executeProductCommand(
+    internal suspend fun <T> executeProductCommand(
         deviceUid: DeviceUid,
         product: DeviceLightProduct,
         command: DeviceLightProductCommand<T>
@@ -161,6 +138,29 @@ class DeviceLightRuntimeRepository internal constructor(
             }
         }
         return outcome
+    }
+}
+
+internal suspend fun <T> DeviceLightRuntimeRepository.acclimationCommand(
+    deviceUid: DeviceUid,
+    action: String,
+    dataFactory: () -> JSONObject = ::JSONObject,
+    parser: (JSONObject, DeviceLightProduct) -> T,
+    refreshStatus: Boolean = false
+): DeviceRuntimeCommandOutcome<T> {
+    val status = currentStatus(deviceUid)
+    val supported = status != null &&
+        status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
+        status.features.acclimation &&
+        status.acclimation.supported
+    return if (supported) {
+        executeProductCommand(
+            deviceUid = deviceUid,
+            product = checkNotNull(status).product,
+            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+        )
+    } else {
+        unsupported(deviceUid, action)
     }
 }
 

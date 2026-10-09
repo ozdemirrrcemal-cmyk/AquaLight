@@ -39,7 +39,20 @@ internal class DeviceLightRuntimeRefreshCoordinator(
         val generation = runtime.currentConnectionGeneration(deviceUid)
             ?: return DeviceLightRuntimeRefreshResult.RejectedStale
         return refresh(RefreshKey(deviceUid, generation, RefreshKind.ALL)) {
-            refreshAllWithinFlight(deviceUid)
+            when (val dashboard = dashboardRefresh.refresh(deviceUid)) {
+                is DeviceLightDashboardRefreshResult.Success -> refreshDependents(
+                    deviceUid = deviceUid,
+                    dashboard = dashboard.dashboard,
+                    generation = dashboard.generation,
+                    refreshSystem = true
+                )
+                is DeviceLightDashboardRefreshResult.Failed ->
+                    DeviceLightRuntimeRefreshResult.Failed(dashboard.outcome)
+                DeviceLightDashboardRefreshResult.RejectedStale ->
+                    DeviceLightRuntimeRefreshResult.RejectedStale
+                DeviceLightDashboardRefreshResult.Malformed ->
+                    DeviceLightRuntimeRefreshResult.Malformed
+            }
         }
     }
 
@@ -124,9 +137,9 @@ internal class DeviceLightRuntimeRefreshCoordinator(
         }
         val pending = CompletableDeferred<DeviceLightRuntimeRefreshResult>()
         val existing = inFlight.putIfAbsent(key, pending)
-        if (existing != null) return existing.await()
-
-        return try {
+        return if (existing != null) {
+            existing.await()
+        } else try {
             val result = runtime.operationGate.withDevice(key.deviceUid) {
                 if (!runtime.isCurrentGeneration(key.deviceUid, key.generation)) {
                     DeviceLightRuntimeRefreshResult.RejectedStale
@@ -148,23 +161,6 @@ internal class DeviceLightRuntimeRefreshCoordinator(
             pending.complete(DeviceLightRuntimeRefreshResult.Malformed)
             inFlight.remove(key, pending)
         }
-    }
-
-    private suspend fun refreshAllWithinFlight(
-        deviceUid: DeviceUid
-    ): DeviceLightRuntimeRefreshResult = when (val dashboard = dashboardRefresh.refresh(deviceUid)) {
-        is DeviceLightDashboardRefreshResult.Success -> refreshDependents(
-            deviceUid = deviceUid,
-            dashboard = dashboard.dashboard,
-            generation = dashboard.generation,
-            refreshSystem = true
-        )
-        is DeviceLightDashboardRefreshResult.Failed ->
-            DeviceLightRuntimeRefreshResult.Failed(dashboard.outcome)
-        DeviceLightDashboardRefreshResult.RejectedStale ->
-            DeviceLightRuntimeRefreshResult.RejectedStale
-        DeviceLightDashboardRefreshResult.Malformed ->
-            DeviceLightRuntimeRefreshResult.Malformed
     }
 
     private suspend fun refreshGenerationWithinFlight(

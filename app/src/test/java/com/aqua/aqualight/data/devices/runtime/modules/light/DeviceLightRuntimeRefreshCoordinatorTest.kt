@@ -58,11 +58,17 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
                 deviceUid, DeviceLightDashboardReadAuthority.AUTHORITATIVE
             )
         )
+        assertNull(
+            fixture.runtime.currentSystem(deviceUid, DeviceLightSystemReadAuthority.AUTHORITATIVE)
+        )
 
         assertTrue(fixture.coordinator.refreshAll(deviceUid).isSuccess())
         assertNotNull(fixture.runtime.currentAuthoritativeSurface())
+        assertNotNull(
+            fixture.runtime.currentSystem(deviceUid, DeviceLightSystemReadAuthority.AUTHORITATIVE)
+        )
         assertEquals(
-            listOf(DeviceLightRuntimeContract.Action.STATUS_GET) + expectedRefreshActions,
+            listOf(DeviceLightRuntimeContract.Action.STATUS_GET) + expectedAllRefreshActions,
             fixture.gateway.actions
         )
     }
@@ -157,7 +163,7 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         assertTrue(mutation.await() is DeviceRuntimeCommandOutcome.Success)
         assertTrue(refresh.await().isSuccess())
         assertEquals(
-            listOf(DeviceLightRuntimeContract.Action.MANUAL_OFF) + expectedRefreshActions,
+            listOf(DeviceLightRuntimeContract.Action.MANUAL_OFF) + expectedAllRefreshActions,
             fixture.gateway.actions
         )
     }
@@ -270,6 +276,9 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
                 managedAutoPlan()
             }
             DeviceLightRuntimeContract.Action.GRAPH_GET -> DeviceLightRuntimeFixtures.graph()
+            DeviceLightThermalV1Contract.Action.STATUS_GET -> thermalStatus()
+            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET ->
+                temperatureProtectionStatus()
             DeviceLightRuntimeContract.Action.MANUAL_OFF -> JSONObject()
             else -> error("Unexpected Light refresh action: $action")
         }
@@ -286,6 +295,14 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             DeviceLightRuntimeContract.Action.CUSTOM_GET,
             DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
             DeviceLightRuntimeContract.Action.GRAPH_GET
+        )
+        val expectedAllRefreshActions = listOf(
+            DeviceLightRuntimeContract.Action.STATUS_GET,
+            DeviceLightRuntimeContract.Action.GRAPH_GET,
+            DeviceLightRuntimeContract.Action.CUSTOM_GET,
+            DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
+            DeviceLightThermalV1Contract.Action.STATUS_GET,
+            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET
         )
         val expectedManagedPlanRefreshActions = listOf(
             DeviceLightRuntimeContract.Action.STATUS_GET,
@@ -320,6 +337,63 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             .put("programCount", 0)
             .put("enabledCount", 0)
             .put("programs", JSONArray())
+
+        fun thermalStatus(): JSONObject = JSONObject(
+            """
+            {
+              "schema":"aql.light-thermal.v1","schemaVersion":1,
+              "productKey":"LIGHT_WRGB_PRO_ELITE","uptimeMs":1000,
+              "topology":{"fanOutputCount":2,"temperatureSensorCount":1},
+              "config":{"mode":"Auto","minTemperatureC":30.0,"maxTemperatureC":50.0},
+              "temperature":{
+                "sensorKey":"fixture","sensorIndex":0,"readingValid":true,
+                "temperatureC":35.0,"sampledAtMs":1000
+              },
+              "lightProtection":{"enabled":true,"active":false,"thresholdC":60.0},
+              "fans":[
+                {
+                  "fanKey":"fan1","index":0,"name":"Fan 1","regime":"Auto",
+                  "valueNow":0.25,"valueAuto":0.25,"percentNow":25.0,"percentAuto":25.0,
+                  "hardware":{
+                    "editable":false,"gpio":15,"ledcChannel":4,
+                    "pwmFrequencyHz":25000,"pwmResolutionBits":10,"invert":false,
+                    "pwmOutputHealth":"OK","health":"UNVERIFIED","physicalFeedbackAvailable":false
+                  }
+                },
+                {
+                  "fanKey":"fan2","index":1,"name":"Fan 2","regime":"Auto",
+                  "valueNow":0.25,"valueAuto":0.25,"percentNow":25.0,"percentAuto":25.0,
+                  "hardware":{
+                    "editable":false,"gpio":16,"ledcChannel":5,
+                    "pwmFrequencyHz":25000,"pwmResolutionBits":10,"invert":false,
+                    "pwmOutputHealth":"OK","health":"UNVERIFIED","physicalFeedbackAvailable":false
+                  }
+                }
+              ],
+              "runtime":{
+                "event":"light.thermal.telemetry.changed","statusEvent":"light.thermal.status.changed",
+                "sensorFailSafeActive":false,"automaticOutputCycleHealthy":true,
+                "hardwareEditable":false,"fanMappingEditable":false,"sensorMappingEditable":false
+              }
+            }
+            """.trimIndent()
+        )
+
+        fun temperatureProtectionStatus(): JSONObject = JSONObject(
+            """
+            {
+              "supported":true,
+              "temperatureProtection":{
+                "supported":true,"active":false,"thresholdEditable":true,
+                "thresholdC":60.0,"minimumC":50.0,"maximumC":70.0
+              },
+              "runtime":{
+                "module":"light","readOnly":false,"supportsStatusGet":true,"supportsSet":true,
+                "event":"light.thermal.status.changed"
+              }
+            }
+            """.trimIndent()
+        )
 
         fun managedAutoPlan(): JSONObject = JSONObject()
             .put("storageGeneration", 12)
