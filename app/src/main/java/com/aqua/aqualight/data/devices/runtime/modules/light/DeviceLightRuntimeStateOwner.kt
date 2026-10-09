@@ -61,6 +61,12 @@ internal enum class DeviceLightStatusReadAuthority {
     PRESENTATION
 }
 
+/** Identity uniquely binds a read, including one begun before the first generation is known. */
+internal class DeviceLightRuntimeRequestToken(
+    val deviceUid: DeviceUid,
+    val generation: DeviceRuntimeConnectionGeneration?
+)
+
 /**
  * The only mutable, firmware-authoritative Light state owner.
  *
@@ -71,7 +77,10 @@ internal enum class DeviceLightStatusReadAuthority {
  */
 internal class DeviceLightRuntimeStateOwner {
     private val lock = Any()
+    private val statusRequests = DeviceLightProjectionRequests()
+    private val protectionRequests = DeviceLightProjectionRequests()
     private val authorityCoordinator = DeviceLightRuntimeAuthorityCoordinator()
+    internal val authorityQueries: DeviceLightRuntimeAuthorityReadAccess = authorityCoordinator
     private val _statuses = MutableStateFlow<Map<DeviceUid, DeviceLightStatus>>(emptyMap())
     private val _stateRevision = MutableStateFlow(0L)
     internal val dashboardProjection = DeviceLightDashboardRuntimeProjection(
@@ -130,8 +139,16 @@ internal class DeviceLightRuntimeStateOwner {
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = synchronized(lock) {
+        val previousStatusGeneration = currentGeneration(deviceUid)
+        val previousProtectionGeneration = currentGeneration(
+            deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+        )
         val accepted = authorityCoordinator.beginGeneration(deviceUid, generation)
-        if (accepted) _stateRevision.value += 1L
+        if (accepted) {
+            if (previousStatusGeneration != generation) statusRequests.invalidate(deviceUid)
+            if (previousProtectionGeneration != generation) protectionRequests.invalidate(deviceUid)
+            _stateRevision.value += 1L
+        }
         accepted
     }
 
@@ -139,21 +156,31 @@ internal class DeviceLightRuntimeStateOwner {
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = synchronized(lock) {
-        val targetsCurrentGeneration = generation == null ||
-            authorityCoordinator.isCurrentGeneration(
-                DeviceLightRuntimeProjection.STATUS,
-                deviceUid,
-                generation
-            )
+        val statusGeneration = currentGeneration(deviceUid)
+        val protectionGeneration = currentGeneration(
+            deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+        )
+        val targetsStatusGeneration = generation == null || statusGeneration == null ||
+            statusGeneration == generation
+        val targetsProtectionGeneration = generation == null || protectionGeneration == null ||
+            protectionGeneration == generation
         authorityCoordinator.invalidate(deviceUid, generation)
-        if (targetsCurrentGeneration) _stateRevision.value += 1L
+        if (targetsStatusGeneration) statusRequests.invalidate(deviceUid)
+        if (targetsProtectionGeneration) protectionRequests.invalidate(deviceUid)
+        if (targetsStatusGeneration || targetsProtectionGeneration) _stateRevision.value += 1L
     }
 
-    fun isAuthoritative(
-        projection: DeviceLightRuntimeProjection,
+    fun beginStatusRequest(
         deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authorityCoordinator.isAuthoritative(projection, deviceUid, generation)
+        projection: DeviceLightRuntimeProjection = DeviceLightRuntimeProjection.STATUS
+    ): DeviceLightRuntimeRequestToken = synchronized(lock) {
+        val requests = when (projection) {
+            DeviceLightRuntimeProjection.STATUS -> statusRequests
+            DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION -> protectionRequests
+            else -> error("Request ordering requires a complete status projection.")
+        }
+        requests.begin(deviceUid, currentGeneration(deviceUid, projection))
+    }
 
     fun currentStatus(
         deviceUid: DeviceUid,
@@ -186,8 +213,15 @@ internal class DeviceLightRuntimeStateOwner {
     fun recordStatus(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
-        status: DeviceLightStatus
+        status: DeviceLightStatus,
+        requestToken: DeviceLightRuntimeRequestToken? = null
     ): Boolean = synchronized(lock) {
+        if (
+            requestToken != null &&
+            !statusRequests.accepts(requestToken, deviceUid, generation)
+        ) {
+            return@synchronized false
+        }
         if (
             !authorityCoordinator.acceptAuthoritativeSnapshot(
                 DeviceLightRuntimeProjection.STATUS,
@@ -197,6 +231,8 @@ internal class DeviceLightRuntimeStateOwner {
         ) {
             return@synchronized false
         }
+        // Unsolicited firmware status supersedes earlier outstanding polling.
+        statusRequests.invalidate(deviceUid)
         _statuses.value = _statuses.value + (deviceUid to status)
         dashboardProjection.reconcileStatus(deviceUid, generation)
         automaticProjection.reconcileStatus(deviceUid, generation, status)
@@ -210,8 +246,26 @@ internal class DeviceLightRuntimeStateOwner {
     fun recordTemperatureProtection(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
-        status: DeviceLightTemperatureProtectionStatus
+        status: DeviceLightTemperatureProtectionStatus,
+        requestToken: DeviceLightRuntimeRequestToken? = null,
+        requireCurrentAuthority: Boolean = false
     ): Boolean = synchronized(lock) {
+        if (
+            requireCurrentAuthority &&
+            !authorityCoordinator.isAuthoritative(
+                DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                deviceUid,
+                generation
+            )
+        ) {
+            return@synchronized false
+        }
+        if (
+            requestToken != null &&
+            !protectionRequests.accepts(requestToken, deviceUid, generation)
+        ) {
+            return@synchronized false
+        }
         if (
             !authorityCoordinator.acceptAuthoritativeSnapshot(
                 DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
@@ -221,6 +275,8 @@ internal class DeviceLightRuntimeStateOwner {
         ) {
             return@synchronized false
         }
+        // A successful mutation ACK or unsolicited snapshot supersedes outstanding polling.
+        protectionRequests.invalidate(deviceUid)
         _temperatureProtection.value = _temperatureProtection.value + (deviceUid to status)
         systemProjection.reconcile(deviceUid)
         _stateRevision.value += 1L
@@ -230,8 +286,19 @@ internal class DeviceLightRuntimeStateOwner {
     fun recordThermalStatus(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
-        status: DeviceLightThermalStatus
+        status: DeviceLightThermalStatus,
+        requireCurrentAuthority: Boolean = false
     ): Boolean = synchronized(lock) {
+        if (
+            requireCurrentAuthority &&
+            !authorityCoordinator.isAuthoritative(
+                DeviceLightRuntimeProjection.THERMAL,
+                deviceUid,
+                generation
+            )
+        ) {
+            return@synchronized false
+        }
         val current = _thermalStates.value[deviceUid]
         if (
             authorityCoordinator.isAuthoritative(
@@ -316,10 +383,38 @@ internal class DeviceLightRuntimeStateOwner {
             _thermalStates.value = _thermalStates.value.without(deviceUid)
             systemProjection.clear(deviceUid)
             authorityCoordinator.clear(deviceUid)
+            statusRequests.invalidate(deviceUid)
+            protectionRequests.invalidate(deviceUid)
             _stateRevision.value += 1L
         }
     }
 
+}
+
+/** Request ordering only; snapshot mutation remains under the owning runtime's lock. */
+private class DeviceLightProjectionRequests {
+    private val requests = HashMap<DeviceUid, DeviceLightRuntimeRequestToken>()
+
+    fun begin(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration?
+    ): DeviceLightRuntimeRequestToken = DeviceLightRuntimeRequestToken(deviceUid, generation).also {
+        requests[deviceUid] = it
+    }
+
+    fun accepts(
+        token: DeviceLightRuntimeRequestToken,
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean {
+        val generationMatches = token.generation == null || token.generation == generation
+        return token.deviceUid == deviceUid && generationMatches && requests[deviceUid] === token
+    }
+
+    /** Removing the unique token also prevents reuse after clear and same-generation reconnect. */
+    fun invalidate(deviceUid: DeviceUid) {
+        requests.remove(deviceUid)
+    }
 }
 
 /** Automatic is a projection component of [DeviceLightRuntimeStateOwner], never a second owner. */

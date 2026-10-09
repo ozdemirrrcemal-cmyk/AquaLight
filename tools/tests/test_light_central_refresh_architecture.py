@@ -21,10 +21,11 @@ class LightCentralRefreshArchitectureTest(unittest.TestCase):
 
         for token in (
             "class DeviceLightRuntimeRefreshCoordinator",
-            "inFlight.putIfAbsent(deviceUid, pending)",
+            "inFlight.putIfAbsent(key, pending)",
             "suspend fun refreshAll",
             "suspend fun refreshGeneration",
             "dashboardRefresh.refresh(deviceUid)",
+            "runtime.operationGate.withDevice",
             "runtime.requestCustom(deviceUid)",
             "runtime.requestAutoPrograms(deviceUid)",
             "runtime.requestGraph(deviceUid)",
@@ -51,19 +52,20 @@ class LightCentralRefreshArchitectureTest(unittest.TestCase):
         self.assertNotIn("inFlight", dashboard)
         self.assertNotIn("reconcileCommitted", dashboard)
 
-    def test_light_bootstrap_uses_the_same_central_refresh_flight(self):
+    def test_light_bootstrap_uses_the_same_central_operation_gate(self):
         provider = MODULE_PROVIDER.read_text(encoding="utf-8")
 
         self.assertIn(
-            "private val lightRuntimeRefreshCoordinator = DeviceLightRuntimeRefreshCoordinator(",
+            "private val lightRuntimeRefreshCoordinator: DeviceLightRuntimeRefreshCoordinator =",
             provider,
         )
+        self.assertIn("DeviceLightRuntimeRefreshCoordinator(", provider)
         self.assertIn(
             "LightRuntimeBootstrapPort(lightRuntimeRefreshCoordinator)",
             provider,
         )
         self.assertIn(
-            "refreshCoordinator.refreshGeneration(",
+            "refreshCoordinator.hydrateStatus(",
             provider,
         )
         self.assertIn(

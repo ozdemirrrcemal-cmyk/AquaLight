@@ -4,12 +4,14 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.core.boundToGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import kotlinx.coroutines.flow.StateFlow
 
 class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    private val stateOwner: DeviceLightRuntimeStateOwner
+    private val stateOwner: DeviceLightRuntimeStateOwner,
+    private val operationGate: DeviceLightDeviceOperationGate = DeviceLightDeviceOperationGate()
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
         stateOwner.temperatureProtection
@@ -29,6 +31,9 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionStatus> {
+        val requestToken = stateOwner.beginStatusRequest(
+            deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+        )
         val outcome = gateway.execute(
             deviceUid,
             DeviceRuntimeJsonCommand(
@@ -37,10 +42,12 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
                 successParser = { data ->
                     DeviceLightTemperatureProtectionParser.parseStatus(data).getOrThrow()
                 }
-            )
+            ).boundToGeneration(requestToken.generation)
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateOwner.recordTemperatureProtection(deviceUid, outcome.generation, outcome.value)
+            stateOwner.recordTemperatureProtection(
+                deviceUid, outcome.generation, outcome.value, requestToken
+            )
         }
         return outcome
     }
@@ -49,8 +56,38 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
     ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {
+        val expectedGeneration = stateOwner.currentGeneration(
+            deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+        )
+        return operationGate.withMutation(deviceUid) {
+            if (
+                expectedGeneration != null &&
+                stateOwner.currentGeneration(
+                    deviceUid, DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION
+                ) == expectedGeneration &&
+                stateOwner.isAuthoritative(
+                    DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                    deviceUid,
+                    expectedGeneration
+                )
+            ) {
+                setThresholdWithinGate(deviceUid, payload, expectedGeneration)
+            } else {
+                DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+                    deviceUid, DeviceLightRuntimeContract.MODULE,
+                    DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+                )
+            }
+        }
+    }
+
+    private suspend fun setThresholdWithinGate(
+        deviceUid: DeviceUid,
+        payload: DeviceLightTemperatureProtectionSetPayload,
+        expectedGeneration: DeviceRuntimeConnectionGeneration
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {
         val status = stateOwner.currentAuthoritativeTemperatureProtection(deviceUid)
-        if (status != null && (!status.supported || !status.runtime.supportsSet)) {
+        if (status == null || !status.supported || !status.runtime.supportsSet) {
             return DeviceRuntimeCommandOutcome.UnsupportedByDevice(
                 deviceUid = deviceUid,
                 module = DeviceLightRuntimeContract.MODULE,
@@ -73,14 +110,20 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
                         }
                     }.getOrThrow()
                 }
-            )
+            ).boundToGeneration(expectedGeneration)
         )
         if (
             outcome is DeviceRuntimeCommandOutcome.Success &&
             !stateOwner.recordTemperatureProtection(
                 deviceUid,
                 outcome.generation,
-                outcome.value.status
+                outcome.value.status,
+                requireCurrentAuthority = true
+            ) &&
+            stateOwner.isAuthoritative(
+                DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                deviceUid,
+                outcome.generation
             )
         ) {
             requestStatus(deviceUid)

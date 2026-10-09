@@ -1,11 +1,13 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 
 /** Converts runtime events into invalidations and delegates authoritative refreshes. */
 internal class DeviceDosingV1EventCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
-    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
+    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
+    private val isDosingDevice: (DeviceUid) -> Boolean
 ) {
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = when (event.type) {
         DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED -> consumeStatusChanged(event)
@@ -29,10 +31,15 @@ internal class DeviceDosingV1EventCoordinator(
      */
     private suspend fun consumeTimeStatusChanged(
         event: DeviceRuntimeTypedEvent
-    ): DeviceDosingV1EventResult = if (refreshCoordinator.refreshAll(event.deviceUid.value)) {
-        DeviceDosingV1EventResult.RefreshedAll
-    } else {
-        DeviceDosingV1EventResult.RefreshFailed
+    ): DeviceDosingV1EventResult {
+        // Time events are device-wide, but this adapter observes every device family.
+        // A Light/Timer clock update must never issue a dosing.status.get request.
+        if (!isDosingDevice(event.deviceUid)) return DeviceDosingV1EventResult.Ignored
+        return if (refreshCoordinator.refreshAll(event.deviceUid.value)) {
+            DeviceDosingV1EventResult.RefreshedAll
+        } else {
+            DeviceDosingV1EventResult.RefreshFailed
+        }
     }
 
     private suspend fun refreshInvalidated(

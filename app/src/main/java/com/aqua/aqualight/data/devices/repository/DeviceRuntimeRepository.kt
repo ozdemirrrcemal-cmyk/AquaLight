@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandSession
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCompletionDisposition
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.core.withGenerationBoundSend
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
@@ -742,15 +743,23 @@ class DeviceRuntimeRepository(
     private fun currentCommandSession(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandSession? = sessionStore.current(deviceUid)
-        ?.takeIf(sessionStore::isCurrent)
         ?.let { session ->
-            DeviceRuntimeCommandSession(
-                deviceUid = deviceUid,
-                generation = session.generation,
-                authenticated = session.wsClient.connectionState.value is
-                    AqlWsConnectionState.Authenticated,
-                send = session.wsClient::send
-            )
+            synchronized(session) {
+                if (!sessionStore.isCurrent(session)) return@synchronized null
+                DeviceRuntimeCommandSession(
+                    deviceUid = deviceUid,
+                    generation = session.generation,
+                    authenticated = session.wsClient.connectionState.value is
+                        AqlWsConnectionState.Authenticated,
+                    send = { message ->
+                        sessionStore.runIfCurrent(session) {
+                            session.wsClient.send(message)
+                        } ?: false
+                    }
+                ).withGenerationBoundSend(session) {
+                    session.generation
+                }
+            }
         }
 
     private suspend fun handleAuthLifecycle(

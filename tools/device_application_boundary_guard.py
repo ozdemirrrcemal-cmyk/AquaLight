@@ -356,7 +356,7 @@ for token, reason in (
         "Light runtime refreshes need one owner-scoped coordinator",
     ),
     (
-        "inFlight.putIfAbsent(deviceUid, pending)",
+        "inFlight.putIfAbsent(key, pending)",
         "Concurrent Light refresh callers must share one device-scoped firmware flight",
     ),
     (
