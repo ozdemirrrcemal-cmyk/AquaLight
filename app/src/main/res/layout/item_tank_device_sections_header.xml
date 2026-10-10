@@ -14,17 +14,19 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/scenesHeaderRow"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content">
 
             <TextView
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginEnd="@dimen/aqua_size_8"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnAddScene"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:includeFontPadding="false"
                 android:text="@string/tank_scenes_title"
                 android:textColor="?attr/colorOnSurface"
@@ -35,6 +37,9 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAddScene"
                 style="@style/Widget.Aqua.Button.InlineAdd"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/aqua_size_34"
                 android:clickable="false"
@@ -42,7 +47,7 @@
                 android:contentDescription="@string/tank_scenes_add_content_description"
                 android:text="@string/aquarium_action_add"
                 android:textStyle="bold" />
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:layout_width="match_parent"
@@ -52,18 +57,20 @@
             android:textColor="@color/aqua_content_secondary"
             android:textSize="@dimen/aqua_text_size_body_small" />
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/controlGroupsHeaderRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_18"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_marginTop="@dimen/aqua_size_18">
 
             <TextView
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginEnd="@dimen/aqua_size_8"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnCreateControlGroup"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:includeFontPadding="false"
                 android:text="@string/tank_control_groups_title"
                 android:textColor="?attr/colorOnSurface"
@@ -73,11 +80,14 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCreateControlGroup"
                 style="@style/Widget.Aqua.Button.InlineAdd"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/aqua_size_34"
                 android:contentDescription="@string/tank_control_groups_create_content_description"
                 android:text="@string/tank_control_groups_create" />
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:layout_width="match_parent"
@@ -89,19 +99,21 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/devicesHeaderRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/aqua_size_18"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_marginTop="@dimen/aqua_size_18">
 
         <TextView
             android:id="@+id/tvDeviceTitle"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginEnd="@dimen/aqua_size_8"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnAddDevice"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
             android:includeFontPadding="false"
             android:text="@string/aquarium_detail_tab_devices"
             android:textColor="?attr/colorOnSurface"
@@ -111,13 +123,16 @@
         <com.google.android.material.button.MaterialButton
             style="@style/Widget.Aqua.Button.InlineAdd"
             android:id="@+id/btnAddDevice"
-            android:layout_width="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_width="wrap_content"
             android:layout_height="@dimen/aqua_size_34"
             android:contentDescription="@string/devices_scan_button_desc"
             android:text="@string/aquarium_action_add"
             android:textStyle="bold" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
     <com.google.android.material.card.MaterialCardView
