@@ -12,6 +12,8 @@ import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.devices.DefaultTankControlGroupDeviceOperations
+import com.aqua.aqualight.ui.tabs.aquarium.detail.groups.TankControlGroupCreateViewModel
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
@@ -95,8 +97,9 @@ internal class OwnerViewModelFactory(
     override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
-            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
+            modelClass != TankControlGroupCreateViewModel::class.java) {
+            "${modelClass.simpleName} requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
             modelClass = modelClass,
@@ -110,7 +113,8 @@ internal class OwnerViewModelFactory(
     ): T = createInternal(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
-            modelClass == DeviceLightQuickSetupViewModel::class.java
+            modelClass == DeviceLightQuickSetupViewModel::class.java ||
+                modelClass == TankControlGroupCreateViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -334,6 +338,10 @@ internal class OwnerViewModelFactory(
                 dosingCardOperations = graph.dosingOperations.cardOperations,
                 coolingCardOperations = graph.coolingCardOperations
             )
+            TankControlGroupCreateViewModel::class.java -> TankControlGroupCreateViewModel(
+                operations = DefaultTankControlGroupDeviceOperations(assignments, repository),
+                savedStateHandle = checkNotNull(quickSetupSavedStateHandle)
+            )
             TankDeviceSelectViewModel::class.java -> TankDeviceSelectViewModel(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(assignments, repository)
             )
@@ -405,7 +413,8 @@ internal class OwnerViewModelFactory(
             DeviceFamilySettingsViewModel::class.java,
             DeviceFirmwareUpdateViewModel::class.java,
             TankDetailDevicesViewModel::class.java,
-            TankDeviceSelectViewModel::class.java
+            TankDeviceSelectViewModel::class.java,
+            TankControlGroupCreateViewModel::class.java
         )
     }
 }
