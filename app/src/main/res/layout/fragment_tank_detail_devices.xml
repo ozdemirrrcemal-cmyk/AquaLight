@@ -9,7 +9,7 @@
     android:paddingStart="@dimen/aqua_size_14"
     android:paddingTop="@dimen/aqua_size_16"
     android:paddingEnd="@dimen/aqua_size_14"
-    android:paddingBottom="@dimen/aqua_size_120">
+    android:paddingBottom="@dimen/aqua_size_0">
 
 
     <!-- Scenes and group actions remain separate from assigned device cards. -->
