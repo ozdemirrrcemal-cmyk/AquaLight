@@ -8,21 +8,4 @@
     <string name="tank_control_groups_create_content_description">Kontrol grubu oluştur</string>
     <string name="tank_control_groups_description">Uyumlu cihazları birlikte yönetin</string>
     <string name="tank_control_group_create_screen_title">Kontrol Grubu Oluştur</string>
-    <string name="tank_group_selected_count">Kontrol grubu · %1$d cihaz</string>
-    <string name="tank_group_devices_count">Tankın ışıkları · %1$d</string>
-    <string name="tank_group_compatible_count">Uyumlu ışıklar · %1$d</string>
-    <string name="tank_group_drop_hint">Işığı buraya sürükleyin veya aşağıdaki listeden dokunarak ekleyin.</string>
-    <string name="tank_group_minimum_two">Aynı model ve boyutta en az iki ışık seçin.</string>
-    <string name="tank_group_selection_ready">Cihaz seçimi hazır. Grup henüz kaydedilmedi.</string>
-    <string name="tank_group_identity_unavailable">Ürün kimliği doğrulanmadı. Eklemeden önce doğrulamak için listeyi yenileyin.</string>
-    <string name="tank_group_add">Ekle</string>
-    <string name="tank_group_remove">Çıkar</string>
-    <string name="tank_group_refresh">Cihazları yenile</string>
-    <string name="tank_group_retry">Tekrar dene</string>
-    <string name="tank_group_loading">Tankın ışıkları yükleniyor…</string>
-    <string name="tank_group_load_failed">Tankın ışıkları yüklenemedi. Tekrar deneyin.</string>
-    <string name="tank_group_no_lights">Bu tankta ışık yok. Cihazlar bölümünden tanka ışık ekleyin.</string>
-    <string name="tank_group_no_more_compatible">Başka uyumlu ışık yok. Gruptaki ışığa dokunarak veya buraya geri sürükleyerek çıkarabilirsiniz.</string>
-    <string name="tank_group_hidden_count">%1$d ışık gizlendi: model, boyut veya kanal yapısı farklı.</string>
-    <string name="tank_group_selection_adjusted">Seçim güncellendi: bir ışık tanktan kaldırıldı veya ürün kimliği değişti.</string>
 </resources>

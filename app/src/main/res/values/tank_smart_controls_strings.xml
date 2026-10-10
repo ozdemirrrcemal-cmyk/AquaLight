@@ -8,21 +8,4 @@
     <string name="tank_control_groups_create_content_description">Create a control group</string>
     <string name="tank_control_groups_description">Control compatible devices together</string>
     <string name="tank_control_group_create_screen_title">Create Control Group</string>
-    <string name="tank_group_selected_count">Control group · %1$d devices</string>
-    <string name="tank_group_devices_count">Tank lights · %1$d</string>
-    <string name="tank_group_compatible_count">Compatible lights · %1$d</string>
-    <string name="tank_group_drop_hint">Drag a light here or tap it in the list below.</string>
-    <string name="tank_group_minimum_two">Select at least two lights of the same model and size.</string>
-    <string name="tank_group_selection_ready">Device selection is ready. The group has not been saved yet.</string>
-    <string name="tank_group_identity_unavailable">Product identity is unverified. Refresh to verify it before adding.</string>
-    <string name="tank_group_add">Add</string>
-    <string name="tank_group_remove">Remove</string>
-    <string name="tank_group_refresh">Refresh devices</string>
-    <string name="tank_group_retry">Try again</string>
-    <string name="tank_group_loading">Loading tank lights…</string>
-    <string name="tank_group_load_failed">Tank lights could not be loaded. Try again.</string>
-    <string name="tank_group_no_lights">No lights in this tank. Add lights to the tank from Devices.</string>
-    <string name="tank_group_no_more_compatible">No more compatible lights. Remove lights from the group by tapping them or dragging them back here.</string>
-    <string name="tank_group_hidden_count">%1$d lights hidden: a different model, size or channel configuration.</string>
-    <string name="tank_group_selection_adjusted">Selection updated: a light was removed from this tank or its product identity changed.</string>
 </resources>

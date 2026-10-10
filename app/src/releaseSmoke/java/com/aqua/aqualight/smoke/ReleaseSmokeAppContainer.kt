@@ -33,8 +33,6 @@ import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
-import com.aqua.aqualight.data.aquarium.devices.DefaultTankControlGroupDeviceOperations
-import com.aqua.aqualight.ui.tabs.aquarium.detail.groups.TankControlGroupCreateViewModel
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
@@ -228,9 +226,8 @@ private class ReleaseSmokeViewModelFactory(
     )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
-            modelClass != TankControlGroupCreateViewModel::class.java) {
-            "${modelClass.simpleName} requires CreationExtras for SavedStateHandle."
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
+            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
             modelClass = modelClass,
@@ -244,8 +241,7 @@ private class ReleaseSmokeViewModelFactory(
     ): T = createInternal(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
-            modelClass == DeviceLightQuickSetupViewModel::class.java ||
-                modelClass == TankControlGroupCreateViewModel::class.java
+            modelClass == DeviceLightQuickSetupViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -259,7 +255,7 @@ private class ReleaseSmokeViewModelFactory(
     ): T {
         val viewModel = createPrimaryViewModel(modelClass)
             ?: createDeviceRootViewModel(modelClass, quickSetupSavedStateHandle)
-            ?: createTankDeviceViewModel(modelClass, quickSetupSavedStateHandle)
+            ?: createTankDeviceViewModel(modelClass)
             ?: error("Release smoke factory has no binding for ${modelClass.name}")
 
         @Suppress("UNCHECKED_CAST")
@@ -433,8 +429,7 @@ private class ReleaseSmokeViewModelFactory(
     }
 
     private fun createTankDeviceViewModel(
-        modelClass: Class<out ViewModel>,
-        savedStateHandle: SavedStateHandle?
+        modelClass: Class<out ViewModel>
     ): ViewModel? = when {
         modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
             TankDetailDevicesViewModel(
@@ -445,11 +440,6 @@ private class ReleaseSmokeViewModelFactory(
                 menuOpenUseCase = deviceMenuOpenUseCase,
                 routeResolver = DeviceRouteResolver(),
                 lightCardOperations = lightOperations.cardOperations
-            )
-        modelClass == TankControlGroupCreateViewModel::class.java ->
-            TankControlGroupCreateViewModel(
-                operations = DefaultTankControlGroupDeviceOperations(assignmentRepository, devicesRepository),
-                savedStateHandle = checkNotNull(savedStateHandle)
             )
         modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
             TankDeviceSelectViewModel(
@@ -485,4 +475,3 @@ private class SmokeUserProfileOperations : UserProfileOperations {
     override suspend fun updateUsername(username: String) = Unit
     override suspend fun saveAddress(address: UserAddressInput) = Unit
 }
-
