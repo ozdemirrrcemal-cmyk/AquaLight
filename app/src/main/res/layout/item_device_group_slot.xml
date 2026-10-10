@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="@dimen/aqua_size_140"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="@dimen/aqua_size_96"
     android:layout_margin="@dimen/aqua_size_4" android:background="@drawable/bg_device_group_slot"
     android:importantForAccessibility="noHideDescendants">
     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -9,6 +10,6 @@
             android:src="@drawable/ic_device_group_light_outline" android:importantForAccessibility="no" />
         <ImageView android:layout_width="@dimen/aqua_size_24" android:layout_height="@dimen/aqua_size_24"
             android:layout_marginTop="@dimen/aqua_size_8" android:src="@drawable/ic_add_24"
-            android:tint="@color/aqua_content_muted" android:importantForAccessibility="no" />
+            app:tint="@color/aqua_content_muted" android:importantForAccessibility="no" />
     </LinearLayout>
 </FrameLayout>
