@@ -38,7 +38,7 @@ class TankControlGroupRendererInstrumentedTest {
         assertTrue(binding.ivComplete.isVisible)
         assertTrue(binding.tvHiddenCount.isVisible)
         assertFalse(binding.emptyLightIconContainer.isVisible)
-        assertEquals("Nature Aquarium", binding.tvTankName.text.toString())
+        assertEquals(1, binding.headerContainer.childCount)
 
         renderer.render(TankControlGroupCreateUiState(
             source = TankControlGroupDevices("Other tank", isLoading = false)

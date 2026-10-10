@@ -19,8 +19,6 @@ internal class TankControlGroupRenderer(
         while (rows.size < MINIMUM_DEVICES) rows.add(GroupDeviceRow.Slot(rows.size))
         group.submitList(rows)
         devices.submitList(state.available.map { GroupDeviceRow.Device(it, interactive && it.compatibility != null) })
-        binding.tvTankName.text = state.source.tankName
-        binding.tvTankName.isVisible = state.source.tankName.isNotBlank()
         binding.tvGroupCount.text = context.getString(R.string.tank_group_device_count, state.selected.size)
         binding.tvGroupHint.setText(if (state.selected.isEmpty())
             R.string.tank_group_drop_hint else R.string.tank_group_remove_hint)

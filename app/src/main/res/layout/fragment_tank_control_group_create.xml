@@ -9,11 +9,6 @@
         app:layout_constraintEnd_toEndOf="parent">
         <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header"
             android:layout_width="match_parent" android:layout_height="wrap_content" />
-        <TextView android:id="@+id/tvTankName" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/aqua_size_58" android:layout_marginEnd="@dimen/aqua_size_16"
-            android:layout_marginBottom="@dimen/aqua_size_8" android:ellipsize="end" android:maxLines="1"
-            android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body"
-            android:visibility="gone" />
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView android:id="@+id/contentScroll"
