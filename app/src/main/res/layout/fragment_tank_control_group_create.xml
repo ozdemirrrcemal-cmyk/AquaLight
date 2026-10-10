@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/background_color">
+    <LinearLayout android:id="@+id/headerContainer" android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content" android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header"
+            android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView android:id="@+id/contentScroll"
+        android:layout_width="@dimen/aqua_size_0" android:layout_height="@dimen/aqua_size_0"
+        android:fillViewport="true" android:clipToPadding="false"
+        android:paddingStart="@dimen/aqua_size_16" android:paddingEnd="@dimen/aqua_size_16"
+        android:paddingTop="@dimen/aqua_size_8" android:paddingBottom="@dimen/aqua_size_16"
+        app:layout_constraintTop_toBottomOf="@id/headerContainer" app:layout_constraintBottom_toTopOf="@id/createFooter"
+        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+            <com.google.android.material.card.MaterialCardView android:id="@+id/groupDropZone"
+                style="@style/Widget.Aqua.Card.Device.Section" android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="@dimen/aqua_size_12">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical">
+                        <TextView android:id="@+id/tvGroupTitle" android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/tank_group_title"
+                            android:textColor="@color/aqua_content_primary" android:textStyle="bold"
+                            android:textSize="@dimen/aqua_text_size_card_title" />
+                        <TextView android:id="@+id/tvGroupCount" style="@style/Widget.Aqua.Group.Count"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    </LinearLayout>
+                    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvGroup" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:layout_marginTop="@dimen/aqua_size_12"
+                        android:nestedScrollingEnabled="false" android:overScrollMode="never" />
+                    <TextView android:id="@+id/tvGroupHint" android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_12" android:layout_marginBottom="@dimen/aqua_size_4"
+                        android:gravity="center" android:text="@string/tank_group_drop_hint"
+                        android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout android:id="@+id/devicesDropZone" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:layout_marginTop="@dimen/aqua_size_20">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:id="@+id/tvDevicesTitle" android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/tank_group_devices_title"
+                        android:textColor="@color/aqua_content_primary" android:textStyle="bold"
+                        android:textSize="@dimen/aqua_text_size_card_title" />
+                    <TextView android:id="@+id/tvDevicesCount" style="@style/Widget.Aqua.Group.Count"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                </LinearLayout>
+                <TextView android:id="@+id/tvDevicesHint" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_4" android:text="@string/tank_group_drag_hint"
+                    android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body" />
+
+                <com.google.android.material.card.MaterialCardView android:id="@+id/compatibilityCard"
+                    style="@style/Widget.Aqua.Card.Device.Section" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_16" android:visibility="gone">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical" android:padding="@dimen/aqua_size_16">
+                        <ImageView android:layout_width="@dimen/aqua_size_40" android:layout_height="@dimen/aqua_size_40"
+                            android:src="@drawable/ic_device_group_verified" android:importantForAccessibility="no" />
+                        <LinearLayout android:layout_width="@dimen/aqua_size_0" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:layout_marginStart="@dimen/aqua_size_12" android:orientation="vertical">
+                            <TextView android:id="@+id/tvCompatibilityModel" android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:textColor="@color/aqua_content_primary" android:textStyle="bold"
+                                android:textSize="@dimen/aqua_text_size_body_large" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_6" android:text="@string/tank_group_compatibility_hint"
+                                android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body_small" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvDevices" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_marginTop="@dimen/aqua_size_12"
+                    android:nestedScrollingEnabled="false" android:overScrollMode="never" />
+
+                <LinearLayout android:id="@+id/emptyState" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:minHeight="@dimen/aqua_size_270" android:orientation="vertical" android:gravity="center"
+                    android:paddingTop="@dimen/aqua_size_20" android:paddingBottom="@dimen/aqua_size_20">
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/emptyLightIconContainer"
+                        style="@style/Widget.Aqua.Card.IconAccent" android:layout_width="@dimen/aqua_size_120"
+                        android:layout_height="@dimen/aqua_size_120" app:cardCornerRadius="@dimen/aqua_size_60">
+                        <ImageView android:layout_width="@dimen/aqua_size_64" android:layout_height="@dimen/aqua_size_32"
+                            android:layout_gravity="center" android:src="@drawable/ic_device_group_light_outline"
+                            android:importantForAccessibility="no" />
+                    </com.google.android.material.card.MaterialCardView>
+                    <ImageView android:id="@+id/ivComplete" android:layout_width="@dimen/aqua_size_64"
+                        android:layout_height="@dimen/aqua_size_64" android:src="@drawable/ic_device_group_complete"
+                        android:visibility="gone" android:importantForAccessibility="no" />
+                    <ProgressBar android:id="@+id/progressDevices" android:layout_width="@dimen/aqua_size_32"
+                        android:layout_height="@dimen/aqua_size_32" android:visibility="gone" />
+                    <TextView android:id="@+id/tvEmptyTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_20" android:gravity="center"
+                        android:text="@string/tank_group_empty_title" android:textColor="@color/aqua_content_primary"
+                        android:textStyle="bold" android:textSize="@dimen/aqua_text_size_title_medium" />
+                    <TextView android:id="@+id/tvEmptyBody" android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8" android:gravity="center"
+                        android:text="@string/tank_group_empty_body" android:textColor="@color/aqua_content_muted"
+                        android:textSize="@dimen/aqua_text_size_body" />
+                </LinearLayout>
+                <TextView android:id="@+id/tvHiddenCount" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_8" android:gravity="center" android:visibility="gone"
+                    android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body_small" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout android:id="@+id/createFooter" android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content" android:orientation="vertical" android:background="@color/background_color"
+        app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <View android:layout_width="match_parent" android:layout_height="@dimen/aqua_size_1"
+            android:background="@color/aqua_card_divider" android:importantForAccessibility="no" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+            android:padding="@dimen/aqua_size_16">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="@dimen/aqua_size_12">
+                <ImageView android:id="@+id/ivSelectionStatus" android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20" android:src="@drawable/ic_info"
+                    android:importantForAccessibility="no" app:tint="@color/aqua_content_muted" />
+                <TextView android:id="@+id/tvSelectionStatus" android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="@dimen/aqua_size_10"
+                    android:text="@string/tank_group_minimum_two" android:textColor="@color/aqua_content_muted"
+                    android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" />
+            </LinearLayout>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnCreate"
+                style="@style/Widget.Aqua.Button.Primary" android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_52" android:text="@string/tank_group_create"
+                android:enabled="false" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

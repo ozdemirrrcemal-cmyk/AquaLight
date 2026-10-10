@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -10,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -18,6 +18,7 @@ import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDeviceSectionsAdapter
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesUiState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
@@ -26,12 +27,15 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
+enum class TankDetailSectionAction {
+    ADD_DEVICE,
+    CREATE_CONTROL_GROUP
+}
+
 class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices) {
 
     interface Host {
-        fun onTankDetailAddDeviceClicked(
-            tankId: Long
-        )
+        fun onTankDetailSectionAction(tankId: Long, action: TankDetailSectionAction)
 
         fun onTankDetailDeviceClicked(
             route: DeviceRoute
@@ -46,6 +50,13 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private val binding get() = _binding!!
 
     private lateinit var adapter: TankAssignedDevicesAdapter
+    private lateinit var sectionsAdapter: TankDeviceSectionsAdapter
+
+    private val parentHost: Host?
+        get() = parentFragment as? Host
+
+    private val baseActivity: BaseActivity?
+        get() = activity as? BaseActivity
 
     private var tankId: Long = 0L
 
@@ -72,7 +83,6 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         setupFeedbackResultListener()
         setupRecycler()
-        setupClickListeners()
         observeViewModel()
 
         viewModel.bind(tankId)
@@ -108,20 +118,21 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             }
         )
 
-        binding.rvAssignedDevices.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvAssignedDevices.adapter = adapter
-        binding.rvAssignedDevices.setHasFixedSize(false)
-    }
-
-    private fun setupClickListeners() {
-        binding.btnAddDevice.setOnClickListener {
-            val state = viewModel.uiState.value
-            if (!state.isRemovingDevice && !state.isOpeningDeviceMenu) {
-                parentHost()?.onTankDetailAddDeviceClicked(
-                    tankId = tankId
-                )
+        sectionsAdapter = TankDeviceSectionsAdapter(
+            onAddDevice = {
+                val state = viewModel.uiState.value
+                if (!state.isLoading && !state.isRemovingDevice && !state.isOpeningDeviceMenu) {
+                    parentHost?.onTankDetailSectionAction(tankId, TankDetailSectionAction.ADD_DEVICE)
+                }
+            },
+            onCreateControlGroup = {
+                parentHost?.onTankDetailSectionAction(tankId, TankDetailSectionAction.CREATE_CONTROL_GROUP)
             }
-        }
+        )
+
+        binding.rvAssignedDevices.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvAssignedDevices.adapter = ConcatAdapter(sectionsAdapter, adapter)
+        binding.rvAssignedDevices.setHasFixedSize(false)
     }
 
     private fun observeViewModel() {
@@ -140,7 +151,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                                 var committed = false
                                 try {
                                     committed =
-                                        parentHost()?.onTankDetailDeviceClicked(event.route) == true
+                                        parentHost?.onTankDetailDeviceClicked(event.route) == true
                                 } finally {
                                     viewModel.onDeviceNavigationFinished(
                                         deviceUid = event.route.deviceUid,
@@ -182,15 +193,15 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         val interactionBusy = operationBusy || state.isOpeningDeviceMenu
 
         adapter.submitList(state.devices)
-        binding.rvAssignedDevices.isEnabled = !interactionBusy
-        binding.btnAddDevice.isEnabled = !interactionBusy
-        binding.rvAssignedDevices.isVisible = !state.isLoading && state.isEmpty.not()
-        binding.cardDevicesEmpty.isVisible = !state.isLoading && state.isEmpty
-        baseActivity()?.setGlobalLoading(
+        sectionsAdapter.render(
+            canAddDevice = !interactionBusy,
+            showEmptyState = !state.isLoading && state.isEmpty
+        )
+        baseActivity?.setGlobalLoading(
             ownerKey = TANK_DEVICE_OPERATION_LOADING_OWNER,
             show = operationBusy
         )
-        baseActivity()?.setGlobalLoading(
+        baseActivity?.setGlobalLoading(
             ownerKey = TANK_DEVICE_MENU_LOADING_OWNER,
             show = state.isOpeningDeviceMenu
         )
@@ -199,8 +210,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun showDeviceUnavailable(
         event: TankDetailDevicesEvent.ShowDeviceUnavailable
     ) {
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceUnavailableDialog(
+        baseActivity?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
+        baseActivity?.showDeviceUnavailableDialog(
             deviceTitle = event.title,
             titleRes = event.titleRes,
             messageRes = event.messageRes
@@ -242,18 +253,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         )
     }
 
-    private fun parentHost(): Host? {
-        return parentFragment as? Host
-    }
-
-    private fun baseActivity(): BaseActivity? {
-        return activity as? BaseActivity
-    }
-
     override fun onDestroyView() {
         viewModel.onNavigationHostDestroyed()
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_OPERATION_LOADING_OWNER)
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
+        baseActivity?.clearGlobalLoading(TANK_DEVICE_OPERATION_LOADING_OWNER)
+        baseActivity?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
         binding.rvAssignedDevices.adapter = null
         _binding = null
         super.onDestroyView()

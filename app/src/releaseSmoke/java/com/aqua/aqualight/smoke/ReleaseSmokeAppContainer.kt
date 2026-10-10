@@ -34,6 +34,7 @@ import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalo
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
+import com.aqua.aqualight.data.aquarium.devices.DefaultTankControlGroupDeviceOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -79,6 +80,7 @@ import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.groups.TankControlGroupCreateViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
@@ -431,6 +433,10 @@ private class ReleaseSmokeViewModelFactory(
     private fun createTankDeviceViewModel(
         modelClass: Class<out ViewModel>
     ): ViewModel? = when {
+        modelClass.isAssignableFrom(TankControlGroupCreateViewModel::class.java) ->
+            TankControlGroupCreateViewModel(
+                DefaultTankControlGroupDeviceOperations(assignmentRepository, devicesRepository, tankStore)
+            )
         modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
             TankDetailDevicesViewModel(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(
@@ -475,3 +481,4 @@ private class SmokeUserProfileOperations : UserProfileOperations {
     override suspend fun updateUsername(username: String) = Unit
     override suspend fun saveAddress(address: UserAddressInput) = Unit
 }
+

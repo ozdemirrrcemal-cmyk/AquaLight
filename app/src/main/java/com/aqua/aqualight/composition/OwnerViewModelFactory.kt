@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
+import com.aqua.aqualight.data.aquarium.devices.DefaultTankControlGroupDeviceOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
@@ -40,6 +41,7 @@ import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.groups.TankControlGroupCreateViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
@@ -337,6 +339,9 @@ internal class OwnerViewModelFactory(
             TankDeviceSelectViewModel::class.java -> TankDeviceSelectViewModel(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(assignments, repository)
             )
+            TankControlGroupCreateViewModel::class.java -> TankControlGroupCreateViewModel(
+                DefaultTankControlGroupDeviceOperations(assignments, repository, graph.aquariumTankStore)
+            )
             else -> error("Unreachable owner ViewModel binding: ${modelClass.name}")
         }
         @Suppress("UNCHECKED_CAST")
@@ -405,7 +410,8 @@ internal class OwnerViewModelFactory(
             DeviceFamilySettingsViewModel::class.java,
             DeviceFirmwareUpdateViewModel::class.java,
             TankDetailDevicesViewModel::class.java,
-            TankDeviceSelectViewModel::class.java
+            TankDeviceSelectViewModel::class.java,
+            TankControlGroupCreateViewModel::class.java
         )
     }
 }
