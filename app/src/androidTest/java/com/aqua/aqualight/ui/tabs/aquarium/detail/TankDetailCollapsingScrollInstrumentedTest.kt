@@ -8,18 +8,41 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.google.android.material.button.MaterialButton
 import androidx.viewpager2.widget.ViewPager2
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.feedback.Stage8DialogTestActivity
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.tabs.TabLayout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class TankDetailCollapsingScrollInstrumentedTest {
+
+    @Test
+    fun scenesAddMatchesDeviceButtonWithoutActivatingUnimplementedScenes() {
+        val scenario = ActivityScenario.launch(Stage8DialogTestActivity::class.java)
+        try {
+            scenario.onActivity { activity ->
+                val header = LayoutInflater.from(activity).inflate(
+                    R.layout.item_tank_device_sections_header, null, false
+                )
+                val sceneButton = header.findViewById<MaterialButton>(R.id.btnAddScene)
+                val deviceButton = header.findViewById<MaterialButton>(R.id.btnAddDevice)
+
+                assertEquals(deviceButton.text.toString(), sceneButton.text.toString())
+                assertEquals(deviceButton.layoutParams.height, sceneButton.layoutParams.height)
+                assertFalse(sceneButton.isClickable)
+                assertFalse(sceneButton.isFocusable)
+            }
+        } finally {
+            scenario.close()
+        }
+    }
 
     @Test
     fun aquariumPhotoScrollsAwayAndTankTabsRemainPinned() {

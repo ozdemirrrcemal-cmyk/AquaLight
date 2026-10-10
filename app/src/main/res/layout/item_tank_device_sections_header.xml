@@ -14,77 +14,43 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <LinearLayout
+            android:id="@+id/scenesHeaderRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:includeFontPadding="false"
+                android:text="@string/tank_scenes_title"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="@dimen/aqua_text_size_title_small"
+                android:textStyle="bold" />
+
+            <!-- UI-only entry; scene creation is not connected yet. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddScene"
+                style="@style/Widget.Aqua.Button.InlineAdd"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/aqua_size_34"
+                android:clickable="false"
+                android:focusable="false"
+                android:contentDescription="@string/tank_scenes_add_content_description"
+                android:text="@string/aquarium_action_add"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:text="@string/tank_scenes_title"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="@dimen/aqua_text_size_title_small"
-            android:textStyle="bold" />
-
-        <!-- Display-only; scene behaviour will be implemented separately. -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardScenesComingSoon"
-            style="@style/Widget.Aqua.Card.Grouped"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_8"
-            android:clickable="false"
-            android:focusable="false">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="@dimen/aqua_size_14"
-                android:paddingTop="@dimen/aqua_size_12"
-                android:paddingEnd="@dimen/aqua_size_14"
-                android:paddingBottom="@dimen/aqua_size_12">
-
-                <ImageView
-                    android:layout_width="@dimen/aqua_size_28"
-                    android:layout_height="@dimen/aqua_size_28"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/ic_light_quick_setup"
-                    android:tint="@color/aqua_light_preset_shrimp_swatch" />
-
-                <LinearLayout
-                    android:layout_width="@dimen/aqua_size_0"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/aqua_size_12"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
-                        android:text="@string/tank_scenes_create"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body_large"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_2"
-                        android:text="@string/tank_scenes_description"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_body_small" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/aqua_size_8"
-                    android:text="@string/tank_scenes_coming_soon"
-                    android:textColor="@color/aqua_light_preset_shrimp_swatch"
-                    android:textSize="@dimen/aqua_text_size_caption" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:text="@string/tank_scenes_description"
+            android:textColor="@color/aqua_content_secondary"
+            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <LinearLayout
             android:id="@+id/controlGroupsHeaderRow"

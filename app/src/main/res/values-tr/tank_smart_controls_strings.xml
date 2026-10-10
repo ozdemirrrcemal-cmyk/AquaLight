@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="tank_scenes_title">Sahneler</string>
-    <string name="tank_scenes_create">Sahne Oluştur</string>
-    <string name="tank_scenes_description">Hazır aydınlatma senaryoları</string>
-    <string name="tank_scenes_coming_soon">Yakında</string>
+    <string name="tank_scenes_description">Özel aydınlatma sahneleri oluşturun ve yönetin.</string>
+    <string name="tank_scenes_add_content_description">Aydınlatma sahnesi ekle</string>
     <string name="tank_control_groups_title">Kontrol Grupları</string>
     <string name="tank_control_groups_create">Oluştur</string>
     <string name="tank_control_groups_create_content_description">Kontrol grubu oluştur</string>
