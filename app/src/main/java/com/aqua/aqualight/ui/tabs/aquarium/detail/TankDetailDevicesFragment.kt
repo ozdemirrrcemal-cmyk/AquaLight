@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -10,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -18,6 +18,7 @@ import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDeviceSectionsAdapter
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesUiState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
@@ -48,6 +49,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private val binding get() = _binding!!
 
     private lateinit var adapter: TankAssignedDevicesAdapter
+    private lateinit var sectionsAdapter: TankDeviceSectionsAdapter
 
     private var tankId: Long = 0L
 
@@ -74,7 +76,6 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         setupFeedbackResultListener()
         setupRecycler()
-        setupClickListeners()
         observeViewModel()
 
         viewModel.bind(tankId)
@@ -110,24 +111,21 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             }
         )
 
-        binding.rvAssignedDevices.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvAssignedDevices.adapter = adapter
-        binding.rvAssignedDevices.setHasFixedSize(false)
-    }
-
-    private fun setupClickListeners() {
-        binding.btnCreateControlGroup.setOnClickListener {
-            parentHost()?.onTankDetailCreateControlGroupClicked(tankId)
-        }
-
-        binding.btnAddDevice.setOnClickListener {
-            val state = viewModel.uiState.value
-            if (!state.isRemovingDevice && !state.isOpeningDeviceMenu) {
-                parentHost()?.onTankDetailAddDeviceClicked(
-                    tankId = tankId
-                )
+        sectionsAdapter = TankDeviceSectionsAdapter(
+            onAddDevice = {
+                val state = viewModel.uiState.value
+                if (!state.isLoading && !state.isRemovingDevice && !state.isOpeningDeviceMenu) {
+                    parentHost()?.onTankDetailAddDeviceClicked(tankId)
+                }
+            },
+            onCreateControlGroup = {
+                parentHost()?.onTankDetailCreateControlGroupClicked(tankId)
             }
-        }
+        )
+
+        binding.rvAssignedDevices.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvAssignedDevices.adapter = ConcatAdapter(sectionsAdapter, adapter)
+        binding.rvAssignedDevices.setHasFixedSize(false)
     }
 
     private fun observeViewModel() {
@@ -188,10 +186,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         val interactionBusy = operationBusy || state.isOpeningDeviceMenu
 
         adapter.submitList(state.devices)
-        binding.rvAssignedDevices.isEnabled = !interactionBusy
-        binding.btnAddDevice.isEnabled = !interactionBusy
-        binding.rvAssignedDevices.isVisible = !state.isLoading && state.isEmpty.not()
-        binding.cardDevicesEmpty.isVisible = !state.isLoading && state.isEmpty
+        sectionsAdapter.render(
+            canAddDevice = !interactionBusy,
+            showEmptyState = !state.isLoading && state.isEmpty
+        )
         baseActivity()?.setGlobalLoading(
             ownerKey = TANK_DEVICE_OPERATION_LOADING_OWNER,
             show = operationBusy
