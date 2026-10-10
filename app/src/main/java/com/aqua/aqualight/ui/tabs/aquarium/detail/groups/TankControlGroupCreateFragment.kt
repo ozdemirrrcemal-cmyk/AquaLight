@@ -20,6 +20,13 @@ class TankControlGroupCreateFragment : Fragment(R.layout.fragment_tank_control_g
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Keep the destination tied to a valid tank while its form is being built.
+        if (args.tankId <= 0L) {
+            findNavController().navigateUp()
+            return
+        }
+
         _binding = FragmentTankControlGroupCreateBinding.bind(view)
         binding.appHeader.setupAquaHeader(
             fragment = this,

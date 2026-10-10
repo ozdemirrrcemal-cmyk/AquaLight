@@ -27,14 +27,15 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
+enum class TankDetailSectionAction {
+    ADD_DEVICE,
+    CREATE_CONTROL_GROUP
+}
+
 class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices) {
 
     interface Host {
-        fun onTankDetailAddDeviceClicked(
-            tankId: Long
-        )
-
-        fun onTankDetailCreateControlGroupClicked(tankId: Long)
+        fun onTankDetailSectionAction(tankId: Long, action: TankDetailSectionAction)
 
         fun onTankDetailDeviceClicked(
             route: DeviceRoute
@@ -50,6 +51,12 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private lateinit var adapter: TankAssignedDevicesAdapter
     private lateinit var sectionsAdapter: TankDeviceSectionsAdapter
+
+    private val parentHost: Host?
+        get() = parentFragment as? Host
+
+    private val baseActivity: BaseActivity?
+        get() = activity as? BaseActivity
 
     private var tankId: Long = 0L
 
@@ -115,11 +122,11 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             onAddDevice = {
                 val state = viewModel.uiState.value
                 if (!state.isLoading && !state.isRemovingDevice && !state.isOpeningDeviceMenu) {
-                    parentHost()?.onTankDetailAddDeviceClicked(tankId)
+                    parentHost?.onTankDetailSectionAction(tankId, TankDetailSectionAction.ADD_DEVICE)
                 }
             },
             onCreateControlGroup = {
-                parentHost()?.onTankDetailCreateControlGroupClicked(tankId)
+                parentHost?.onTankDetailSectionAction(tankId, TankDetailSectionAction.CREATE_CONTROL_GROUP)
             }
         )
 
@@ -144,7 +151,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                                 var committed = false
                                 try {
                                     committed =
-                                        parentHost()?.onTankDetailDeviceClicked(event.route) == true
+                                        parentHost?.onTankDetailDeviceClicked(event.route) == true
                                 } finally {
                                     viewModel.onDeviceNavigationFinished(
                                         deviceUid = event.route.deviceUid,
@@ -190,11 +197,11 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             canAddDevice = !interactionBusy,
             showEmptyState = !state.isLoading && state.isEmpty
         )
-        baseActivity()?.setGlobalLoading(
+        baseActivity?.setGlobalLoading(
             ownerKey = TANK_DEVICE_OPERATION_LOADING_OWNER,
             show = operationBusy
         )
-        baseActivity()?.setGlobalLoading(
+        baseActivity?.setGlobalLoading(
             ownerKey = TANK_DEVICE_MENU_LOADING_OWNER,
             show = state.isOpeningDeviceMenu
         )
@@ -203,8 +210,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun showDeviceUnavailable(
         event: TankDetailDevicesEvent.ShowDeviceUnavailable
     ) {
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceUnavailableDialog(
+        baseActivity?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
+        baseActivity?.showDeviceUnavailableDialog(
             deviceTitle = event.title,
             titleRes = event.titleRes,
             messageRes = event.messageRes
@@ -246,18 +253,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         )
     }
 
-    private fun parentHost(): Host? {
-        return parentFragment as? Host
-    }
-
-    private fun baseActivity(): BaseActivity? {
-        return activity as? BaseActivity
-    }
-
     override fun onDestroyView() {
         viewModel.onNavigationHostDestroyed()
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_OPERATION_LOADING_OWNER)
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
+        baseActivity?.clearGlobalLoading(TANK_DEVICE_OPERATION_LOADING_OWNER)
+        baseActivity?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
         binding.rvAssignedDevices.adapter = null
         _binding = null
         super.onDestroyView()

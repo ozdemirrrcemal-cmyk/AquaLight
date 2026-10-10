@@ -148,28 +148,22 @@ class TankDetailFragment :
         }
     }
 
-    override fun onTankDetailAddDeviceClicked(tankId: Long) {
+    override fun onTankDetailSectionAction(tankId: Long, action: TankDetailSectionAction) {
         if (tankId != this.tankId) {
             return
         }
 
-        navigateFromTankDetail(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDeviceSelectFragment(
-                tankId = this.tankId
-            )
-        )
-    }
-
-    override fun onTankDetailCreateControlGroupClicked(tankId: Long) {
-        if (tankId != this.tankId) {
-            return
+        val directions: NavDirections = when (action) {
+            TankDetailSectionAction.ADD_DEVICE ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToTankDeviceSelectFragment(
+                    tankId = this.tankId
+                )
+            TankDetailSectionAction.CREATE_CONTROL_GROUP ->
+                TankDetailFragmentDirections.actionTankDetailFragmentToTankControlGroupCreateFragment(
+                    tankId = this.tankId
+                )
         }
-
-        navigateFromTankDetail(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankControlGroupCreateFragment(
-                tankId = this.tankId
-            )
-        )
+        navigateFromTankDetail(directions)
     }
 
     override fun onTankDetailDeviceClicked(route: DeviceRoute): Boolean {
