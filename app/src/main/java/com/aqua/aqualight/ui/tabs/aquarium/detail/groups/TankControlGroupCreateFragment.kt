@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
 import androidx.core.view.ViewCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -41,7 +40,6 @@ class TankControlGroupCreateFragment : Fragment(R.layout.fragment_tank_control_g
         }
 
         _binding = FragmentTankControlGroupCreateBinding.bind(view)
-        binding.appHeader.root.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_card_surface))
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(

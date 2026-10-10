@@ -1,9 +1,11 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.groups
 
 import android.content.res.Configuration
+import android.graphics.drawable.ColorDrawable
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.test.core.app.ApplicationProvider
@@ -17,6 +19,7 @@ import com.aqua.aqualight.application.devices.groups.LightGroupCompatibility
 import com.aqua.aqualight.application.devices.groups.TankControlGroupDevice
 import com.aqua.aqualight.application.devices.groups.TankControlGroupDevices
 import com.aqua.aqualight.databinding.FragmentTankControlGroupCreateBinding
+import com.aqua.aqualight.databinding.ItemDeviceGroupCardBinding
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -25,6 +28,28 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class TankControlGroupRendererInstrumentedTest {
+    @Test fun groupScreenUsesSharedTankBackgroundAndDeviceCardStyles() = onMain {
+        val binding = createBinding()
+        val context = binding.root.context
+        val expectedBackground = ContextCompat.getColor(context, R.color.background_color)
+        val expectedSectionCard = ContextCompat.getColor(
+            context,
+            R.color.aqua_card_device_section_surface
+        )
+        val expectedDeviceCard = ContextCompat.getColor(
+            context,
+            R.color.aqua_card_device_surface
+        )
+        assertEquals(expectedBackground, (binding.root.background as ColorDrawable).color)
+        assertEquals(expectedBackground, (binding.appHeader.root.background as ColorDrawable).color)
+        assertEquals(expectedBackground, (binding.createFooter.background as ColorDrawable).color)
+        assertEquals(expectedSectionCard, binding.groupDropZone.cardBackgroundColor.defaultColor)
+        assertEquals(expectedSectionCard, binding.compatibilityCard.cardBackgroundColor.defaultColor)
+
+        val deviceCard = ItemDeviceGroupCardBinding.inflate(LayoutInflater.from(context))
+        assertEquals(expectedDeviceCard, deviceCard.card.cardBackgroundColor.defaultColor)
+    }
+
     @Test fun readySelectionReturningToEmptyTankClearsAllSelectedVisuals() = onMain {
         val binding = createBinding()
         val renderer = renderer(binding)
