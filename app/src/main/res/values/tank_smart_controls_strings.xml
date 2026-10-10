@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tank_scenes_title">Scenes</string>
+    <string name="tank_scenes_create">Create a Scene</string>
+    <string name="tank_scenes_description">Saved lighting scenarios</string>
+    <string name="tank_scenes_coming_soon">Coming soon</string>
+    <string name="tank_control_groups_title">Control Groups</string>
+    <string name="tank_control_groups_create">Create</string>
+    <string name="tank_control_groups_create_content_description">Create a control group</string>
+    <string name="tank_control_groups_description">Control compatible devices together</string>
+    <string name="tank_control_group_create_screen_title">Create Control Group</string>
+</resources>

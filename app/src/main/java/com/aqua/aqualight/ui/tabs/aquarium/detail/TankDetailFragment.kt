@@ -160,6 +160,18 @@ class TankDetailFragment :
         )
     }
 
+    override fun onTankDetailCreateControlGroupClicked(tankId: Long) {
+        if (tankId != this.tankId) {
+            return
+        }
+
+        navigateFromTankDetail(
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankControlGroupCreateFragment(
+                tankId = this.tankId
+            )
+        )
+    }
+
     override fun onTankDetailDeviceClicked(route: DeviceRoute): Boolean {
         tabCoordinator.select(TankDetailTab.DEVICES)
 

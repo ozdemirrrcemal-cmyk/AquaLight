@@ -33,6 +33,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             tankId: Long
         )
 
+        fun onTankDetailCreateControlGroupClicked(tankId: Long)
+
         fun onTankDetailDeviceClicked(
             route: DeviceRoute
         ): Boolean
@@ -114,6 +116,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun setupClickListeners() {
+        binding.btnCreateControlGroup.setOnClickListener {
+            parentHost()?.onTankDetailCreateControlGroupClicked(tankId)
+        }
+
         binding.btnAddDevice.setOnClickListener {
             val state = viewModel.uiState.value
             if (!state.isRemovingDevice && !state.isOpeningDeviceMenu) {

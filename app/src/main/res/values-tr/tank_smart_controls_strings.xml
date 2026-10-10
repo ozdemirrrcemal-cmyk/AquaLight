@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tank_scenes_title">Sahneler</string>
+    <string name="tank_scenes_create">Sahne Oluştur</string>
+    <string name="tank_scenes_description">Hazır aydınlatma senaryoları</string>
+    <string name="tank_scenes_coming_soon">Yakında</string>
+    <string name="tank_control_groups_title">Kontrol Grupları</string>
+    <string name="tank_control_groups_create">Oluştur</string>
+    <string name="tank_control_groups_create_content_description">Kontrol grubu oluştur</string>
+    <string name="tank_control_groups_description">Uyumlu cihazları birlikte yönetin</string>
+    <string name="tank_control_group_create_screen_title">Kontrol Grubu Oluştur</string>
+</resources>
