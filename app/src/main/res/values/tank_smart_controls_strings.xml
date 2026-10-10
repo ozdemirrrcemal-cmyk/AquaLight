@@ -8,4 +8,26 @@
     <string name="tank_control_groups_create_content_description">Create a control group</string>
     <string name="tank_control_groups_description">Control compatible devices together</string>
     <string name="tank_control_group_create_screen_title">Create Control Group</string>
+    <string name="tank_group_title">Control group</string>
+    <string name="tank_group_devices_title">Tank devices</string>
+    <string name="tank_group_compatible_title">Compatible devices</string>
+    <string name="tank_group_drop_hint">Drag devices here.</string>
+    <string name="tank_group_remove_hint">Drag down to remove.</string>
+    <string name="tank_group_drag_hint">Press and hold, then drag up.</string>
+    <string name="tank_group_compatibility_hint">Compatible with the devices in this group.</string>
+    <string name="tank_group_empty_title">No devices in this tank</string>
+    <string name="tank_group_empty_body">Assign a light to your tank first.</string>
+    <string name="tank_group_all_selected">All compatible devices are in the group.</string>
+    <string name="tank_group_hidden_count">%1$d different-model devices hidden.</string>
+    <string name="tank_group_minimum_two">Select at least 2 compatible devices.</string>
+    <string name="tank_group_ready_count">%1$d compatible devices selected.</string>
+    <string name="tank_group_create">Create group</string>
+    <string name="tank_group_add_accessibility">Add to control group</string>
+    <string name="tank_group_remove_accessibility">Remove from control group</string>
+    <string name="tank_group_loading">Loading tank devices…</string>
+    <string name="tank_group_load_failed">Tank devices could not be loaded.</string>
+    <string name="tank_group_tank_missing">This tank no longer exists.</string>
+    <string name="tank_group_no_compatible">No more compatible devices.</string>
+    <string name="tank_group_device_count">%1$d devices</string>
+    <string name="tank_group_count">%1$d</string>
 </resources>
