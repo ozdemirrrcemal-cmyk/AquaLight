@@ -18,12 +18,12 @@
                 android:orientation="vertical" android:padding="@dimen/aqua_size_12">
                 <TextView android:id="@+id/tvGroupTitle" android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:textColor="@color/aqua_content_primary"
-                    android:textSize="@dimen/aqua_text_size_card_title" android:textStyle="bold"
-                    android:accessibilityHeading="true" />
-                <FrameLayout android:layout_width="match_parent" android:layout_height="@dimen/aqua_size_120">
+                    android:textSize="@dimen/aqua_text_size_card_title" android:textStyle="bold" />
+                <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:minHeight="@dimen/aqua_size_120">
                     <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvSelected"
-                        android:layout_width="match_parent" android:layout_height="match_parent"
-                        android:clipToPadding="false" />
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:minHeight="@dimen/aqua_size_120" android:clipToPadding="false" />
                     <TextView android:id="@+id/tvGroupEmpty" android:layout_width="match_parent"
                         android:layout_height="match_parent" android:gravity="center"
                         android:text="@string/tank_group_drop_hint" android:textColor="@color/aqua_content_muted"
@@ -45,8 +45,7 @@
                 android:orientation="vertical" android:padding="@dimen/aqua_size_12">
                 <TextView android:id="@+id/tvDevicesTitle" android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:textColor="@color/aqua_content_primary"
-                    android:textSize="@dimen/aqua_text_size_card_title" android:textStyle="bold"
-                    android:accessibilityHeading="true" />
+                    android:textSize="@dimen/aqua_text_size_card_title" android:textStyle="bold" />
                 <FrameLayout android:layout_width="match_parent" android:layout_height="@dimen/aqua_size_0"
                     android:layout_weight="1">
                     <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvDevices"

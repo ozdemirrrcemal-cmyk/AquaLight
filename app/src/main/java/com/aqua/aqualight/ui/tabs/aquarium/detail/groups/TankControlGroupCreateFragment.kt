@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.DragEvent
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -41,6 +42,8 @@ class TankControlGroupCreateFragment : Fragment(R.layout.fragment_tank_control_g
             return
         }
         _binding = FragmentTankControlGroupCreateBinding.bind(view)
+        ViewCompat.setAccessibilityHeading(binding.tvGroupTitle, true)
+        ViewCompat.setAccessibilityHeading(binding.tvDevicesTitle, true)
         dragSession = Any()
         binding.appHeader.setupAquaHeader(this, AquaHeaderConfig(
             titleOverride = getString(R.string.tank_control_group_create_screen_title),
