@@ -24,15 +24,21 @@
                 android:layout_height="wrap_content">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="@dimen/aqua_size_12">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical">
+                    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        >
                         <TextView android:id="@+id/tvGroupTitle" android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/tank_group_title"
+                            android:layout_height="wrap_content" app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/tvGroupCount"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" android:text="@string/tank_group_title"
                             android:textColor="@color/aqua_content_primary" android:textStyle="bold"
                             android:textSize="@dimen/aqua_text_size_card_title" />
                         <TextView android:id="@+id/tvGroupCount" style="@style/Widget.Aqua.Group.Count"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
                             android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                     <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvGroup" android:layout_width="match_parent"
                         android:layout_height="wrap_content" android:layout_marginTop="@dimen/aqua_size_12"
                         android:nestedScrollingEnabled="false" android:overScrollMode="never" />
@@ -45,15 +51,21 @@
 
             <LinearLayout android:id="@+id/devicesDropZone" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:layout_marginTop="@dimen/aqua_size_20">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:gravity="center_vertical">
+                <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    >
                     <TextView android:id="@+id/tvDevicesTitle" android:layout_width="@dimen/aqua_size_0"
-                        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/tank_group_devices_title"
+                        android:layout_height="wrap_content" app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/tvDevicesCount"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" android:text="@string/tank_group_devices_title"
                         android:textColor="@color/aqua_content_primary" android:textStyle="bold"
                         android:textSize="@dimen/aqua_text_size_card_title" />
                     <TextView android:id="@+id/tvDevicesCount" style="@style/Widget.Aqua.Group.Count"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                </LinearLayout>
+                        app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
                 <TextView android:id="@+id/tvDevicesHint" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/aqua_size_4" android:text="@string/tank_group_drag_hint"
                     android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body" />
@@ -61,12 +73,20 @@
                 <com.google.android.material.card.MaterialCardView android:id="@+id/compatibilityCard"
                     style="@style/Widget.Aqua.Card.Device.Section" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/aqua_size_16" android:visibility="gone">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center_vertical" android:padding="@dimen/aqua_size_16">
-                        <ImageView android:layout_width="@dimen/aqua_size_40" android:layout_height="@dimen/aqua_size_40"
-                            android:src="@drawable/ic_device_group_verified" android:importantForAccessibility="no" />
+                    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:padding="@dimen/aqua_size_16">
+                        <ImageView android:id="@+id/ivCompatibilityIcon" android:layout_width="@dimen/aqua_size_40"
+                            android:layout_height="@dimen/aqua_size_40"
+                            android:src="@drawable/ic_device_group_verified" android:importantForAccessibility="no"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
                         <LinearLayout android:layout_width="@dimen/aqua_size_0" android:layout_height="wrap_content"
-                            android:layout_weight="1" android:layout_marginStart="@dimen/aqua_size_12" android:orientation="vertical">
+                            android:layout_marginStart="@dimen/aqua_size_12" android:orientation="vertical"
+                            app:layout_constraintStart_toEndOf="@id/ivCompatibilityIcon"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent">
                             <TextView android:id="@+id/tvCompatibilityModel" android:layout_width="match_parent" android:layout_height="wrap_content"
                                 android:textColor="@color/aqua_content_primary" android:textStyle="bold"
                                 android:textSize="@dimen/aqua_text_size_body_large" />
@@ -74,7 +94,7 @@
                                 android:layout_marginTop="@dimen/aqua_size_6" android:text="@string/tank_group_compatibility_hint"
                                 android:textColor="@color/aqua_content_muted" android:textSize="@dimen/aqua_text_size_body_small" />
                         </LinearLayout>
-                    </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvDevices" android:layout_width="match_parent"
@@ -120,16 +140,22 @@
             android:background="@color/aqua_card_divider" android:importantForAccessibility="no" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
             android:padding="@dimen/aqua_size_16">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="@dimen/aqua_size_12">
+            <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                 android:layout_marginBottom="@dimen/aqua_size_12">
                 <ImageView android:id="@+id/ivSelectionStatus" android:layout_width="@dimen/aqua_size_20"
                     android:layout_height="@dimen/aqua_size_20" android:src="@drawable/ic_info"
-                    android:importantForAccessibility="no" app:tint="@color/aqua_content_muted" />
+                    android:importantForAccessibility="no" app:tint="@color/aqua_content_muted"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
                 <TextView android:id="@+id/tvSelectionStatus" android:layout_width="@dimen/aqua_size_0"
-                    android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="@dimen/aqua_size_10"
+                    android:layout_height="wrap_content" app:layout_constraintStart_toEndOf="@id/ivSelectionStatus"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" android:layout_marginStart="@dimen/aqua_size_10"
                     android:text="@string/tank_group_minimum_two" android:textColor="@color/aqua_content_muted"
                     android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" />
-            </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
             <com.google.android.material.button.MaterialButton android:id="@+id/btnCreate"
                 style="@style/Widget.Aqua.Button.Primary" android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_size_52" android:text="@string/tank_group_create"

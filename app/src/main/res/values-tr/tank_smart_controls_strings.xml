@@ -18,9 +18,15 @@
     <string name="tank_group_empty_title">Bu tankta cihaz yok</string>
     <string name="tank_group_empty_body">Önce tankınıza bir ışık atayın.</string>
     <string name="tank_group_all_selected">Tüm uyumlu cihazlar grupta.</string>
-    <string name="tank_group_hidden_count">%1$d farklı model gizlendi.</string>
+    <plurals name="tank_group_hidden_count">
+        <item quantity="one">%1$d farklı model gizlendi.</item>
+        <item quantity="other">%1$d farklı model gizlendi.</item>
+    </plurals>
     <string name="tank_group_minimum_two">En az 2 uyumlu cihaz seçin.</string>
-    <string name="tank_group_ready_count">%1$d uyumlu cihaz seçildi.</string>
+    <plurals name="tank_group_ready_count">
+        <item quantity="one">%1$d uyumlu cihaz seçildi.</item>
+        <item quantity="other">%1$d uyumlu cihaz seçildi.</item>
+    </plurals>
     <string name="tank_group_create">Grup oluştur</string>
     <string name="tank_group_add_accessibility">Kontrol grubuna ekle</string>
     <string name="tank_group_remove_accessibility">Kontrol grubundan çıkar</string>
@@ -28,6 +34,9 @@
     <string name="tank_group_load_failed">Tankın cihazları yüklenemedi.</string>
     <string name="tank_group_tank_missing">Bu tank artık mevcut değil.</string>
     <string name="tank_group_no_compatible">Başka uyumlu cihaz yok.</string>
-    <string name="tank_group_device_count">%1$d cihaz</string>
+    <plurals name="tank_group_device_count">
+        <item quantity="one">%1$d cihaz</item>
+        <item quantity="other">%1$d cihaz</item>
+    </plurals>
     <string name="tank_group_count">%1$d</string>
 </resources>

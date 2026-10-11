@@ -18,9 +18,15 @@
     <string name="tank_group_empty_title">No devices in this tank</string>
     <string name="tank_group_empty_body">Assign a light to your tank first.</string>
     <string name="tank_group_all_selected">All compatible devices are in the group.</string>
-    <string name="tank_group_hidden_count">%1$d different-model devices hidden.</string>
+    <plurals name="tank_group_hidden_count">
+        <item quantity="one">%1$d different-model device hidden.</item>
+        <item quantity="other">%1$d different-model devices hidden.</item>
+    </plurals>
     <string name="tank_group_minimum_two">Select at least 2 compatible devices.</string>
-    <string name="tank_group_ready_count">%1$d compatible devices selected.</string>
+    <plurals name="tank_group_ready_count">
+        <item quantity="one">%1$d compatible device selected.</item>
+        <item quantity="other">%1$d compatible devices selected.</item>
+    </plurals>
     <string name="tank_group_create">Create group</string>
     <string name="tank_group_add_accessibility">Add to control group</string>
     <string name="tank_group_remove_accessibility">Remove from control group</string>
@@ -28,6 +34,9 @@
     <string name="tank_group_load_failed">Tank devices could not be loaded.</string>
     <string name="tank_group_tank_missing">This tank no longer exists.</string>
     <string name="tank_group_no_compatible">No more compatible devices.</string>
-    <string name="tank_group_device_count">%1$d devices</string>
+    <plurals name="tank_group_device_count">
+        <item quantity="one">%1$d device</item>
+        <item quantity="other">%1$d devices</item>
+    </plurals>
     <string name="tank_group_count">%1$d</string>
 </resources>

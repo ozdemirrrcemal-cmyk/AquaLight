@@ -19,7 +19,7 @@ internal class TankControlGroupRenderer(
         while (rows.size < MINIMUM_DEVICES) rows.add(GroupDeviceRow.Slot(rows.size))
         group.submitList(rows)
         devices.submitList(state.available.map { GroupDeviceRow.Device(it, interactive && it.compatibility != null) })
-        binding.tvGroupCount.text = context.getString(R.string.tank_group_device_count, state.selected.size)
+        binding.tvGroupCount.text = context.resources.getQuantityString(R.plurals.tank_group_device_count, state.selected.size, state.selected.size)
         binding.tvGroupHint.setText(if (state.selected.isEmpty())
             R.string.tank_group_drop_hint else R.string.tank_group_remove_hint)
         binding.tvDevicesTitle.setText(if (state.selected.isEmpty())
@@ -31,7 +31,7 @@ internal class TankControlGroupRenderer(
         binding.compatibilityCard.isVisible = first != null
         binding.tvCompatibilityModel.text = first?.productLabel.orEmpty()
         binding.tvHiddenCount.isVisible = interactive && state.hiddenCount > 0
-        binding.tvHiddenCount.text = context.getString(R.string.tank_group_hidden_count, state.hiddenCount)
+        binding.tvHiddenCount.text = context.resources.getQuantityString(R.plurals.tank_group_hidden_count, state.hiddenCount, state.hiddenCount)
         renderEmpty(state, interactive)
         renderFooter(state)
     }
@@ -55,7 +55,7 @@ internal class TankControlGroupRenderer(
 
     private fun renderFooter(state: TankControlGroupCreateUiState) {
         binding.tvSelectionStatus.text = if (state.isReady)
-            context.getString(R.string.tank_group_ready_count, state.selected.size)
+            context.resources.getQuantityString(R.plurals.tank_group_ready_count, state.selected.size, state.selected.size)
             else context.getString(R.string.tank_group_minimum_two)
         binding.ivSelectionStatus.setImageResource(if (state.isReady)
             R.drawable.ic_device_group_ready else R.drawable.ic_info)
