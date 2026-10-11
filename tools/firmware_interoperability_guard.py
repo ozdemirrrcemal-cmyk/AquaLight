@@ -35,9 +35,9 @@ guard.REQUEST_CONTRACT_BLOBS = {
 # Dosing keeps its separately reviewed feature pin; it now declares the final core revision.
 guard.DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
-guard.PRODUCT_CATALOG_EXPORT_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+guard.PRODUCT_CATALOG_EXPORT_COMMIT = "225e32b21d63c55e3685b693582cc33000680d7a"
 guard.EXPECTED_FIXTURES["aql_product_catalog_v1.json"] = (
-    "c0061ae2074ab249777d8682412bba22be9920992c8565d8e0c1d11f29000aa4",
+    "89401270c5449e9c2ec0684545d5988827cdeef54e34b2324ea4ad192b0f20f6",
     None,
     False,
 )

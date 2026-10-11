@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
 CURRENT_FIRMWARE_COMMIT = (
-    "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+    "225e32b21d63c55e3685b693582cc33000680d7a"
 )
 
 EXPECTED_PRODUCTS = {
@@ -19,7 +19,7 @@ EXPECTED_PRODUCTS = {
     ),
     "LIGHT_RGB_PRO_SLIM": (
         "light",
-        "rgb_pro_slim",
+        "rgb_pro_slim_120",
         (3, 0, 0, 0, 0),
     ),
     "TIMER_RELAY_PRO_2": (

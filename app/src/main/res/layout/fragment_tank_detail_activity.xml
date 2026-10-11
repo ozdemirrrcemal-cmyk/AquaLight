@@ -7,7 +7,7 @@
   android:layout_height="match_parent"
   android:background="@color/background_color">
 
-  <ScrollView
+  <androidx.core.widget.NestedScrollView
     android:id="@+id/activityScrollView"
     android:layout_width="@dimen/aqua_size_0"
     android:layout_height="@dimen/aqua_size_0"
@@ -248,7 +248,7 @@
 
     </LinearLayout>
 
-  </ScrollView>
+  </androidx.core.widget.NestedScrollView>
 
   <com.google.android.material.card.MaterialCardView
     style="@style/Widget.Aqua.Card.Inline"

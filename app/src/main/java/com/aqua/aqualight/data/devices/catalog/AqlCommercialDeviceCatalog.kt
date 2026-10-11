@@ -74,6 +74,19 @@ internal object AqlCommercialDeviceCatalog {
         return validateReported(reported)
     }
 
+    /** Durable identity lookup for display/local selection, never runtime command authority. */
+    fun presentationProduct(snapshot: DeviceSnapshot): AqlCommercialCatalogProduct? {
+        return if (snapshot.hasValidatedRuntimeMetadata) {
+            (validateSnapshot(snapshot) as? AqlCommercialCatalogValidation.Valid)?.product
+        } else {
+            snapshot.toReportedCatalogProduct().getOrNull()?.let { reported ->
+                productsByIdentity[reported.compatibilityIdentity]?.takeIf { product ->
+                    compareIdentity(product, reported) == null
+                }
+            }
+        }
+    }
+
     private fun validateReported(reported: ReportedCatalogProduct): AqlCommercialCatalogValidation {
         val product = productsByIdentity[reported.compatibilityIdentity]
             ?: return invalid(

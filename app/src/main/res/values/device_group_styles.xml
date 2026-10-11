@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Widget.Aqua.Group.Count" parent="">
+        <item name="android:background">@drawable/bg_device_group_count</item>
+        <item name="android:minHeight">@dimen/aqua_size_28</item>
+        <item name="android:minWidth">@dimen/aqua_size_36</item>
+        <item name="android:paddingStart">@dimen/aqua_size_12</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_12</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/aqua_content_primary_soft</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption_plus</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+</resources>

@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: 7df97ce807ebb1e90ff63cc36206d6ce479a62fc
+// Source firmware commit: 225e32b21d63c55e3685b693582cc33000680d7a
 
 package com.aqua.aqualight.data.devices.catalog
 
@@ -257,10 +257,10 @@ internal val AQL_GENERATED_COMMERCIAL_PRODUCTS: List<AqlCommercialCatalogProduct
         productId = DeviceProductId("com.aqualight.light.rgb_pro_slim"),
         family = DeviceFamily.LIGHT,
         line = DeviceProductLine("rgb_pro"),
-        model = DeviceProductModel("rgb_pro_slim"),
-        displayName = "RGB Pro Slim",
-        skuId = DeviceSkuId("com.aqualight.light.rgb_pro_slim.global.black"),
-        skuCode = DeviceSkuCode("AQL-L-RPS-GLB-BLK"),
+        model = DeviceProductModel("rgb_pro_slim_120"),
+        displayName = "RGB Pro Slim 120",
+        skuId = DeviceSkuId("com.aqualight.light.rgb_pro_slim_120.global.black"),
+        skuCode = DeviceSkuCode("AQL-L-RPS120-GLB-BLK"),
         hardwareRevision = DeviceHardwareRevision("2.0"),
         limits = DeviceLimitSet(
             lightChannelCount = 3,

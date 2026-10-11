@@ -1,98 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color">
 
+    <!-- Keep the tank title fixed above the collapsing image and pinned tabs. -->
     <include
         android:id="@+id/appHeader"
         layout="@layout/layout_aqua_header"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.card.MaterialCardView
-    style="@style/Widget.Aqua.Card.Inline"
-        android:id="@+id/cardTankImage"
-        android:layout_width="@dimen/aqua_size_0"
-        android:layout_height="@dimen/aqua_size_190"
-        android:layout_marginStart="@dimen/aqua_size_14"
-        android:layout_marginTop="@dimen/aqua_size_22"
-        android:layout_marginEnd="@dimen/aqua_size_14"
-        app:cardCornerRadius="@dimen/aqua_size_22"
-        app:cardElevation="@dimen/aqua_size_0"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appHeader"
-        app:strokeWidth="@dimen/aqua_size_0">
-
-        <FrameLayout
-            android:id="@+id/imageFrame"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/imgTankPhoto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@string/aquarium_content_desc_aquarium_photo"
-                android:scaleType="centerCrop"
-                android:src="@drawable/nature_aquarium" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/aqua_fragment_tank_detail_background" />
-
-            <FrameLayout
-                android:id="@+id/markerContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone" />
-
-        </FrameLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tankTabs"
-        android:layout_width="@dimen/aqua_size_0"
-        android:layout_height="@dimen/aqua_size_48"
-        android:layout_marginStart="@dimen/aqua_size_14"
-        android:layout_marginTop="@dimen/aqua_size_2"
-        android:layout_marginEnd="@dimen/aqua_size_14"
-        android:background="@color/background_color"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardTankImage"
-        app:tabGravity="fill"
-        app:tabIndicatorColor="@color/aqua_accent_primary"
-        app:tabIndicatorFullWidth="false"
-        app:tabIndicatorGravity="bottom"
-        app:tabIndicatorHeight="@dimen/aqua_size_3"
-        app:tabMinWidth="@dimen/aqua_size_0"
-        app:tabMode="fixed"
-        app:tabPaddingEnd="@dimen/aqua_size_0"
-        app:tabPaddingStart="@dimen/aqua_size_0"
-        app:tabRippleColor="@color/aqua_color_transparent"
-        app:tabSelectedTextColor="@color/aqua_content_on_dark"
-        app:tabTextAppearance="@style/TextAppearance.Aqua.TankTab"
-        app:tabTextColor="@color/aqua_content_secondary" />
-
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/tankDetailPager"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
         android:background="@color/background_color"
-        android:clipToPadding="false"
-        android:overScrollMode="never"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tankTabs" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/tankAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/background_color"
+            app:elevation="@dimen/aqua_size_0"
+            app:liftOnScroll="false">
+
+            <!-- First scroll off the photo; the sibling TabLayout stays pinned. -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_scrollFlags="scroll">
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Inline"
+                    android:id="@+id/cardTankImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/aqua_size_190"
+                    android:layout_marginStart="@dimen/aqua_size_14"
+                    android:layout_marginTop="@dimen/aqua_size_22"
+                    android:layout_marginEnd="@dimen/aqua_size_14"
+                    app:cardCornerRadius="@dimen/aqua_size_22"
+                    app:cardElevation="@dimen/aqua_size_0"
+                    app:strokeWidth="@dimen/aqua_size_0">
+            
+                    <FrameLayout
+                        android:id="@+id/imageFrame"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+            
+                        <ImageView
+                            android:id="@+id/imgTankPhoto"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="@string/aquarium_content_desc_aquarium_photo"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/nature_aquarium" />
+            
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/aqua_fragment_tank_detail_background" />
+            
+                        <FrameLayout
+                            android:id="@+id/markerContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:visibility="gone" />
+            
+                    </FrameLayout>
+            
+                </com.google.android.material.card.MaterialCardView>
+
+            </FrameLayout>
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tankTabs"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_48"
+                android:layout_marginStart="@dimen/aqua_size_14"
+                android:layout_marginTop="@dimen/aqua_size_2"
+                android:layout_marginEnd="@dimen/aqua_size_14"
+                android:background="@color/background_color"
+                app:tabGravity="fill"
+                app:tabIndicatorColor="@color/aqua_accent_primary"
+                app:tabIndicatorFullWidth="false"
+                app:tabIndicatorGravity="bottom"
+                app:tabIndicatorHeight="@dimen/aqua_size_3"
+                app:tabMinWidth="@dimen/aqua_size_0"
+                app:tabMode="fixed"
+                app:tabPaddingEnd="@dimen/aqua_size_0"
+                app:tabPaddingStart="@dimen/aqua_size_0"
+                app:tabRippleColor="@color/aqua_color_transparent"
+                app:tabSelectedTextColor="@color/aqua_content_on_dark"
+                app:tabTextAppearance="@style/TextAppearance.Aqua.TankTab"
+                app:tabTextColor="@color/aqua_content_secondary" />
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/tankDetailPager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background_color"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
